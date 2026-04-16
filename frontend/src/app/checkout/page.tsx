@@ -14,6 +14,9 @@ import { fetchApi, imageUrl, type CelebrationKeys } from '@/lib/api';
 import CheckoutStickyCTA from '@/components/CheckoutStickyCTA';
 import SavedAddressPicker from '@/components/SavedAddressPicker';
 import type { CustomerAddress } from '@/lib/api';
+import { TW_CITIES, districtsFor, zipFor } from '@/lib/tw-regions';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
 import { useCelebrate } from '@/components/Celebration';
 import { useSerendipity } from '@/components/Serendipity';
 
@@ -46,6 +49,11 @@ export default function CheckoutPage() {
   const [submitting, setSubmitting] = useState(false);
   const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
   const [codStatus, setCodStatus] = useState<{ blocked: boolean; message: string | null }>({ blocked: false, message: null });
+
+  // Shipping address split state (re-assembled into form.shipping_address on change)
+  const [shipCity, setShipCity] = useState('');
+  const [shipDistrict, setShipDistrict] = useState('');
+  const [shipStreet, setShipStreet] = useState('');
   const codCheckTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const finalTotal = total;
@@ -76,6 +84,35 @@ export default function CheckoutPage() {
       }));
     }
   }, [customer]);
+
+  // After returning from ECPay's CVS map, consume the one-shot token to fill store fields.
+  useEffect(() => {
+    const sp = new URLSearchParams(window.location.search);
+    const token = sp.get('cvs_token');
+    if (!token) return;
+    (async () => {
+      try {
+        const res = await fetch(`${API_URL}/logistics/cvs/pick/${token}`);
+        if (!res.ok) return;
+        const d = await res.json() as { store_id: string; store_name: string; address: string; shipping_method: string };
+        setForm((prev) => ({
+          ...prev,
+          shipping_method: d.shipping_method === 'cvs_family' ? 'cvs_family' : 'cvs_711',
+          shipping_store_id: d.store_id,
+          shipping_store_name: d.store_name,
+          shipping_address: d.address,
+        }));
+        toast(`✓ 已選取 ${d.store_name}`);
+      } catch {
+        toast('取貨門市讀取失敗，請重新選擇');
+      } finally {
+        // Remove the token from the URL so reload doesn't re-consume
+        sp.delete('cvs_token');
+        const qs = sp.toString();
+        window.history.replaceState(null, '', window.location.pathname + (qs ? `?${qs}` : ''));
+      }
+    })();
+  }, [toast]);
 
   const update = (field: keyof OrderForm, value: string | boolean) => {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -229,13 +266,18 @@ export default function CheckoutPage() {
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
                   Email <span className="text-red-500">*</span>
+                  {isLoggedIn && (
+                    <span className="text-[10px] text-gray-400 ml-2 font-normal">（Google 帳號綁定，無法修改）</span>
+                  )}
                 </label>
                 <input
                   id="email"
                   type="email"
                   value={form.email}
-                  onChange={(e) => update('email', e.target.value)}
-                  className={`w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#9F6B3E] focus:border-transparent outline-none ${errors.email ? 'field-error' : ''}`}
+                  onChange={(e) => !isLoggedIn && update('email', e.target.value)}
+                  readOnly={isLoggedIn}
+                  disabled={isLoggedIn}
+                  className={`w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#9F6B3E] focus:border-transparent outline-none ${isLoggedIn ? 'bg-gray-50 text-gray-600 cursor-not-allowed' : ''} ${errors.email ? 'field-error' : ''}`}
                 />
                 {errors.email && <p className="field-error-text">{errors.email}</p>}
               </div>
@@ -362,51 +404,96 @@ export default function CheckoutPage() {
               )}
 
               {!isCvs && (
-                <div>
-                  <label htmlFor="shipping_address" className="block text-sm font-medium text-gray-700 mb-1">
-                    配送地址 <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    id="shipping_address"
-                    type="text"
-                    value={form.shipping_address}
-                    onChange={(e) => update('shipping_address', e.target.value)}
-                    placeholder="縣市 + 區域 + 路段門號"
-                    className={`w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#9F6B3E] focus:border-transparent outline-none ${errors.shipping_address ? 'field-error' : ''}`}
-                  />
-                  {errors.shipping_address && <p className="field-error-text">{errors.shipping_address}</p>}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      縣市 <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      value={shipCity}
+                      onChange={(e) => {
+                        const city = e.target.value;
+                        setShipCity(city);
+                        setShipDistrict('');
+                        update('shipping_address', [city, '', shipStreet].filter(Boolean).join(' '));
+                      }}
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#9F6B3E] focus:border-transparent outline-none bg-white"
+                    >
+                      <option value="">請選擇</option>
+                      {TW_CITIES.map((c) => (
+                        <option key={c.city} value={c.city}>{c.city}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      區 <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      value={shipDistrict}
+                      onChange={(e) => {
+                        const d = e.target.value;
+                        setShipDistrict(d);
+                        const zip = shipCity ? (zipFor(shipCity, d) ?? '') : '';
+                        update('shipping_address', [zip, shipCity, d, shipStreet].filter(Boolean).join(' '));
+                      }}
+                      disabled={!shipCity}
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#9F6B3E] focus:border-transparent outline-none bg-white disabled:bg-gray-50 disabled:text-gray-400"
+                    >
+                      <option value="">{shipCity ? '請選擇區' : '先選縣市'}</option>
+                      {districtsFor(shipCity).map((d) => (
+                        <option key={d.name} value={d.name}>{d.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="col-span-2">
+                    <label htmlFor="shipping_address" className="block text-sm font-medium text-gray-700 mb-1">
+                      路段 + 門牌 <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      id="shipping_address"
+                      type="text"
+                      value={shipStreet}
+                      onChange={(e) => {
+                        const street = e.target.value;
+                        setShipStreet(street);
+                        const zip = shipCity && shipDistrict ? (zipFor(shipCity, shipDistrict) ?? '') : '';
+                        update('shipping_address', [zip, shipCity, shipDistrict, street].filter(Boolean).join(' '));
+                      }}
+                      placeholder="例：仁愛路二段 100 號 5 樓"
+                      className={`w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#9F6B3E] focus:border-transparent outline-none ${errors.shipping_address ? 'field-error' : ''}`}
+                    />
+                    {errors.shipping_address && <p className="field-error-text">{errors.shipping_address}</p>}
+                  </div>
                 </div>
               )}
 
               {isCvs && (
                 <div className="space-y-4">
-                  <div>
-                    <label htmlFor="shipping_store_name" className="block text-sm font-medium text-gray-700 mb-1">
-                      取貨門市名稱 <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      id="shipping_store_name"
-                      type="text"
-                      value={form.shipping_store_name}
-                      onChange={(e) => update('shipping_store_name', e.target.value)}
-                      placeholder="例：台北信義門市"
-                      className={`w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#9F6B3E] focus:border-transparent outline-none ${errors.shipping_store_name ? 'field-error' : ''}`}
-                    />
-                    {errors.shipping_store_name && <p className="field-error-text">{errors.shipping_store_name}</p>}
-                  </div>
-                  <div>
-                    <label htmlFor="shipping_store_id" className="block text-sm font-medium text-gray-700 mb-1">
-                      門市店號 <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      id="shipping_store_id"
-                      type="text"
-                      value={form.shipping_store_id}
-                      onChange={(e) => update('shipping_store_id', e.target.value)}
-                      className={`w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#9F6B3E] focus:border-transparent outline-none ${errors.shipping_store_id ? 'field-error' : ''}`}
-                    />
-                    {errors.shipping_store_id && <p className="field-error-text">{errors.shipping_store_id}</p>}
-                  </div>
+                  {/* Open ECPay's map in new tab; page auto-returns via cvs_token */}
+                  <a
+                    href={`${API_URL}/logistics/cvs/init?sub=${form.shipping_method === 'cvs_family' ? 'FAMI' : 'UNIMART'}&cod=${form.payment_method === 'cod' ? 1 : 0}`}
+                    target="_blank"
+                    rel="noopener"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-br from-[#9F6B3E] to-[#85572F] text-white font-black text-sm shadow-md shadow-[#9F6B3E]/20 hover:opacity-90 transition-opacity"
+                  >
+                    🏪 選擇{form.shipping_method === 'cvs_family' ? '全家' : '7-11'}門市 →
+                  </a>
+                  {(form.shipping_store_name || form.shipping_store_id) ? (
+                    <div className="p-3 bg-[#fdf7ef] border border-[#e7d9cb] rounded-lg text-sm space-y-0.5">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-black text-[#9F6B3E]">✓ 已選取</span>
+                      </div>
+                      <div className="font-black text-gray-900">{form.shipping_store_name}</div>
+                      <div className="text-[11px] text-gray-500">店號 {form.shipping_store_id}</div>
+                      {form.shipping_address && <div className="text-[11px] text-gray-600">{form.shipping_address}</div>}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-gray-500">點上方按鈕進入綠界門市地圖，選擇後會自動回填到結帳頁。</p>
+                  )}
+                  {(errors.shipping_store_name || errors.shipping_store_id) && (
+                    <p className="field-error-text">請先選取取貨門市</p>
+                  )}
                 </div>
               )}
             </div>
@@ -425,7 +512,7 @@ export default function CheckoutPage() {
                   onChange={(e) => update('payment_method', e.target.value)}
                   className="text-[#9F6B3E] focus:ring-[#9F6B3E]"
                 />
-                <span className="font-medium text-gray-900">信用卡付款（綠界）</span>
+                <span className="font-medium text-gray-900">信用卡付款</span>
               </label>
               <label className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:border-[#9F6B3E] has-[:checked]:border-[#9F6B3E] has-[:checked]:bg-[#9F6B3E]/5">
                 <input
@@ -436,7 +523,7 @@ export default function CheckoutPage() {
                   onChange={(e) => update('payment_method', e.target.value)}
                   className="text-[#9F6B3E] focus:ring-[#9F6B3E]"
                 />
-                <span className="font-medium text-gray-900">ATM 轉帳</span>
+                <span className="font-medium text-gray-900">銀行轉帳</span>
               </label>
 
               {/* COD - visible but may be disabled */}
@@ -477,7 +564,7 @@ export default function CheckoutPage() {
                       <Link href="/login" className="text-[#9F6B3E] font-semibold underline hover:text-[#85572F]">
                         免費註冊 / 登入
                       </Link>
-                      {' '}即可解鎖貨到付款，訪客請使用信用卡或 ATM 轉帳。
+                      {' '}即可解鎖貨到付款，訪客請使用信用卡或 銀行轉帳。
                     </p>
                   </div>
                 </div>
@@ -493,7 +580,7 @@ export default function CheckoutPage() {
                     <p className="font-black">貨到付款功能已永久停用</p>
                     <p className="mt-1 leading-relaxed">
                       您過去曾有「貨到付款未取件」紀錄，依本站政策已停用此支付方式。
-                      您仍可使用<strong>信用卡</strong>或<strong>ATM 轉帳</strong>正常完成訂購。
+                      您仍可使用<strong>信用卡</strong>或<strong>銀行轉帳</strong>正常完成訂購。
                       若有疑問請透過{' '}
                       <a href="https://lin.ee/pandorasdo" target="_blank" rel="noopener" className="underline font-black">
                         LINE 客服
@@ -511,13 +598,10 @@ export default function CheckoutPage() {
                   <div>
                     <p className="font-black text-sm text-[#9F6B3E]">貨到付款注意事項</p>
                     <ul className="mt-1.5 space-y-1 list-disc list-inside marker:text-[#9F6B3E]">
-                      <li>商品送達時請備妥足額現金，當面點收後付款。</li>
                       <li>超商取貨須於 <strong>7 天內</strong>到店取件，逾期視同放棄。</li>
                       <li>
                         <strong className="text-red-600">一次未取件將永久停用貨到付款</strong>
-                        （不影響信用卡/ATM 訂購）。
                       </li>
-                      <li>限台灣本島地區配送，單筆上限 NT$20,000。</li>
                     </ul>
                   </div>
                 </div>

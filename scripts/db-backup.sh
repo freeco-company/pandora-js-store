@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 # Daily DB backup — runs on the production server via cron.
-# Keeps the last 30 days of gzipped mysqldumps in /var/backups/pandora/.
+# Keeps the last 7 days of gzipped mysqldumps in /var/backups/pandora/.
+#
+# ⚠️  LIMITATION: backups live on the SAME server as the DB.
+#    If the whole server dies / disk fails, the backups die with it.
+#    For real disaster recovery, also pipe to off-site storage (S3/Backblaze/
+#    another server). See the "off-site mirror" block below for a rsync option.
 #
 # Install once on the server:
 #   chmod +x /var/www/pandora/scripts/db-backup.sh
@@ -11,7 +16,7 @@
 set -euo pipefail
 
 BACKUP_DIR="/var/backups/pandora"
-RETENTION_DAYS=30
+RETENTION_DAYS=7
 ENV_FILE="/var/www/pandora/backend/.env"
 
 mkdir -p "$BACKUP_DIR"

@@ -7,6 +7,7 @@ use App\Mail\OrderConfirmation;
 use App\Models\Blacklist;
 use App\Models\Coupon;
 use App\Models\Customer;
+use App\Models\CustomerAddress;
 use App\Models\Order;
 use App\Models\Product;
 use App\Services\CartPricingService;
@@ -132,6 +133,12 @@ class OrderController extends Controller
 
         $order->load('items');
 
+        // Sync order details back onto the customer record.
+        // - name / phone: only if the customer record is still default/empty or user is authenticated
+        // - address book: add a new CustomerAddress row if this shipping address is new
+        // Email is NOT overwritten (it's the identity, especially for Google OAuth users)
+        $this->syncCustomerFromOrder($customer, $request, $order);
+
         // Gamification: award achievements, check outfit unlocks, maybe serendipity
         $awardedCodes = $this->evaluator->evaluate($customer->fresh(), $order, $coupon !== null);
         $newOutfits = $this->outfitService->checkUnlocks($customer->fresh());
@@ -176,6 +183,57 @@ class OrderController extends Controller
     /**
      * List the authenticated customer's orders (newest first).
      */
+    /**
+     * Persist the customer-facing details from an order back onto the account:
+     *   - update name/phone on the Customer row (if user didn't have them set)
+     *   - add a new address to the address book if this shipping address is new
+     *
+     * Email is intentionally not touched (Google OAuth identity).
+     */
+    private function syncCustomerFromOrder(Customer $customer, Request $request, \App\Models\Order $order): void
+    {
+        // Update profile fields if missing / stale
+        $dirty = false;
+        $postedName = (string) $request->input('customer.name');
+        $postedPhone = (string) $request->input('customer.phone');
+
+        if ($postedName && $customer->name !== $postedName) {
+            $customer->name = $postedName;
+            $dirty = true;
+        }
+        if ($postedPhone && $customer->phone !== $postedPhone) {
+            $customer->phone = $postedPhone;
+            $dirty = true;
+        }
+        if ($dirty) $customer->save();
+
+        // Only record a street address when the order actually carries one
+        // (CVS-pickup orders store store_id/store_name instead)
+        $street = trim((string) ($order->shipping_address ?? ''));
+        if ($street === '') return;
+
+        $recipient = trim((string) ($order->shipping_name ?? $customer->name));
+        $phone = trim((string) ($order->shipping_phone ?? $customer->phone));
+
+        // Dedupe: skip if exact same street already exists
+        $exists = $customer->addresses()
+            ->where('street', $street)
+            ->where('recipient_name', $recipient)
+            ->exists();
+        if ($exists) return;
+
+        // First-ever address auto-becomes default
+        $isFirst = $customer->addresses()->count() === 0;
+
+        CustomerAddress::create([
+            'customer_id'    => $customer->id,
+            'recipient_name' => $recipient,
+            'phone'          => $phone,
+            'street'         => $street,
+            'is_default'     => $isFirst,
+        ]);
+    }
+
     public function customerOrders(Request $request): JsonResponse
     {
         $customer = $request->user();

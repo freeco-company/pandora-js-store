@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\CartController;
 use App\Http\Controllers\Api\CouponController;
 use App\Http\Controllers\Api\CustomerController;
 use App\Http\Controllers\Api\CustomerProfileController;
+use App\Http\Controllers\Api\LogisticsController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\PopupController;
@@ -63,3 +64,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/customer/addresses/{address}', [CustomerProfileController::class, 'addressUpdate']);
     Route::delete('/customer/addresses/{address}', [CustomerProfileController::class, 'addressDestroy']);
 });
+
+// ECPay 物流 CVS 超商地圖選店（需開放 POST 給 ECPay callback）
+Route::get('/logistics/cvs/init', [LogisticsController::class, 'init']);
+Route::post('/logistics/cvs/callback', [LogisticsController::class, 'callback'])->withoutMiddleware(['web']);
+Route::get('/logistics/cvs/pick/{token}', [LogisticsController::class, 'pick']);
