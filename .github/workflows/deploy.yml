@@ -1,0 +1,127 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]           # auto-deploy on merge to main
+  workflow_dispatch:            # allow manual trigger from GitHub UI
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false    # never cancel a deploy mid-flight
+
+jobs:
+  test:
+    uses: ./.github/workflows/ci.yml
+
+  deploy:
+    name: Rsync + rebuild + pm2 reload
+    needs: test                 # only deploy if CI green
+    runs-on: ubuntu-latest
+    outputs:
+      status: ${{ steps.smoke.outputs.status }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SERVER_SSH_KEY }}
+
+      - name: Add server to known_hosts
+        run: ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Rsync backend
+        run: |
+          rsync -az \
+            --exclude='node_modules/' --exclude='.next/' --exclude='.git/' \
+            --exclude='vendor/' --exclude='storage/logs/' \
+            --exclude='storage/framework/cache/' \
+            --exclude='storage/framework/sessions/' \
+            --exclude='storage/framework/views/' \
+            --exclude='bootstrap/cache/*.php' \
+            --exclude='.env*' \
+            backend/ root@${{ secrets.SERVER_HOST }}:/var/www/pandora/backend/
+
+      - name: Rsync frontend
+        run: |
+          rsync -az \
+            --exclude='node_modules/' --exclude='.next/' --exclude='.git/' \
+            --exclude='.env*' \
+            frontend/ root@${{ secrets.SERVER_HOST }}:/var/www/pandora/frontend/
+
+      - name: Rsync scripts + workflows
+        run: |
+          rsync -az scripts/ root@${{ secrets.SERVER_HOST }}:/var/www/pandora/scripts/ || true
+
+      - name: Backend install + migrate + cache
+        run: |
+          ssh root@${{ secrets.SERVER_HOST }} bash -s <<'EOF'
+            set -e
+            cd /var/www/pandora/backend
+            composer install --no-dev --optimize-autoloader --no-interaction 2>&1 | tail -3
+            rm -f bootstrap/cache/*.php
+            php artisan config:cache
+            php artisan route:cache
+            php artisan migrate --force
+          EOF
+
+      - name: Frontend install + build + pm2 reload
+        run: |
+          ssh root@${{ secrets.SERVER_HOST }} bash -s <<'EOF'
+            set -e
+            cd /var/www/pandora/frontend
+            npm install --prefer-offline --no-audit --no-fund 2>&1 | tail -3
+            rm -rf .next
+            NODE_OPTIONS='--max-old-space-size=1400' npm run build 2>&1 | tail -5
+            pm2 restart pandora-frontend
+            : > /root/.pm2/logs/pandora-frontend-error-0.log
+          EOF
+
+      - name: Wait for frontend warm up
+        run: sleep 8
+
+      - name: Smoke test (live)
+        id: smoke
+        run: |
+          if bash scripts/smoke.sh; then
+            echo "status=pass" >> $GITHUB_OUTPUT
+          else
+            echo "status=fail" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+  notify:
+    name: Discord notification
+    needs: [test, deploy]
+    if: always()                # always run, even if prior jobs failed
+    runs-on: ubuntu-latest
+    steps:
+      - name: Determine status
+        id: status
+        run: |
+          if [[ "${{ needs.deploy.result }}" == "success" ]]; then
+            echo "color=4915280" >> $GITHUB_OUTPUT          # green 0x4A9D5F
+            echo "emoji=✅" >> $GITHUB_OUTPUT
+            echo "title=Deploy OK" >> $GITHUB_OUTPUT
+          elif [[ "${{ needs.test.result }}" == "failure" ]]; then
+            echo "color=14709644" >> $GITHUB_OUTPUT         # red 0xE0748C
+            echo "emoji=❌" >> $GITHUB_OUTPUT
+            echo "title=Tests failed — deploy blocked" >> $GITHUB_OUTPUT
+          else
+            echo "color=15243067" >> $GITHUB_OUTPUT         # orange 0xE8A93B
+            echo "emoji=⚠️" >> $GITHUB_OUTPUT
+            echo "title=Deploy failed" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Post to Discord
+        run: |
+          curl -fsSL -H "Content-Type: application/json" \
+            -d '{
+              "embeds": [{
+                "title": "${{ steps.status.outputs.emoji }} ${{ steps.status.outputs.title }}",
+                "description": "**commit**: `${{ github.sha }}`\n**by**: ${{ github.actor }}\n**branch**: `${{ github.ref_name }}`\n**message**: ${{ github.event.head_commit.message }}\n**run**: <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}>",
+                "color": ${{ steps.status.outputs.color }},
+                "timestamp": "${{ github.event.head_commit.timestamp }}"
+              }]
+            }' \
+            "${{ secrets.DISCORD_DEPLOY_WEBHOOK }}" || true

@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Disallow: /cart
+Disallow: /checkout
+Disallow: /order-complete
+Disallow: /order-lookup
+Disallow: /admin
+Disallow: /api/
+
+Sitemap: https://pandora-dev.js-store.com.tw/sitemap.xml

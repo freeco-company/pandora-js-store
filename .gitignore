@@ -1,0 +1,59 @@
+# Root-level secrets + OS junk
+.DS_Store
+*.log
+.env
+.env.local
+.env.production
+.vscode/
+.idea/
+
+# WP source material (not code; kept locally as import reference)
+wp-source/
+
+# Claude Code local notes
+.claude/
+
+# Backend (Laravel)
+/backend/vendor/
+/backend/node_modules/
+/backend/public/hot
+/backend/public/storage
+/backend/public/build/
+/backend/storage/*.key
+/backend/storage/app/public/*
+!/backend/storage/app/public/.gitkeep
+/backend/storage/framework/cache/*
+!/backend/storage/framework/cache/.gitkeep
+/backend/storage/framework/sessions/*
+!/backend/storage/framework/sessions/.gitkeep
+/backend/storage/framework/views/*
+!/backend/storage/framework/views/.gitkeep
+/backend/storage/logs/*
+!/backend/storage/logs/.gitkeep
+/backend/storage/debugbar/*
+/backend/bootstrap/cache/*.php
+/backend/.env
+/backend/.env.local
+/backend/.env.backup
+/backend/.env.production
+/backend/.phpunit.result.cache
+/backend/.phpunit.cache
+/backend/Homestead.json
+/backend/Homestead.yaml
+/backend/npm-debug.log
+/backend/yarn-error.log
+/backend/auth.json
+
+# Frontend (Next.js)
+/frontend/node_modules/
+/frontend/.next/
+/frontend/out/
+/frontend/build/
+/frontend/.env
+/frontend/.env.local
+/frontend/.env.production
+/frontend/.env.development.local
+/frontend/.vercel
+/frontend/*.tsbuildinfo
+/frontend/next-env.d.ts
+/frontend/.turbo

@@ -1,0 +1,91 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: ['**']           # run tests on every branch push
+  workflow_call:               # allow deploy.yml to call this as a gate
+
+jobs:
+  backend:
+    name: Backend tests
+    runs-on: ubuntu-latest
+    services:
+      mariadb:
+        image: mariadb:10.11
+        env:
+          MARIADB_ROOT_PASSWORD: root
+          MARIADB_DATABASE: pandora_test
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="mysqladmin ping -uroot -proot"
+          --health-interval=10s --health-timeout=5s --health-retries=5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP 8.3
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, pdo, pdo_mysql, dom, fileinfo, bcmath, gd, intl
+          coverage: none
+
+      - name: Cache composer
+        uses: actions/cache@v4
+        with:
+          path: backend/vendor
+          key: ${{ runner.os }}-composer-${{ hashFiles('backend/composer.lock') }}
+
+      - name: Composer install
+        working-directory: backend
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Prepare test .env
+        working-directory: backend
+        run: |
+          cp .env.example .env
+          php artisan key:generate --ansi
+          sed -i 's|^DB_CONNECTION=.*|DB_CONNECTION=mysql|' .env
+          sed -i 's|^DB_HOST=.*|DB_HOST=127.0.0.1|' .env
+          sed -i 's|^DB_PORT=.*|DB_PORT=3306|' .env
+          sed -i 's|^DB_DATABASE=.*|DB_DATABASE=pandora_test|' .env
+          sed -i 's|^DB_USERNAME=.*|DB_USERNAME=root|' .env
+          sed -i 's|^DB_PASSWORD=.*|DB_PASSWORD=root|' .env
+
+      - name: Migrate
+        working-directory: backend
+        run: php artisan migrate --force
+
+      - name: Run phpunit
+        working-directory: backend
+        run: php artisan test --parallel
+
+  frontend:
+    name: Frontend type-check + build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install
+        working-directory: frontend
+        run: npm ci
+
+      - name: TypeScript
+        working-directory: frontend
+        run: npx tsc --noEmit
+
+      - name: Build (dry — no deploy)
+        working-directory: frontend
+        env:
+          NEXT_PUBLIC_API_URL: https://pandora-dev.js-store.com.tw/api
+          NEXT_PUBLIC_STORAGE_URL: https://pandora-dev.js-store.com.tw
+          NEXT_PUBLIC_SITE_URL: https://pandora-dev.js-store.com.tw
+        run: NODE_OPTIONS='--max-old-space-size=4096' npm run build
