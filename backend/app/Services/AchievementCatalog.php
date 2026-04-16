@@ -39,6 +39,12 @@ class AchievementCatalog
     public const STREAK_30 = 'streak_30';
     public const STREAK_100 = 'streak_100';
 
+    // Referral
+    public const FIRST_REFERRAL = 'first_referral';
+    public const REFERRAL_3 = 'referral_3';
+    public const REFERRAL_10 = 'referral_10';
+    public const FIRST_REFERRED = 'first_referred';
+
     // Display metadata: emoji, name, description, tier (bronze/silver/gold)
     public static function all(): array
     {
@@ -71,6 +77,11 @@ class AchievementCatalog
             self::STREAK_7 => ['emoji' => '🔥', 'name' => '七日連訪', 'description' => '連續 7 天造訪', 'tier' => 'silver'],
             self::STREAK_30 => ['emoji' => '🔥', 'name' => '月月相伴', 'description' => '連續 30 天造訪', 'tier' => 'gold'],
             self::STREAK_100 => ['emoji' => '🌟', 'name' => '百日傳說', 'description' => '連續 100 天造訪', 'tier' => 'gold'],
+
+            self::FIRST_REFERRAL => ['emoji' => '🎁', 'name' => '第一位推薦者', 'description' => '成功邀請一位朋友完成首單', 'tier' => 'silver'],
+            self::REFERRAL_3     => ['emoji' => '🎁', 'name' => '仙女推廣大使', 'description' => '累積推薦 3 位朋友', 'tier' => 'gold'],
+            self::REFERRAL_10    => ['emoji' => '👑', 'name' => '仙女 KOL', 'description' => '累積推薦 10 位朋友', 'tier' => 'gold'],
+            self::FIRST_REFERRED => ['emoji' => '🌸', 'name' => '被邀請的仙女', 'description' => '透過朋友推薦碼加入', 'tier' => 'bronze'],
         ];
     }
 

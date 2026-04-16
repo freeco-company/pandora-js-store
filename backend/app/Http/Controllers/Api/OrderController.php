@@ -27,6 +27,7 @@ class OrderController extends Controller
         private OrderAchievementEvaluator $evaluator,
         private OutfitService $outfitService,
         private SerendipityService $serendipity,
+        private \App\Services\AchievementService $achievements,
     ) {}
 
     public function store(Request $request): JsonResponse
@@ -133,11 +134,17 @@ class OrderController extends Controller
 
         $order->load('items');
 
+        // Grab the pre-order count (for referral first-order detection).
+        $priorOrderCount = (int) $customer->total_orders;
+
         // Sync order details back onto the customer record.
         // - name / phone: only if the customer record is still default/empty or user is authenticated
         // - address book: add a new CustomerAddress row if this shipping address is new
         // Email is NOT overwritten (it's the identity, especially for Google OAuth users)
         $this->syncCustomerFromOrder($customer, $request, $order);
+
+        // Referral reward (EXP-based, idempotent, first-order gated)
+        $this->processReferralReward($customer->fresh(), $priorOrderCount);
 
         // Gamification: award achievements, check outfit unlocks, maybe serendipity
         $awardedCodes = $this->evaluator->evaluate($customer->fresh(), $order, $coupon !== null);
@@ -183,6 +190,33 @@ class OrderController extends Controller
     /**
      * List the authenticated customer's orders (newest first).
      */
+    /**
+     * Grant referral achievements on the referred customer's FIRST successful order.
+     * Idempotent via Customer::referral_reward_granted.
+     */
+    private function processReferralReward(Customer $customer, int $priorOrderCount): void
+    {
+        if ($priorOrderCount > 0) return;                           // only on very first order
+        if ($customer->referral_reward_granted) return;             // already processed
+        if (! $customer->referred_by_customer_id) return;
+
+        $referrer = Customer::find($customer->referred_by_customer_id);
+        if (! $referrer || $referrer->id === $customer->id) return; // self-ref guard
+
+        // Mark done so we never re-award
+        $customer->update(['referral_reward_granted' => true]);
+
+        // Reward the referred (new) customer
+        $this->achievements->award($customer, \App\Services\AchievementCatalog::FIRST_REFERRED);
+
+        // Reward the referrer — tier on cumulative successful referrals
+        $this->achievements->award($referrer, \App\Services\AchievementCatalog::FIRST_REFERRAL);
+        $successCount = Customer::where('referred_by_customer_id', $referrer->id)
+            ->where('referral_reward_granted', true)->count();
+        if ($successCount >= 3)  $this->achievements->award($referrer, \App\Services\AchievementCatalog::REFERRAL_3);
+        if ($successCount >= 10) $this->achievements->award($referrer, \App\Services\AchievementCatalog::REFERRAL_10);
+    }
+
     /**
      * Persist the customer-facing details from an order back onto the account:
      *   - update name/phone on the Customer row (if user didn't have them set)

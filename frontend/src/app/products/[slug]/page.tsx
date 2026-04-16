@@ -7,6 +7,8 @@ import AddToCartButton from '@/components/AddToCartButton';
 import ProductStickyCTA from '@/components/ProductStickyCTA';
 import RecentlyViewed from '@/components/RecentlyViewed';
 import RecentlyViewedTracker from '@/components/RecentlyViewedTracker';
+import RelatedArticles from '@/components/RelatedArticles';
+import StockNotifyButton from '@/components/StockNotifyButton';
 import ProductGallery from '@/components/ProductGallery';
 import ShareButtons from '@/components/ShareButtons';
 import ProductCardGrid from '@/components/ProductCardGrid';
@@ -292,17 +294,18 @@ export default async function ProductDetailPage({ params }: Props) {
                 <span className="inline-block bg-gray-500 text-white text-sm font-semibold px-4 py-1.5 rounded-full">
                   已售完
                 </span>
-                <button
-                  disabled
-                  className="w-full py-3 px-6 font-semibold rounded-full bg-gray-300 text-gray-500 cursor-not-allowed"
-                >
-                  已售完，無法加入購物車
-                </button>
+                <StockNotifyButton slug={product.slug} />
               </div>
             ) : (
               <AddToCartButton product={product} />
             )}
           </div>
+          {/* Mobile: sold-out products also get notify-me (sticky CTA disabled for out-of-stock) */}
+          {product.stock_status === 'outofstock' && (
+            <div className="md:hidden mt-4">
+              <StockNotifyButton slug={product.slug} />
+            </div>
+          )}
 
           {/* Share */}
           <ShareButtons
@@ -330,6 +333,9 @@ export default async function ProductDetailPage({ params }: Props) {
 
       {/* Recently viewed — only shows if user has history (localStorage) */}
       <RecentlyViewed excludeSlug={product.slug} />
+
+      {/* Internal cross-link: recent articles, boosts SEO + dwell time */}
+      <RelatedArticles />
 
       {/* Description — full width container, readable prose width */}
       {product.description && (

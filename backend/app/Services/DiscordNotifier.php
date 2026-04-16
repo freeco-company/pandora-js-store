@@ -19,6 +19,15 @@ class DiscordNotifier
         return new self(config('services.discord.compliance_webhook'));
     }
 
+    /** Webhook for new-order alerts — falls back to compliance if unset. */
+    public static function orders(): self
+    {
+        return new self(
+            config('services.discord.orders_webhook')
+                ?: config('services.discord.compliance_webhook')
+        );
+    }
+
     public function isEnabled(): bool
     {
         return ! empty($this->webhook);

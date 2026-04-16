@@ -19,6 +19,18 @@ class CustomerProfileController extends Controller
     public function show(Request $request): JsonResponse
     {
         $c = $request->user();
+
+        // Ensure referral code exists for legacy accounts
+        if (! $c->referral_code) {
+            $c->referral_code = \App\Models\Customer::generateReferralCode();
+            $c->save();
+        }
+
+        $refCount = \App\Models\Customer::where('referred_by_customer_id', $c->id)->count();
+        $refSuccessCount = \App\Models\Customer::where('referred_by_customer_id', $c->id)
+            ->where('referral_reward_granted', true)
+            ->count();
+
         return response()->json([
             'id'         => $c->id,
             'name'       => $c->name,
@@ -28,6 +40,9 @@ class CustomerProfileController extends Controller
             'membership_level' => $c->membership_level,
             'total_orders'     => $c->total_orders,
             'total_spent'      => (int) $c->total_spent,
+            'referral_code'    => $c->referral_code,
+            'referrals_count'  => $refCount,
+            'referrals_success' => $refSuccessCount,
         ]);
     }
 

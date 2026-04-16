@@ -41,6 +41,11 @@ export const ACHIEVEMENT_CATALOG: Record<string, AchievementDef> = {
   streak_7: { code: 'streak_7', name: '七日連訪', description: '連續 7 天造訪', emoji: '🔥', tier: 'silver' },
   streak_30: { code: 'streak_30', name: '月月相伴', description: '連續 30 天造訪', emoji: '🔥', tier: 'gold' },
   streak_100: { code: 'streak_100', name: '百日傳說', description: '連續 100 天造訪', emoji: '🌟', tier: 'gold' },
+
+  first_referral: { code: 'first_referral', name: '第一位推薦者', description: '成功邀請一位朋友完成首單', emoji: '🎁', tier: 'silver' },
+  referral_3: { code: 'referral_3', name: '仙女推廣大使', description: '累積推薦 3 位朋友', emoji: '🎁', tier: 'gold' },
+  referral_10: { code: 'referral_10', name: '仙女 KOL', description: '累積推薦 10 位朋友', emoji: '👑', tier: 'gold' },
+  first_referred: { code: 'first_referred', name: '被邀請的仙女', description: '透過朋友推薦碼加入', emoji: '🌸', tier: 'bronze' },
 };
 
 export const TIER_GRADIENTS: Record<AchievementTier, string> = {

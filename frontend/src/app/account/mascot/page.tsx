@@ -23,7 +23,7 @@ import {
 } from '@/lib/api';
 import { stageFromStreak } from '@/lib/achievements';
 
-type Tab = 'outfit' | 'backdrop';
+type Tab = 'outfit' | 'backdrop' | 'achievements';
 
 export default function MascotHomePage() {
   const router = useRouter();
@@ -56,6 +56,7 @@ export default function MascotHomePage() {
   }
 
   const ownedCodes = new Set(data.outfits.owned.map((o) => o.code));
+  const earnedCodes = new Set(data.achievements.earned.map((e) => e.code));
   const currentOutfit = previewOutfit !== undefined ? previewOutfit : data.customer.current_outfit;
   const currentBackdrop = previewBackdrop !== undefined ? previewBackdrop : data.customer.current_backdrop;
   const stage = stageFromStreak(data.customer.streak_days);
@@ -191,17 +192,20 @@ export default function MascotHomePage() {
       <div className="bg-white border-t border-[#e7d9cb]">
         <div className="max-w-2xl mx-auto px-4 sm:px-6">
           <div className="flex gap-1 pt-4">
-            {(['outfit', 'backdrop'] as const).map((t) => {
+            {(['outfit', 'backdrop', 'achievements'] as const).map((t) => {
               const active = tab === t;
-              const label = t === 'outfit' ? '👒 服裝' : '🎨 背景';
-              const ownedCount =
-                t === 'outfit'
-                  ? Object.keys(data.outfits.catalog).filter((c) => ownedCodes.has(c)).length
-                  : Object.keys(data.outfits.backdrops).filter((c) => ownedCodes.has(c)).length;
-              const total =
-                t === 'outfit'
-                  ? Object.keys(data.outfits.catalog).length
-                  : Object.keys(data.outfits.backdrops).length;
+              const label = t === 'outfit' ? '👒 服裝' : t === 'backdrop' ? '🎨 背景' : '🏆 成就';
+              let ownedCount: number, total: number;
+              if (t === 'outfit') {
+                ownedCount = Object.keys(data.outfits.catalog).filter((c) => ownedCodes.has(c)).length;
+                total = Object.keys(data.outfits.catalog).length;
+              } else if (t === 'backdrop') {
+                ownedCount = Object.keys(data.outfits.backdrops).filter((c) => ownedCodes.has(c)).length;
+                total = Object.keys(data.outfits.backdrops).length;
+              } else {
+                ownedCount = data.achievements.earned.length;
+                total = Object.keys(data.achievements.catalog).length;
+              }
               return (
                 <button
                   key={t}
@@ -256,6 +260,28 @@ export default function MascotHomePage() {
               current={currentBackdrop}
               onTap={(v) => setPreviewBackdrop(v)}
             />
+          )}
+
+          {tab === 'achievements' && (
+            <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+              {Object.entries(data.achievements.catalog).map(([code, def]) => {
+                const earned = earnedCodes.has(code);
+                return (
+                  <div
+                    key={code}
+                    title={def.description}
+                    className={`aspect-square rounded-2xl p-2 flex flex-col items-center justify-center text-center transition-all ${
+                      earned ? 'bg-white border border-[#e7d9cb] shadow-sm' : 'bg-slate-100 opacity-55'
+                    }`}
+                  >
+                    <div className={`text-3xl mb-1 ${earned ? '' : 'grayscale'}`}>{def.emoji}</div>
+                    <div className={`text-[10px] font-black leading-tight ${earned ? 'text-slate-800' : 'text-slate-400'}`}>
+                      {def.name}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           )}
         </div>
       </section>

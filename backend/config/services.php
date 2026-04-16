@@ -43,6 +43,7 @@ return [
 
     'discord' => [
         'compliance_webhook' => env('DISCORD_COMPLIANCE_WEBHOOK'),
+        'orders_webhook'     => env('DISCORD_ORDERS_WEBHOOK'),
     ],
 
     'ecpay' => [

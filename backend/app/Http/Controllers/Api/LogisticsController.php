@@ -31,7 +31,15 @@ class LogisticsController extends Controller
     /** Produce the auto-submit form that launches ECPay's CVS map. */
     public function init(Request $request): Response
     {
-        $sub = strtoupper($request->get('sub', 'UNIMART'));        // UNIMART | FAMI
+        // Subtype enum: UNIMARTC2C / FAMIC2C / HILIFEC2C / OKMARTC2C (C2C shop-to-consumer).
+        // `sub=UNIMART` from frontend is remapped to C2C form.
+        $raw = strtoupper($request->get('sub', 'UNIMART'));
+        $sub = match ($raw) {
+            'FAMI', 'FAMIC2C'       => 'FAMIC2C',
+            'HILIFE', 'HILIFEC2C'   => 'HILIFEC2C',
+            'OKMART', 'OKMARTC2C'   => 'OKMARTC2C',
+            default                 => 'UNIMARTC2C',
+        };
         $cod = $request->boolean('cod') ? 'Y' : 'N';
 
         $merchantId   = config('services.ecpay.merchant_id');
@@ -86,8 +94,8 @@ HTML;
             'store_id'   => $storeId,
             'store_name' => $storeName,
             'address'    => $address,
-            'sub_type'   => $sub,                        // UNIMART / FAMI
-            'shipping_method' => $sub === 'FAMI' ? 'cvs_family' : 'cvs_711',
+            'sub_type'   => $sub,                        // UNIMARTC2C / FAMIC2C / etc.
+            'shipping_method' => str_starts_with($sub, 'FAMI') ? 'cvs_family' : 'cvs_711',
             'created_at' => now()->toIso8601String(),
         ], now()->addMinutes(self::CACHE_TTL_MINUTES));
 

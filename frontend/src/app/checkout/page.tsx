@@ -180,6 +180,16 @@ export default function CheckoutPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // UX: if user chose CVS pickup but hasn't picked a store yet, auto-open
+    // the map picker instead of blocking with a validation error.
+    if (isCvs && (!form.shipping_store_id || !form.shipping_store_name)) {
+      const sub = form.shipping_method === 'cvs_family' ? 'FAMI' : 'UNIMART';
+      const cod = form.payment_method === 'cod' ? 1 : 0;
+      window.open(`${API_URL}/logistics/cvs/init?sub=${sub}&cod=${cod}`, '_blank', 'noopener');
+      toast('請先於新分頁選擇取貨門市');
+      return;
+    }
+
     if (!validate(form as unknown as Record<string, any>, validationRules)) {
       return;
     }

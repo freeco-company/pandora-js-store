@@ -17,7 +17,29 @@ class Customer extends Model
         'wp_user_id',
         'streak_days', 'last_active_date', 'current_outfit', 'current_backdrop',
         'last_serendipity_at', 'activation_progress', 'total_spent', 'total_orders',
+        'referral_code', 'referred_by_customer_id', 'referral_reward_granted',
     ];
+
+    /** Auto-generate a unique referral_code on first save if blank. */
+    protected static function booted(): void
+    {
+        static::creating(function (Customer $c) {
+            if (! $c->referral_code) {
+                $c->referral_code = static::generateReferralCode();
+            }
+        });
+    }
+
+    public static function generateReferralCode(): string
+    {
+        do {
+            // 8-char upper-alnum, avoiding confusing 0/O/1/I
+            $alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+            $code = '';
+            for ($i = 0; $i < 8; $i++) $code .= $alphabet[random_int(0, strlen($alphabet) - 1)];
+        } while (static::where('referral_code', $code)->exists());
+        return $code;
+    }
 
     protected $hidden = ['password'];
 

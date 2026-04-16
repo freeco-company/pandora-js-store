@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\CouponController;
 use App\Http\Controllers\Api\CustomerController;
 use App\Http\Controllers\Api\CustomerProfileController;
 use App\Http\Controllers\Api\LogisticsController;
+use App\Http\Controllers\Api\StockNotificationController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\PopupController;
@@ -69,3 +70,6 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::get('/logistics/cvs/init', [LogisticsController::class, 'init']);
 Route::post('/logistics/cvs/callback', [LogisticsController::class, 'callback'])->withoutMiddleware(['web']);
 Route::get('/logistics/cvs/pick/{token}', [LogisticsController::class, 'pick']);
+
+// Back-in-stock notify
+Route::post('/products/{slug}/notify-stock', [StockNotificationController::class, 'subscribe']);

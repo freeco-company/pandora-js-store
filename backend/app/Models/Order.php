@@ -15,7 +15,7 @@ class Order extends Model
         'payment_method', 'payment_status', 'ecpay_trade_no',
         'shipping_method', 'shipping_name', 'shipping_phone',
         'shipping_address', 'shipping_store_id', 'shipping_store_name',
-        'note', 'wp_order_id',
+        'note', 'wp_order_id', 'abandoned_reminder_sent_at',
     ];
 
     protected $casts = [
@@ -23,6 +23,7 @@ class Order extends Model
         'shipping_fee' => 'decimal:2',
         'discount' => 'decimal:2',
         'total' => 'decimal:2',
+        'abandoned_reminder_sent_at' => 'datetime',
     ];
 
     public function coupon()

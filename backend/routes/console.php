@@ -32,3 +32,15 @@ Schedule::command('compliance:audit')
     ->timezone('Asia/Taipei')
     ->withoutOverlapping(30)
     ->appendOutputTo(storage_path('logs/compliance-audit.log'));
+
+// Back-in-stock notifier — hourly scan
+Schedule::command('stock:notify')
+    ->hourly()
+    ->withoutOverlapping(10)
+    ->appendOutputTo(storage_path('logs/stock-notify.log'));
+
+// Abandoned-cart recovery mail — runs every 3 hours
+Schedule::command('cart:abandoned-mail')
+    ->everyThreeHours()
+    ->withoutOverlapping(20)
+    ->appendOutputTo(storage_path('logs/abandoned-cart.log'));
