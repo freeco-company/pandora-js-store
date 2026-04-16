@@ -200,22 +200,22 @@ export default function CartPage() {
                   )}
                 </div>
 
-                {/* Quantity Controls */}
+                {/* Quantity Controls — 44px min tap targets */}
                 <div className="flex items-center gap-3 mt-2">
                   <div className="flex items-center border border-gray-200 rounded-full">
                     <button
                       onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
-                      className="w-8 h-8 flex items-center justify-center text-gray-600 hover:text-gray-900"
+                      className="w-11 h-11 flex items-center justify-center text-gray-600 hover:text-gray-900 active:scale-95 transition"
                       aria-label="減少"
                     >
-                      -
+                      −
                     </button>
-                    <span className="w-8 text-center text-sm font-medium">
+                    <span className="w-10 text-center text-sm font-bold tabular-nums">
                       {item.quantity}
                     </span>
                     <button
                       onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
-                      className="w-8 h-8 flex items-center justify-center text-gray-600 hover:text-gray-900"
+                      className="w-11 h-11 flex items-center justify-center text-gray-600 hover:text-gray-900 active:scale-95 transition"
                       aria-label="增加"
                     >
                       +
@@ -223,7 +223,7 @@ export default function CartPage() {
                   </div>
                   <button
                     onClick={() => setRemoveConfirmId(item.product.id)}
-                    className="text-xs text-gray-400 hover:text-red-500 transition-colors min-h-[32px] px-2"
+                    className="text-xs text-gray-400 hover:text-red-500 transition-colors min-h-[44px] px-3"
                   >
                     移除
                   </button>

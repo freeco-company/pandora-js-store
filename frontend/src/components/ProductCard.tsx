@@ -133,7 +133,7 @@ export default function ProductCard({ product }: { product: Product }) {
         {isOutOfStock ? (
           <button
             disabled
-            className="w-full py-1.5 sm:py-2 px-3 sm:px-4 bg-gray-300 text-gray-500 text-xs sm:text-sm font-semibold rounded-full cursor-not-allowed"
+            className="w-full min-h-[40px] py-2 px-3 sm:px-4 bg-gray-300 text-gray-500 text-sm font-semibold rounded-full cursor-not-allowed"
           >
             已售完
           </button>
@@ -148,7 +148,7 @@ export default function ProductCard({ product }: { product: Product }) {
                 setTimeout(() => setAdded(false), 1500);
               }
             }}
-            className="w-full py-1.5 sm:py-2 px-3 sm:px-4 bg-[#9F6B3E] text-white text-xs sm:text-sm font-semibold rounded-full hover:bg-[#85572F] transition-colors btn-press"
+            className="w-full min-h-[40px] py-2 px-3 sm:px-4 bg-[#9F6B3E] text-white text-sm font-semibold rounded-full hover:bg-[#85572F] active:scale-95 transition-all btn-press"
           >
             {added ? (
               <span style={{ display: 'inline-block', animation: 'checkmark-pop 0.3s ease' }}>✓</span>
