@@ -13,9 +13,13 @@ class EcpayService
 
     public function __construct()
     {
-        $this->merchantId = config('services.ecpay.merchant_id');
-        $this->hashKey = config('services.ecpay.hash_key');
-        $this->hashIv = config('services.ecpay.hash_iv');
+        // Cast to string so tests / CI environments without ECPay env vars
+        // can still boot the service (e.g. any test that touches
+        // OrderController which injects EcpayLogisticsService → EcpayService).
+        // Tests that actually hit the service set real values via Config::set.
+        $this->merchantId = (string) config('services.ecpay.merchant_id');
+        $this->hashKey = (string) config('services.ecpay.hash_key');
+        $this->hashIv = (string) config('services.ecpay.hash_iv');
         $this->apiUrl = config('services.ecpay.mode') === 'production'
             ? 'https://payment.ecpay.com.tw/Cashier/AioCheckOut/V5'
             : 'https://payment-stage.ecpay.com.tw/Cashier/AioCheckOut/V5';
