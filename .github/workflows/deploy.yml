@@ -55,7 +55,7 @@ jobs:
 
       - name: Backend install + migrate + cache
         run: |
-          ssh root@${{ secrets.SERVER_HOST }} bash -s <<'EOF'
+          ssh -o ServerAliveInterval=30 -o ServerAliveCountMax=120 root@${{ secrets.SERVER_HOST }} bash -s <<'EOF'
             set -e
             cd /var/www/pandora/backend
             composer install --no-dev --optimize-autoloader --no-interaction 2>&1 | tail -3
@@ -72,13 +72,20 @@ jobs:
           EOF
 
       - name: Frontend install + build + pm2 reload
+        # Server has 1.9GB RAM + 512MB swap. npm run build peaks near the
+        # memory cap so:
+        #  - stop pm2's next-server before building (frees ~220MB of heap)
+        #  - NODE_OPTIONS=--max-old-space-size=1024 leaves headroom for PHP/MariaDB
+        #  - SSH keepalive prevents broken-pipe when build takes >60s of no stdout
+        #    (the failure mode we hit on cf32752 deploy).
         run: |
-          ssh root@${{ secrets.SERVER_HOST }} bash -s <<'EOF'
+          ssh -o ServerAliveInterval=30 -o ServerAliveCountMax=120 root@${{ secrets.SERVER_HOST }} bash -s <<'EOF'
             set -e
             cd /var/www/pandora/frontend
             npm install --prefer-offline --no-audit --no-fund 2>&1 | tail -3
+            pm2 stop pandora-frontend || true
             rm -rf .next
-            NODE_OPTIONS='--max-old-space-size=1400' npm run build 2>&1 | tail -5
+            NODE_OPTIONS='--max-old-space-size=1024' npm run build 2>&1 | tail -8
             pm2 restart pandora-frontend
             : > /root/.pm2/logs/pandora-frontend-error-0.log
           EOF

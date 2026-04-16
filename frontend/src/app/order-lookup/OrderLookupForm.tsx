@@ -262,6 +262,35 @@ export default function OrderLookupForm() {
 
 function MyOrdersList({ orders, loading }: { orders: Order[] | null; loading: boolean }) {
   const [openId, setOpenId] = useState<string | null>(null);
+  const [paying, setPaying] = useState<string | null>(null);
+
+  const payAgain = async (orderNumber: string) => {
+    setPaying(orderNumber);
+    try {
+      const res = await fetch(`${API_URL}/payment/create`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ order_number: orderNumber }),
+      });
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message || '付款建立失敗');
+      const pay = (await res.json()) as { action: string; params: Record<string, string> };
+      const f = document.createElement('form');
+      f.method = 'POST';
+      f.action = pay.action;
+      for (const [k, v] of Object.entries(pay.params)) {
+        const i = document.createElement('input');
+        i.type = 'hidden';
+        i.name = k;
+        i.value = String(v);
+        f.appendChild(i);
+      }
+      document.body.appendChild(f);
+      f.submit();
+    } catch (e: any) {
+      alert(`付款跳轉失敗：${e?.message ?? ''}，請稍後再試`);
+      setPaying(null);
+    }
+  };
 
   if (loading) {
     return (
@@ -395,12 +424,14 @@ function MyOrdersList({ orders, loading }: { orders: Order[] | null; loading: bo
                 </div>
 
                 {o.status === 'pending' && o.payment_method === 'ecpay_credit' && (
-                  <Link
-                    href={`/order-lookup?order=${o.order_number}`}
-                    className="block text-center px-4 py-2.5 rounded-full bg-[#9F6B3E] text-white font-black text-sm hover:bg-[#85572F]"
+                  <button
+                    type="button"
+                    onClick={() => payAgain(o.order_number)}
+                    disabled={paying === o.order_number}
+                    className="w-full text-center px-4 py-2.5 rounded-full bg-[#9F6B3E] text-white font-black text-sm hover:bg-[#85572F] disabled:opacity-60"
                   >
-                    前往付款 →
-                  </Link>
+                    {paying === o.order_number ? '跳轉中…' : '前往付款 →'}
+                  </button>
                 )}
               </div>
             )}
