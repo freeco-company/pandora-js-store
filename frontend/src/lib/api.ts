@@ -21,6 +21,26 @@ export async function fetchApi<T>(endpoint: string, options?: RequestInit): Prom
   return res.json();
 }
 
+/**
+ * Server-Component friendly GET with sensible defaults:
+ *  - `revalidate: 300` (5-min soft cache) so ISR pages don't hammer Laravel
+ *  - `tags` allow on-demand revalidation via revalidateTag() from the backend
+ *    side (if we ever wire that up)
+ * Don't use this from client components — Next.js ignores the cache opts
+ * there and you'd pay for the serialization overhead.
+ */
+async function getPublic<T>(
+  endpoint: string,
+  { revalidate = 300, tags = [] as string[] } = {},
+): Promise<T> {
+  const res = await fetch(`${API_URL}${endpoint}`, {
+    headers: { Accept: 'application/json' },
+    next: { revalidate, tags },
+  });
+  if (!res.ok) throw new Error(`API error: ${res.status}`);
+  return res.json();
+}
+
 // Customer types
 export interface Customer {
   id: number;
@@ -96,13 +116,13 @@ export interface CartCalculationItem {
 }
 
 export const getProducts = (category?: string) =>
-  fetchApi<Product[]>(`/products${category ? `?category=${category}` : ''}`);
+  getPublic<Product[]>(`/products${category ? `?category=${category}` : ''}`, { tags: ['products'] });
 
 export const getProduct = (slug: string) =>
-  fetchApi<Product>(`/products/${slug}`);
+  getPublic<Product>(`/products/${slug}`, { tags: ['products', `product:${slug}`] });
 
 export const getProductCategories = () =>
-  fetchApi<ProductCategory[]>('/product-categories');
+  getPublic<ProductCategory[]>('/product-categories', { revalidate: 3600, tags: ['product-categories'] });
 
 export interface PaginatedResponse<T> {
   data: T[];
@@ -112,12 +132,13 @@ export interface PaginatedResponse<T> {
 }
 
 export const getArticles = (type?: string, page = 1, perPage = 12) =>
-  fetchApi<PaginatedResponse<Article>>(
-    `/articles?per_page=${perPage}&page=${page}${type ? `&type=${type}` : ''}`
+  getPublic<PaginatedResponse<Article>>(
+    `/articles?per_page=${perPage}&page=${page}${type ? `&type=${type}` : ''}`,
+    { tags: ['articles'] },
   );
 
 export const getArticle = (slug: string) =>
-  fetchApi<Article>(`/articles/${slug}`);
+  getPublic<Article>(`/articles/${slug}`, { tags: ['articles', `article:${slug}`] });
 
 export const calculateCart = (items: CartItem[]) =>
   fetchApi<CartCalculation>('/cart/calculate', {
@@ -134,7 +155,7 @@ export interface Banner {
   link: string | null;
 }
 
-export const getBanners = () => fetchApi<Banner[]>('/banners');
+export const getBanners = () => getPublic<Banner[]>('/banners', { revalidate: 900, tags: ['banners'] });
 
 // Popup types
 export interface Popup {
@@ -146,7 +167,7 @@ export interface Popup {
   display_frequency: 'once' | 'every_visit' | 'once_per_day';
 }
 
-export const getPopups = () => fetchApi<Popup[]>('/popups');
+export const getPopups = () => getPublic<Popup[]>('/popups', { revalidate: 900, tags: ['popups'] });
 
 // Search
 export const searchProducts = (q: string) =>

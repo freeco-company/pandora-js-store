@@ -7,18 +7,35 @@
   --color-accent-light: #9F6B3E1a;
   --color-header: #e7d9cb;
   --color-footer: #1e1e1e;
-  --font-heading: "Microsoft JhengHei", "微軟正黑體", "Noto Sans TC", sans-serif;
+  /* System-font stack: renders the native Traditional-Chinese face on
+     every platform without shipping any webfont bytes.
+       - iOS/macOS → -apple-system + PingFang TC
+       - Android   → Roboto + Noto Sans CJK TC
+       - Windows   → Segoe UI + Microsoft JhengHei */
+  --font-heading: -apple-system, BlinkMacSystemFont, "PingFang TC", "Microsoft JhengHei", "微軟正黑體", "Noto Sans TC", "Segoe UI", Roboto, sans-serif;
 }
 
 html {
   scroll-behavior: smooth;
+  /* Opt-in to Next.js view-transition animations for supporting browsers */
+  view-transition-name: root;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 220ms;
+  }
 }
 
 body {
-  font-family: "Microsoft JhengHei", "微軟正黑體", "Noto Sans TC", sans-serif;
+  font-family: var(--font-heading);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
   overscroll-behavior-x: none;
+  /* Avoid iOS auto font-boost when rotating / zooming */
+  -webkit-text-size-adjust: 100%;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -42,7 +59,7 @@ body {
 button, a { -webkit-tap-highlight-color: transparent; }
 
 h1, h2, h3, h4, h5, h6 {
-  font-family: "Microsoft JhengHei", "微軟正黑體", "Noto Sans TC", sans-serif;
+  font-family: var(--font-heading);
 }
 
 /* Hide scrollbar for horizontal scroll containers */
