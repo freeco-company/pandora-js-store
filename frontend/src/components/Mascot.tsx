@@ -63,18 +63,65 @@ export default function Mascot({
 
         {stage === 'bloom' && (
           <>
-            <path d="M50 72 Q50 52 50 38" stroke="#7ab87a" strokeWidth="3" fill="none" strokeLinecap="round" />
-            <ellipse cx="38" cy="50" rx="10" ry="6" fill="#8ccf8c" transform="rotate(-25 38 50)" />
-            <ellipse cx="62" cy="50" rx="10" ry="6" fill="#8ccf8c" transform="rotate(25 62 50)" />
-            {/* Flower petals */}
-            <circle cx="50" cy="25" r="8" fill="#ffb7c5" />
-            <circle cx="40" cy="30" r="8" fill="#ffc6d1" />
-            <circle cx="60" cy="30" r="8" fill="#ffc6d1" />
-            <circle cx="45" cy="20" r="7" fill="#ffd1dc" />
-            <circle cx="55" cy="20" r="7" fill="#ffd1dc" />
-            <circle cx="50" cy="28" r="5" fill="#fff176" />
-            <circle cx="50" cy="32" r="10" fill="#9edc9e" />
+            {/* Stem + side leaves — slightly fuller than sprout */}
+            <path d="M50 72 Q50 52 50 38" stroke="#7ab87a" strokeWidth="3.2" fill="none" strokeLinecap="round" />
+            <path d="M50 58 Q40 55 36 48" stroke="#7ab87a" strokeWidth="1.6" fill="none" strokeLinecap="round" />
+            <path d="M50 58 Q60 55 64 48" stroke="#7ab87a" strokeWidth="1.6" fill="none" strokeLinecap="round" />
+            <ellipse cx="38" cy="50" rx="10" ry="6" fill="url(#leafGrad)" transform="rotate(-25 38 50)" />
+            <ellipse cx="62" cy="50" rx="10" ry="6" fill="url(#leafGrad)" transform="rotate(25 62 50)" />
+
+            {/* Body (head) — the mascot's face sits here */}
+            <circle cx="50" cy="36" r="10.5" fill="#9edc9e" />
+            <circle cx="47" cy="33" r="2" fill="#b8ecb8" opacity="0.8" />
+
+            {/* 5-petal cherry-blossom crown centred on (50, 22).
+                Each petal is an ellipse rotated to a pentagon vertex; pink
+                gradient fill + subtle notch makes it read as a flower
+                rather than overlapping dots. */}
+            <g filter="url(#petalShadow)">
+              {[0, 72, 144, 216, 288].map((deg) => (
+                <g key={deg} transform={`rotate(${deg} 50 22)`}>
+                  <path
+                    d="M50 12 C 54 12, 57 16, 57 20 C 57 23, 53.5 24, 50 24 C 46.5 24, 43 23, 43 20 C 43 16, 46 12, 50 12 Z"
+                    fill="url(#petalGrad)"
+                  />
+                </g>
+              ))}
+              {/* Stamen cluster */}
+              <circle cx="50" cy="22" r="2.6" fill="#fff176" />
+              <circle cx="48.3" cy="21" r="0.8" fill="#f9a825" />
+              <circle cx="51.7" cy="21" r="0.8" fill="#f9a825" />
+              <circle cx="50" cy="23.5" r="0.8" fill="#f9a825" />
+            </g>
+
+            {/* Sparkle accents — tiny cross stars framing the bloom */}
+            <g fill="#fff9c4" className="mascot-sparkle">
+              <path d="M30 18 l1 2 l2 1 l-2 1 l-1 2 l-1 -2 l-2 -1 l2 -1 z" />
+              <path d="M70 26 l0.8 1.6 l1.6 0.8 l-1.6 0.8 l-0.8 1.6 l-0.8 -1.6 l-1.6 -0.8 l1.6 -0.8 z" />
+              <path d="M22 32 l0.7 1.4 l1.4 0.7 l-1.4 0.7 l-0.7 1.4 l-0.7 -1.4 l-1.4 -0.7 l1.4 -0.7 z" />
+            </g>
           </>
+        )}
+
+        {/* Gradients + shadow definitions (only rendered when bloom) */}
+        {stage === 'bloom' && (
+          <defs>
+            <linearGradient id="petalGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="#ffecf1" />
+              <stop offset="60%" stopColor="#ffc6d1" />
+              <stop offset="100%" stopColor="#ff8fa8" />
+            </linearGradient>
+            <linearGradient id="leafGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#a7e3a7" />
+              <stop offset="100%" stopColor="#6faa6f" />
+            </linearGradient>
+            <filter id="petalShadow" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur in="SourceAlpha" stdDeviation="0.8" />
+              <feOffset dy="1" />
+              <feComponentTransfer><feFuncA type="linear" slope="0.35" /></feComponentTransfer>
+              <feMerge><feMergeNode /><feMergeNode in="SourceGraphic" /></feMerge>
+            </filter>
+          </defs>
         )}
 
         {/* Face — always on the "head" (body) */}
@@ -92,8 +139,20 @@ export default function Mascot({
         .mascot-bounce {
           animation: mascotBounce 2.8s ease-in-out infinite;
         }
+        @keyframes mascotSparkle {
+          0%, 100% { opacity: 0.25; transform: scale(0.8); }
+          50% { opacity: 1; transform: scale(1.1); }
+        }
+        :global(.mascot-sparkle path) {
+          transform-origin: center;
+          transform-box: fill-box;
+          animation: mascotSparkle 2.4s ease-in-out infinite;
+        }
+        :global(.mascot-sparkle path:nth-child(2)) { animation-delay: 0.5s; }
+        :global(.mascot-sparkle path:nth-child(3)) { animation-delay: 1.1s; }
         @media (prefers-reduced-motion: reduce) {
-          .mascot-bounce { animation: none; }
+          .mascot-bounce,
+          :global(.mascot-sparkle path) { animation: none; }
         }
       `}</style>
     </div>
