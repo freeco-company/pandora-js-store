@@ -134,22 +134,23 @@ class OrderController extends Controller
 
         $order->load('items');
 
-        // Grab the pre-order count (for referral first-order detection).
-        $priorOrderCount = (int) $customer->total_orders;
-
         // Sync order details back onto the customer record.
         // - name / phone: only if the customer record is still default/empty or user is authenticated
         // - address book: add a new CustomerAddress row if this shipping address is new
         // Email is NOT overwritten (it's the identity, especially for Google OAuth users)
         $this->syncCustomerFromOrder($customer, $request, $order);
 
-        // Referral reward (EXP-based, idempotent, first-order gated)
-        $this->processReferralReward($customer->fresh(), $priorOrderCount);
-
-        // Gamification: award achievements, check outfit unlocks, maybe serendipity
-        $awardedCodes = $this->evaluator->evaluate($customer->fresh(), $order, $coupon !== null);
-        $newOutfits = $this->outfitService->checkUnlocks($customer->fresh());
-        $serendipity = $this->serendipity->maybeGenerate($customer->fresh());
+        // Credit-card orders are NOT paid yet — payment happens on the ECPay
+        // hosted page. Don't award achievements / referral EXP until the
+        // ECPay callback confirms RtnCode=1 (see PaymentController + the
+        // runCelebrations helper below). COD / bank transfer still count as
+        // "placed-order" events and celebrate immediately.
+        $awardedCodes = [];
+        $newOutfits = [];
+        $serendipity = null;
+        if ($order->payment_method !== 'ecpay_credit') {
+            [$awardedCodes, $newOutfits, $serendipity] = $this->runCelebrations($order);
+        }
 
         // Send order confirmation email
         try {
@@ -167,6 +168,34 @@ class OrderController extends Controller
             '_outfits' => $newOutfits,
             '_serendipity' => $serendipity,
         ], 201);
+    }
+
+    /**
+     * Run all "order succeeded" side-effects: referral reward, achievement
+     * evaluation, outfit unlocks, serendipity roll. Idempotent — safe to
+     * call from both the store() fast-path (for COD/bank transfer) AND from
+     * the ECPay callback once RtnCode=1 (for credit-card orders).
+     *
+     * @return array{0: array<int,string>, 1: array<int,string>, 2: ?array}
+     */
+    public function runCelebrations(Order $order): array
+    {
+        $customer = Customer::findOrFail($order->customer_id);
+
+        // Prior-order count EXCLUDES this one (even if it's been created) —
+        // that's what first-order referral logic expects.
+        $priorOrderCount = (int) Order::where('customer_id', $customer->id)
+            ->where('id', '!=', $order->id)
+            ->count();
+
+        $this->processReferralReward($customer, $priorOrderCount);
+
+        $coupon = $order->coupon_id ? Coupon::find($order->coupon_id) : null;
+        $awarded = $this->evaluator->evaluate($customer->fresh(), $order, $coupon !== null);
+        $outfits = $this->outfitService->checkUnlocks($customer->fresh());
+        $serendipity = $this->serendipity->maybeGenerate($customer->fresh());
+
+        return [$awarded, $outfits, $serendipity];
     }
 
     /**

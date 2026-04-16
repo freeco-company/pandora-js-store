@@ -7,11 +7,13 @@ use App\Models\Order;
 use App\Services\EcpayService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class PaymentController extends Controller
 {
     public function __construct(
-        private EcpayService $ecpayService
+        private EcpayService $ecpayService,
+        private OrderController $orderController,
     ) {}
 
     /**
@@ -54,11 +56,26 @@ class PaymentController extends Controller
         }
 
         if ($data['RtnCode'] == '1') {
+            // Only run celebrations on the FIRST transition to paid — the
+            // callback can fire multiple times (ECPay retries until 1|OK).
+            $wasUnpaid = $order->payment_status !== 'paid';
+
             $order->update([
                 'payment_status' => 'paid',
                 'ecpay_trade_no' => $data['TradeNo'],
                 'status' => 'processing',
             ]);
+
+            if ($wasUnpaid) {
+                try {
+                    $this->orderController->runCelebrations($order->fresh());
+                } catch (\Throwable $e) {
+                    Log::error('Failed to run celebrations after ECPay callback', [
+                        'order_number' => $order->order_number,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
         } else {
             $order->update([
                 'payment_status' => 'failed',

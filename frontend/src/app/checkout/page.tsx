@@ -163,12 +163,10 @@ export default function CheckoutPage() {
     shipping_address: [
       { required: true, message: '請輸入配送地址', when: () => !isCvs },
     ],
-    shipping_store_name: [
-      { required: true, message: '請輸入取貨門市名稱', when: () => isCvs },
-    ],
-    shipping_store_id: [
-      { required: true, message: '請輸入門市店號', when: () => isCvs },
-    ],
+    // shipping_store_name / shipping_store_id are intentionally NOT in the
+    // base rules: when CVS is selected without a store picked we don't want
+    // the form to hard-block on them — handleSubmit instead auto-opens the
+    // ECPay map so the user can finish the flow in one click.
     shipping_name: [
       { required: true, message: '請輸入收件人姓名', when: () => !form.same_as_customer },
     ],
