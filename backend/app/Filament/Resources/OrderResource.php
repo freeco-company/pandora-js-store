@@ -58,7 +58,7 @@ class OrderResource extends Resource
                         ->label('總金額'),
                 ])->columns(2),
 
-                \Filament\Schemas\Components\Section::make('��款資訊')->schema([
+                \Filament\Schemas\Components\Section::make('付款資訊')->schema([
                     Forms\Components\Select::make('payment_method')
                         ->options([
                             'ecpay_credit' => '信用卡（綠界）',
@@ -71,10 +71,12 @@ class OrderResource extends Resource
                             'unpaid' => '未付款',
                             'paid' => '已付款',
                             'refunded' => '已退款',
+                            'failed' => '付款失敗',
                         ])
                         ->label('付款狀態'),
                     Forms\Components\TextInput::make('ecpay_trade_no')
-                        ->label('綠界���易編號'),
+                        ->label('綠界交易編號')
+                        ->helperText('綠界金流的 TradeNo，付款成功後自動回填'),
                 ])->columns(2),
 
                 \Filament\Schemas\Components\Section::make('配送資訊')->schema([
@@ -88,20 +90,42 @@ class OrderResource extends Resource
                     Forms\Components\TextInput::make('shipping_name')
                         ->label('收件人'),
                     Forms\Components\TextInput::make('shipping_phone')
-                        ->label('��件電話'),
+                        ->label('收件電話'),
                     Forms\Components\TextInput::make('shipping_address')
-                        ->label('配送地址'),
+                        ->label('配送地址')
+                        ->columnSpanFull(),
                     Forms\Components\TextInput::make('shipping_store_name')
                         ->label('門市名稱'),
                     Forms\Components\TextInput::make('shipping_store_id')
                         ->label('門市店號'),
                 ])->columns(2),
 
+                \Filament\Schemas\Components\Section::make('綠界物流（CVS）')->schema([
+                    Forms\Components\TextInput::make('ecpay_logistics_id')
+                        ->label('綠界物流編號 (AllPayLogisticsID)')
+                        ->helperText('CVS 訂單付款後由系統自動向綠界建立，若尚未產生可手動補填。'),
+                    Forms\Components\TextInput::make('booking_note')
+                        ->label('寄件編號')
+                        ->helperText('交件時出示給超商店員使用。'),
+                    Forms\Components\TextInput::make('cvs_payment_no')
+                        ->label('代收款編號')
+                        ->helperText('僅貨到付款訂單會有。'),
+                    Forms\Components\TextInput::make('cvs_validation_no')
+                        ->label('驗證碼'),
+                    Forms\Components\TextInput::make('logistics_status_msg')
+                        ->label('綠界回傳訊息')
+                        ->columnSpanFull()
+                        ->disabled(),
+                    Forms\Components\DateTimePicker::make('logistics_created_at')
+                        ->label('物流建立時間')
+                        ->disabled(),
+                ])->columns(2)->collapsible()->collapsed(fn ($record) => ! $record?->shipping_method || ! str_starts_with($record->shipping_method, 'cvs_')),
+
                 \Filament\Schemas\Components\Section::make('備註')->schema([
                     Forms\Components\Textarea::make('note')
                         ->label('訂單備註')
                         ->columnSpanFull(),
-                ]),
+                ])->collapsible(),
             ]);
     }
 
@@ -112,9 +136,12 @@ class OrderResource extends Resource
                 Tables\Columns\TextColumn::make('order_number')
                     ->searchable()
                     ->sortable()
+                    ->copyable()
+                    ->weight('bold')
                     ->label('訂單編號'),
                 Tables\Columns\TextColumn::make('customer.name')
                     ->searchable()
+                    ->description(fn ($record) => $record->customer?->email)
                     ->label('客戶'),
                 Tables\Columns\BadgeColumn::make('status')
                     ->colors([
@@ -130,34 +157,63 @@ class OrderResource extends Resource
                         'completed' => '已完成',
                         'cancelled' => '已取消',
                         'refunded' => '已退款',
-                        'cod_no_pickup' => '貨到付款未取件',
+                        'cod_no_pickup' => '未取件',
                         default => $state,
                     })
                     ->label('狀態'),
-                Tables\Columns\TextColumn::make('pricing_tier')
-                    ->formatStateUsing(fn (string $state): string => match ($state) {
-                        'regular' => '原價',
-                        'combo' => '搭配價',
-                        'vip' => 'VIP',
-                        default => $state,
-                    })
-                    ->label('方案'),
                 Tables\Columns\TextColumn::make('total')
                     ->money('TWD')
                     ->sortable()
+                    ->alignEnd()
                     ->label('金額'),
-                Tables\Columns\TextColumn::make('payment_method')
+                Tables\Columns\TextColumn::make('pricing_tier')
+                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                        'regular' => '原價',
+                        'combo' => '搭配',
+                        'vip' => 'VIP',
+                        default => $state,
+                    })
+                    ->badge()
+                    ->color(fn (string $state) => match ($state) {
+                        'vip' => 'warning',
+                        'combo' => 'info',
+                        default => 'gray',
+                    })
+                    ->label('方案'),
+                Tables\Columns\TextColumn::make('shipping_method')
                     ->formatStateUsing(fn (?string $state): string => match ($state) {
-                        'ecpay_credit' => '信用卡',
-                        'bank_transfer' => 'ATM',
-                        'cod' => '貨到付款',
+                        'home_delivery' => '🏠 宅配',
+                        'cvs_711' => '🏪 7-11',
+                        'cvs_family' => '🏪 全家',
                         default => $state ?? '-',
                     })
+                    ->description(fn ($record) => $record->shipping_store_name ?: null)
+                    ->label('配送'),
+                Tables\Columns\TextColumn::make('payment_method')
+                    ->formatStateUsing(fn (?string $state): string => match ($state) {
+                        'ecpay_credit' => '💳 信用卡',
+                        'bank_transfer' => '🏦 ATM',
+                        'cod' => '📦 貨到付款',
+                        default => $state ?? '-',
+                    })
+                    ->description(fn ($record) => match ($record->payment_status) {
+                        'paid' => '已付款',
+                        'unpaid' => '未付款',
+                        'refunded' => '已退款',
+                        'failed' => '付款失敗',
+                        default => null,
+                    })
                     ->label('付款'),
+                Tables\Columns\TextColumn::make('ecpay_logistics_id')
+                    ->label('物流編號')
+                    ->placeholder('—')
+                    ->copyable()
+                    ->description(fn ($record) => $record->booking_note ? "寄件 {$record->booking_note}" : null)
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('created_at')
-                    ->dateTime('Y-m-d H:i')
+                    ->dateTime('m/d H:i')
                     ->sortable()
-                    ->label('建立時間'),
+                    ->label('建立'),
             ])
             ->defaultSort('created_at', 'desc')
             ->filters([
@@ -165,9 +221,11 @@ class OrderResource extends Resource
                     ->options([
                         'pending' => '待處理',
                         'processing' => '處理中',
+                        'shipped' => '已出貨',
                         'completed' => '已完成',
                         'cancelled' => '已取消',
                         'refunded' => '已退款',
+                        'cod_no_pickup' => '未取件',
                     ])
                     ->label('狀態'),
                 Tables\Filters\SelectFilter::make('payment_method')
@@ -177,6 +235,27 @@ class OrderResource extends Resource
                         'cod' => '貨到付款',
                     ])
                     ->label('付款方式'),
+                Tables\Filters\SelectFilter::make('payment_status')
+                    ->options([
+                        'unpaid' => '未付款',
+                        'paid' => '已付款',
+                        'refunded' => '已退款',
+                        'failed' => '付款失敗',
+                    ])
+                    ->label('付款狀態'),
+                Tables\Filters\SelectFilter::make('shipping_method')
+                    ->options([
+                        'home_delivery' => '宅配',
+                        'cvs_711' => '7-11',
+                        'cvs_family' => '全家',
+                    ])
+                    ->label('配送方式'),
+                Tables\Filters\Filter::make('needs_logistics')
+                    ->label('待建立物流')
+                    ->query(fn ($query) => $query
+                        ->whereIn('shipping_method', ['cvs_711', 'cvs_family'])
+                        ->whereNull('ecpay_logistics_id')
+                        ->where('payment_status', 'paid')),
             ])
             ->actions([
                 \Filament\Actions\EditAction::make(),

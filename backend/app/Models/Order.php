@@ -13,6 +13,8 @@ class Order extends Model
         'order_number', 'customer_id', 'coupon_id', 'status', 'pricing_tier',
         'subtotal', 'shipping_fee', 'discount', 'total',
         'payment_method', 'payment_status', 'ecpay_trade_no',
+        'ecpay_logistics_id', 'cvs_payment_no', 'cvs_validation_no',
+        'booking_note', 'logistics_status_msg', 'logistics_created_at',
         'shipping_method', 'shipping_name', 'shipping_phone',
         'shipping_address', 'shipping_store_id', 'shipping_store_name',
         'note', 'wp_order_id', 'abandoned_reminder_sent_at',
@@ -23,6 +25,7 @@ class Order extends Model
         'shipping_fee' => 'decimal:2',
         'discount' => 'decimal:2',
         'total' => 'decimal:2',
+        'logistics_created_at' => 'datetime',
         'abandoned_reminder_sent_at' => 'datetime',
     ];
 
