@@ -133,89 +133,106 @@ class OrderResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('order_number')
-                    ->searchable()
-                    ->sortable()
-                    ->copyable()
-                    ->weight('bold')
-                    ->label('訂單編號'),
-                Tables\Columns\TextColumn::make('customer.name')
-                    ->searchable()
-                    ->description(fn ($record) => $record->customer?->email)
-                    ->label('客戶'),
-                Tables\Columns\BadgeColumn::make('status')
-                    ->colors([
-                        'warning' => 'pending',
-                        'primary' => fn ($state) => in_array($state, ['processing', 'shipped']),
-                        'success' => 'completed',
-                        'danger' => fn ($state) => in_array($state, ['cancelled', 'refunded', 'cod_no_pickup']),
-                    ])
-                    ->formatStateUsing(fn (string $state): string => match ($state) {
-                        'pending' => '待處理',
-                        'processing' => '處理中',
-                        'shipped' => '已出貨',
-                        'completed' => '已完成',
-                        'cancelled' => '已取消',
-                        'refunded' => '已退款',
-                        'cod_no_pickup' => '未取件',
-                        default => $state,
-                    })
-                    ->label('狀態'),
-                Tables\Columns\TextColumn::make('total')
-                    ->money('TWD')
-                    ->sortable()
-                    ->alignEnd()
-                    ->label('金額'),
-                Tables\Columns\TextColumn::make('pricing_tier')
-                    ->formatStateUsing(fn (string $state): string => match ($state) {
-                        'regular' => '原價',
-                        'combo' => '搭配',
-                        'vip' => 'VIP',
-                        default => $state,
-                    })
-                    ->badge()
-                    ->color(fn (string $state) => match ($state) {
-                        'vip' => 'warning',
-                        'combo' => 'info',
-                        default => 'gray',
-                    })
-                    ->label('方案'),
-                Tables\Columns\TextColumn::make('shipping_method')
-                    ->formatStateUsing(fn (?string $state): string => match ($state) {
-                        'home_delivery' => '🏠 宅配',
-                        'cvs_711' => '🏪 7-11',
-                        'cvs_family' => '🏪 全家',
-                        default => $state ?? '-',
-                    })
-                    ->description(fn ($record) => $record->shipping_store_name ?: null)
-                    ->label('配送'),
-                Tables\Columns\TextColumn::make('payment_method')
-                    ->formatStateUsing(fn (?string $state): string => match ($state) {
-                        'ecpay_credit' => '💳 信用卡',
-                        'bank_transfer' => '🏦 ATM',
-                        'cod' => '📦 貨到付款',
-                        default => $state ?? '-',
-                    })
-                    ->description(fn ($record) => match ($record->payment_status) {
-                        'paid' => '已付款',
-                        'unpaid' => '未付款',
-                        'refunded' => '已退款',
-                        'failed' => '付款失敗',
-                        default => null,
-                    })
-                    ->label('付款'),
-                Tables\Columns\TextColumn::make('ecpay_logistics_id')
-                    ->label('物流編號')
-                    ->placeholder('—')
-                    ->copyable()
-                    ->description(fn ($record) => $record->booking_note ? "寄件 {$record->booking_note}" : null)
-                    ->toggleable(),
-                Tables\Columns\TextColumn::make('created_at')
-                    ->dateTime('m/d H:i')
-                    ->sortable()
-                    ->label('建立'),
+                // Card layout — responsive: 1 col on mobile, 2 on tablet, 3 on
+                // desktop. Ends the painful horizontal-scroll-table UX on phone
+                // and makes order triage possible with one thumb.
+                Tables\Columns\Layout\Stack::make([
+                    Tables\Columns\Layout\Split::make([
+                        Tables\Columns\TextColumn::make('order_number')
+                            ->searchable()
+                            ->sortable()
+                            ->copyable()
+                            ->weight('bold')
+                            ->size(\Filament\Support\Enums\TextSize::Large)
+                            ->label('訂單編號'),
+                        Tables\Columns\BadgeColumn::make('status')
+                            ->colors([
+                                'warning' => 'pending',
+                                'primary' => fn ($state) => in_array($state, ['processing', 'shipped']),
+                                'success' => 'completed',
+                                'danger' => fn ($state) => in_array($state, ['cancelled', 'refunded', 'cod_no_pickup']),
+                            ])
+                            ->formatStateUsing(fn (string $state): string => match ($state) {
+                                'pending' => '待處理',
+                                'processing' => '處理中',
+                                'shipped' => '已出貨',
+                                'completed' => '已完成',
+                                'cancelled' => '已取消',
+                                'refunded' => '已退款',
+                                'cod_no_pickup' => '未取件',
+                                default => $state,
+                            })
+                            ->grow(false)
+                            ->label('狀態'),
+                    ]),
+
+                    Tables\Columns\TextColumn::make('customer.name')
+                        ->searchable()
+                        ->icon('heroicon-m-user')
+                        ->description(fn ($record) => $record->customer?->email)
+                        ->label('客戶'),
+
+                    Tables\Columns\Layout\Split::make([
+                        Tables\Columns\TextColumn::make('shipping_method')
+                            ->formatStateUsing(fn (?string $state): string => match ($state) {
+                                'home_delivery' => '🏠 宅配',
+                                'cvs_711' => '🏪 7-11',
+                                'cvs_family' => '🏪 全家',
+                                default => $state ?? '-',
+                            })
+                            ->description(fn ($record) => $record->shipping_store_name ?: $record->shipping_address)
+                            ->label('配送'),
+                        Tables\Columns\TextColumn::make('payment_method')
+                            ->formatStateUsing(fn (?string $state): string => match ($state) {
+                                'ecpay_credit' => '💳 信用卡',
+                                'bank_transfer' => '🏦 ATM',
+                                'cod' => '📦 貨到付款',
+                                default => $state ?? '-',
+                            })
+                            ->description(fn ($record) => match ($record->payment_status) {
+                                'paid' => '✓ 已付款',
+                                'unpaid' => '⏳ 未付款',
+                                'refunded' => '↺ 已退款',
+                                'failed' => '✕ 付款失敗',
+                                default => null,
+                            })
+                            ->grow(false)
+                            ->label('付款'),
+                    ]),
+
+                    Tables\Columns\Layout\Split::make([
+                        Tables\Columns\TextColumn::make('total')
+                            ->money('TWD')
+                            ->sortable()
+                            ->weight('bold')
+                            ->color('primary')
+                            ->size(\Filament\Support\Enums\TextSize::Large)
+                            ->label('金額'),
+                        Tables\Columns\TextColumn::make('created_at')
+                            ->since()
+                            ->tooltip(fn ($record) => $record->created_at?->format('Y-m-d H:i'))
+                            ->icon('heroicon-m-clock')
+                            ->grow(false)
+                            ->label('建立'),
+                    ]),
+
+                    Tables\Columns\TextColumn::make('ecpay_logistics_id')
+                        ->placeholder('— 未建立物流單 —')
+                        ->copyable()
+                        ->description(fn ($record) => $record->booking_note ? "寄件編號 {$record->booking_note}" : null)
+                        ->icon('heroicon-m-building-storefront')
+                        ->label('物流'),
+                ])->space(2),
             ])
+            ->contentGrid([
+                'default' => 1,
+                'md' => 2,
+                'xl' => 3,
+            ])
+            ->paginated([12, 24, 48, 96])
+            ->defaultPaginationPageOption(24)
             ->defaultSort('created_at', 'desc')
+            ->recordUrl(fn ($record) => Pages\EditOrder::getUrl(['record' => $record]))
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
                     ->options([
