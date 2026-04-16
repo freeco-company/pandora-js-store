@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 /**
- * Edge middleware: 308 permanent-redirect legacy product slugs.
+ * Edge proxy (Next.js 16 — renamed from middleware): 308 permanent-redirect
+ * legacy product slugs.
  *
  * When a user hits /products/{legacy_slug}, we fetch the canonical slug from
  * the backend (which remembers slug_legacy) and 308 them to the new URL.
@@ -11,7 +12,7 @@ import { NextRequest, NextResponse } from 'next/server';
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://pandora-dev.js-store.com.tw/api';
 const memo = new Map<string, string | null>();
 
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   const match = pathname.match(/^\/products\/([^\/]+)$/);

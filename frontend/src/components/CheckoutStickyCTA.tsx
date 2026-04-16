@@ -50,6 +50,7 @@ export default function CheckoutStickyCTA({
           className="shrink-0 h-11 px-6 rounded-full bg-gradient-to-br from-[#9F6B3E] to-[#85572F] text-white font-black text-sm flex items-center gap-1.5 shadow-md shadow-[#9F6B3E]/20 active:scale-[0.98] transition-transform disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {submitting ? '處理中...' : '送出訂單'}
+          {!submitting && <span aria-hidden>→</span>}
         </button>
       </div>
     </div>

@@ -78,8 +78,10 @@ export default async function ProductsPage({
             stagger={70}
           />
           <ScrollReveal variant="fade-up" delay={300}>
-            <p className="text-sm sm:text-base text-gray-700 mt-4 max-w-lg mx-auto">
-              任選 2 件享 1+1 搭配價，組合滿 $4,000 升級 VIP 優惠價
+            <p className="text-sm sm:text-base text-gray-700 mt-4 max-w-lg mx-auto text-balance leading-relaxed">
+              任選 2 件享 <span className="font-black text-[#9F6B3E]">1+1 搭配價</span>
+              <span className="mx-1.5 text-gray-400">·</span>
+              組合滿 $4,000 升級 <span className="font-black text-[#9F6B3E]">VIP 優惠價</span>
             </p>
           </ScrollReveal>
         </div>

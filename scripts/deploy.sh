@@ -17,6 +17,16 @@ SERVER_HOST="${SERVER_HOST:-139.162.121.187}"
 SERVER_PASS="${SERVER_PASS:?Set SERVER_PASS env var}"
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
+# Refuse to deploy against production unless explicitly confirmed — prevents foot-gun
+# when a working shell still has SERVER_PASS set. CI sets DEPLOY_CONFIRMED=1 to bypass.
+if [[ "$SERVER_HOST" =~ (pandora\.js-store|shop\.jerosse|^139\.162\.121\.187$) ]]; then
+  if [[ "${DEPLOY_CONFIRMED:-}" != "1" ]] && [[ " $* " != *" --yes "* ]] && [[ " $* " != *" -y "* ]]; then
+    echo "⚠️  You're about to deploy to PRODUCTION ($SERVER_HOST)."
+    read -r -p "Continue? Type 'yes' to proceed: " confirm
+    [[ "$confirm" == "yes" ]] || { echo "aborted."; exit 1; }
+  fi
+fi
+
 SSH="sshpass -p $SERVER_PASS ssh -o StrictHostKeyChecking=accept-new root@$SERVER_HOST"
 RSYNC="sshpass -p $SERVER_PASS rsync -az -e 'ssh -o StrictHostKeyChecking=accept-new'"
 

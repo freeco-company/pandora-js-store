@@ -82,6 +82,8 @@ jobs:
 
       - name: Smoke test (live)
         id: smoke
+        env:
+          DEPLOY_CONFIRMED: '1'
         run: |
           if bash scripts/smoke.sh; then
             echo "status=pass" >> $GITHUB_OUTPUT

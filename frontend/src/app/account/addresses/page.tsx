@@ -13,6 +13,7 @@ import {
   deleteAddress,
   type CustomerAddress,
 } from '@/lib/api';
+import { TW_CITIES, districtsFor, zipFor } from '@/lib/tw-regions';
 
 type Draft = Omit<CustomerAddress, 'id'>;
 const emptyDraft: Draft = {
@@ -213,27 +214,40 @@ export default function AddressesPage() {
                 className="input"
               />
             </Row>
-            <div className="grid grid-cols-3 gap-2">
-              <Row label="郵遞區號">
-                <input
-                  type="text" value={editing.draft.postal_code || ''}
-                  onChange={(e) => setEditing({ ...editing, draft: { ...editing.draft, postal_code: e.target.value } })}
-                  maxLength={10} className="input"
-                />
+            <div className="grid grid-cols-2 gap-2">
+              <Row label="縣市 *">
+                <select
+                  value={editing.draft.city || ''}
+                  onChange={(e) => {
+                    const city = e.target.value;
+                    setEditing({ ...editing, draft: { ...editing.draft, city, district: '', postal_code: '' } });
+                  }}
+                  required
+                  className="input"
+                >
+                  <option value="">請選擇縣市</option>
+                  {TW_CITIES.map((c) => (
+                    <option key={c.city} value={c.city}>{c.city}</option>
+                  ))}
+                </select>
               </Row>
-              <Row label="縣市">
-                <input
-                  type="text" value={editing.draft.city || ''}
-                  onChange={(e) => setEditing({ ...editing, draft: { ...editing.draft, city: e.target.value } })}
-                  maxLength={40} className="input"
-                />
-              </Row>
-              <Row label="區">
-                <input
-                  type="text" value={editing.draft.district || ''}
-                  onChange={(e) => setEditing({ ...editing, draft: { ...editing.draft, district: e.target.value } })}
-                  maxLength={40} className="input"
-                />
+              <Row label="區 *">
+                <select
+                  value={editing.draft.district || ''}
+                  onChange={(e) => {
+                    const district = e.target.value;
+                    const zip = editing.draft.city ? (zipFor(editing.draft.city, district) ?? '') : '';
+                    setEditing({ ...editing, draft: { ...editing.draft, district, postal_code: zip } });
+                  }}
+                  required
+                  disabled={!editing.draft.city}
+                  className="input disabled:bg-slate-50 disabled:text-slate-400"
+                >
+                  <option value="">{editing.draft.city ? '請選擇區' : '先選縣市'}</option>
+                  {districtsFor(editing.draft.city || '').map((d) => (
+                    <option key={d.name} value={d.name}>{d.name}</option>
+                  ))}
+                </select>
               </Row>
             </div>
             <Row label="街道地址 *">

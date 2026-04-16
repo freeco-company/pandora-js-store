@@ -601,7 +601,7 @@ export default function CheckoutPage() {
             <button
               type="submit"
               disabled={submitting}
-              className="mt-6 w-full py-3 bg-[#9F6B3E] text-white font-semibold rounded-full hover:bg-[#85572F] transition-colors disabled:opacity-50 disabled:cursor-not-allowed btn-press"
+              className="mt-6 w-full py-3 bg-[#9F6B3E] text-white font-semibold rounded-full hover:bg-[#85572F] transition-colors disabled:opacity-50 disabled:cursor-not-allowed btn-press hidden md:block"
             >
               {submitting ? '處理中...' : '確認送出訂單'}
             </button>

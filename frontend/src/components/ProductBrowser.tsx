@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import ProductCard from './ProductCard';
 import { getProducts, type Product, type ProductCategory } from '@/lib/api';
+import { categoryVisual } from '@/lib/category-visual';
 
 const SORT_OPTIONS = [
   { value: '', label: '預設排序' },
@@ -115,43 +116,59 @@ export default function ProductBrowser({
     return () => window.removeEventListener('popstate', onPop);
   }, [category, sort, load]);
 
+  const totalCount = sorted.length;
+  const activeCatObj = categories.find((c) => c.slug === category);
+  const activeCatCount = activeCatObj?.products_count ?? null;
+
   return (
     <>
-      {/* Category Pills */}
+      {/* Category Pills — sticky bar with emoji + count badges */}
       {categories.length > 0 && (
-        <div className="mb-6 sm:mb-8 -mx-4 sm:mx-0 sticky top-[64px] md:top-[80px] z-20 bg-white/85 backdrop-blur-md py-3 sm:py-0 sm:bg-transparent sm:backdrop-blur-none sm:static">
+        <div className="mb-4 -mx-4 sm:mx-0 sticky top-[64px] md:top-[80px] z-20 bg-white/90 backdrop-blur-md py-3 sm:py-4 border-b border-[#e7d9cb]/60">
           <div className="flex gap-2 px-4 sm:px-0 overflow-x-auto scrollbar-hide snap-x snap-mandatory">
             <button
               onClick={() => changeCategory('')}
-              className={`shrink-0 snap-start px-5 py-2 rounded-full text-sm font-black transition-all duration-300 cursor-pointer ${
+              className={`shrink-0 snap-start inline-flex items-center gap-1.5 pl-4 pr-3 py-2 rounded-full text-sm font-black transition-all duration-300 cursor-pointer ${
                 !category
                   ? 'bg-gradient-to-br from-[#9F6B3E] to-[#85572F] text-white shadow-md shadow-[#9F6B3E]/30 scale-105'
                   : 'bg-white border border-[#e7d9cb] text-gray-700 hover:border-[#9F6B3E] hover:text-[#9F6B3E]'
               }`}
-              style={{
-                opacity: 0,
-                animation: 'pill-in 0.4s cubic-bezier(0.2, 0.9, 0.3, 1.1) 0s forwards',
-              }}
+              style={{ opacity: 0, animation: 'pill-in 0.4s cubic-bezier(0.2, 0.9, 0.3, 1.1) 0s forwards' }}
             >
+              <span className="text-base">✨</span>
               全部
+              {initialProducts.length > 0 && !category && (
+                <span className="inline-flex items-center justify-center min-w-[22px] h-5 px-1.5 rounded-full bg-white/20 text-[10px] font-black">
+                  {initialProducts.length}
+                </span>
+              )}
             </button>
-            {categories.map((cat, i) => (
-              <button
-                key={cat.id}
-                onClick={() => changeCategory(cat.slug)}
-                className={`shrink-0 snap-start px-5 py-2 rounded-full text-sm font-black transition-all duration-300 cursor-pointer ${
-                  category === cat.slug
-                    ? 'bg-gradient-to-br from-[#9F6B3E] to-[#85572F] text-white shadow-md shadow-[#9F6B3E]/30 scale-105'
-                    : 'bg-white border border-[#e7d9cb] text-gray-700 hover:border-[#9F6B3E] hover:text-[#9F6B3E]'
-                }`}
-                style={{
-                  opacity: 0,
-                  animation: `pill-in 0.4s cubic-bezier(0.2, 0.9, 0.3, 1.1) ${(i + 1) * 50}ms forwards`,
-                }}
-              >
-                {cat.name}
-              </button>
-            ))}
+            {categories.map((cat, i) => {
+              const v = categoryVisual(cat.name);
+              const active = category === cat.slug;
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => changeCategory(cat.slug)}
+                  className={`shrink-0 snap-start inline-flex items-center gap-1.5 pl-3 pr-3 py-2 rounded-full text-sm font-black transition-all duration-300 cursor-pointer ${
+                    active
+                      ? 'bg-gradient-to-br from-[#9F6B3E] to-[#85572F] text-white shadow-md shadow-[#9F6B3E]/30 scale-105'
+                      : 'bg-white border border-[#e7d9cb] text-gray-700 hover:border-[#9F6B3E] hover:text-[#9F6B3E]'
+                  }`}
+                  style={{ opacity: 0, animation: `pill-in 0.4s cubic-bezier(0.2, 0.9, 0.3, 1.1) ${(i + 1) * 50}ms forwards` }}
+                >
+                  <span className="text-base">{v.emoji}</span>
+                  {cat.name}
+                  {cat.products_count !== undefined && cat.products_count > 0 && (
+                    <span className={`inline-flex items-center justify-center min-w-[22px] h-5 px-1.5 rounded-full text-[10px] font-black ${
+                      active ? 'bg-white/20' : 'bg-[#fdf7ef] text-[#9F6B3E]'
+                    }`}>
+                      {cat.products_count}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
           </div>
           <style>{`
             @keyframes pill-in {
@@ -168,13 +185,30 @@ export default function ProductBrowser({
         </div>
       )}
 
-      {/* Sort dropdown */}
-      <div className="flex justify-end mb-6">
-        <div className="relative">
+      {/* Toolbar — count + active filter chip + sort (single row on desktop) */}
+      <div className="flex items-center justify-between gap-3 mb-6">
+        <div className="flex items-center gap-2 flex-wrap min-w-0">
+          <span className="text-sm text-gray-600 shrink-0">
+            共 <strong className="text-[#9F6B3E]">{totalCount}</strong> 件
+          </span>
+          {activeCatObj && (
+            <button
+              onClick={() => changeCategory('')}
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#fdf7ef] border border-[#e7d9cb] text-xs font-black text-[#7a5836] hover:bg-[#f7eee3] transition-colors"
+              aria-label="清除分類篩選"
+            >
+              <span className="text-sm">{categoryVisual(activeCatObj.name).emoji}</span>
+              {activeCatObj.name}
+              {activeCatCount !== null && <span className="text-[#9F6B3E]">· {activeCatCount}</span>}
+              <span className="ml-0.5 text-gray-400">✕</span>
+            </button>
+          )}
+        </div>
+        <div className="relative shrink-0">
           <select
             value={sort}
             onChange={(e) => changeSort(e.target.value as SortValue)}
-            className="appearance-none bg-white border border-gray-300 rounded-full px-5 py-2 pr-10 text-sm text-gray-700 cursor-pointer hover:border-[#9F6B3E] focus:ring-2 focus:ring-[#9F6B3E] focus:border-transparent outline-none transition-colors"
+            className="appearance-none bg-white border border-gray-300 rounded-full pl-4 pr-9 py-2 text-sm text-gray-700 cursor-pointer hover:border-[#9F6B3E] focus:ring-2 focus:ring-[#9F6B3E] focus:border-transparent outline-none transition-colors"
           >
             {SORT_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>
