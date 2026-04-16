@@ -116,14 +116,35 @@ jobs:
           fi
 
       - name: Post to Discord
+        env:
+          EMOJI: ${{ steps.status.outputs.emoji }}
+          TITLE: ${{ steps.status.outputs.title }}
+          COLOR: ${{ steps.status.outputs.color }}
+          COMMIT_SHA: ${{ github.sha }}
+          ACTOR: ${{ github.actor }}
+          BRANCH: ${{ github.ref_name }}
+          MESSAGE: ${{ github.event.head_commit.message }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          TIMESTAMP: ${{ github.event.head_commit.timestamp }}
+          WEBHOOK: ${{ secrets.DISCORD_DEPLOY_WEBHOOK }}
         run: |
-          curl -fsSL -H "Content-Type: application/json" \
-            -d '{
-              "embeds": [{
-                "title": "${{ steps.status.outputs.emoji }} ${{ steps.status.outputs.title }}",
-                "description": "**commit**: `${{ github.sha }}`\n**by**: ${{ github.actor }}\n**branch**: `${{ github.ref_name }}`\n**message**: ${{ github.event.head_commit.message }}\n**run**: <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}>",
-                "color": ${{ steps.status.outputs.color }},
-                "timestamp": "${{ github.event.head_commit.timestamp }}"
+          # Build JSON safely with jq so Chinese/newlines/backticks in the commit
+          # message can't break the shell or the webhook payload.
+          PAYLOAD=$(jq -n \
+            --arg title   "$EMOJI $TITLE" \
+            --arg sha     "$COMMIT_SHA" \
+            --arg actor   "$ACTOR" \
+            --arg branch  "$BRANCH" \
+            --arg msg     "$MESSAGE" \
+            --arg run     "$RUN_URL" \
+            --arg ts      "$TIMESTAMP" \
+            --argjson color  "$COLOR" \
+            '{
+              embeds: [{
+                title: $title,
+                description: ("**commit**: `" + $sha[0:7] + "`\n**by**: " + $actor + "\n**branch**: `" + $branch + "`\n**message**: " + ($msg | split("\n")[0]) + "\n**run**: <" + $run + ">"),
+                color: $color,
+                timestamp: $ts
               }]
-            }' \
-            "${{ secrets.DISCORD_DEPLOY_WEBHOOK }}" || true
+            }')
+          curl -fsSL -H "Content-Type: application/json" -d "$PAYLOAD" "$WEBHOOK" || true
