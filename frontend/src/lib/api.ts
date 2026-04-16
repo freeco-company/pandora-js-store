@@ -66,6 +66,10 @@ export interface Product {
   stock_status: 'instock' | 'outofstock';
   categories: ProductCategory[];
   seo_meta: SeoMeta | null;
+  /** 衛福部健康食品認證字號 (e.g. 衛部健食字第 A00455 號) */
+  hf_cert_no?: string | null;
+  /** 經核可的保健功效，如「輔助調節血脂」 */
+  hf_cert_claim?: string | null;
   created_at?: string;
 }
 

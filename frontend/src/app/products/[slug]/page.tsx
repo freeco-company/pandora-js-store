@@ -4,6 +4,7 @@ import { notFound, permanentRedirect } from 'next/navigation';
 import { getProduct, getProducts, imageUrl } from '@/lib/api';
 import { formatPrice } from '@/lib/format';
 import AddToCartButton from '@/components/AddToCartButton';
+import { HealthFoodBadge } from '@/components/HealthFoodBadge';
 import ProductStickyCTA from '@/components/ProductStickyCTA';
 import RecentlyViewed from '@/components/RecentlyViewed';
 import RecentlyViewedTracker from '@/components/RecentlyViewedTracker';
@@ -204,6 +205,12 @@ export default async function ProductDetailPage({ params }: Props) {
 
           {product.short_description && (
             <ShortDescription text={product.short_description} />
+          )}
+
+          {product.hf_cert_no && product.hf_cert_claim && (
+            <div className="mb-5">
+              <HealthFoodBadge certNo={product.hf_cert_no} claim={product.hf_cert_claim} />
+            </div>
           )}
 
           {/* Pricing Tiers — stacked cards with progressive savings */}

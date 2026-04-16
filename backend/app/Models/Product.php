@@ -12,7 +12,8 @@ class Product extends Model
     protected $fillable = [
         'name', 'slug', 'description', 'short_description',
         'price', 'combo_price', 'vip_price', 'sale_price',
-        'sku', 'stock_quantity', 'stock_status', 'weight',
+        'sku', 'hf_cert_no', 'hf_cert_claim',
+        'stock_quantity', 'stock_status', 'weight',
         'image', 'gallery', 'is_active', 'sort_order', 'wp_id',
     ];
 

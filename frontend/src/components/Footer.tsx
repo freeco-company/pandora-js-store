@@ -41,6 +41,32 @@ function FooterInner() {
   };
   return (
     <footer className="mt-auto pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-0" style={{ backgroundColor: '#1e1e1e' }}>
+      {/* Trust strip — 官方授權 / 詐騙警語 / 合規聲明 */}
+      <div className="bg-gradient-to-r from-[#2a1f17] via-[#1e1e1e] to-[#2a1f17] border-b border-white/5">
+        <div className="max-w-[1290px] mx-auto px-5 sm:px-6 lg:px-8 py-6 grid grid-cols-1 md:grid-cols-3 gap-5 text-center md:text-left">
+          <div className="flex items-start gap-3">
+            <span className="text-xl">🔒</span>
+            <div>
+              <div className="text-white text-sm font-bold">JEROSSE 官方正品授權</div>
+              <div className="text-gray-400 text-xs mt-1 leading-relaxed">法芮可有限公司授權經銷，每件商品皆為原廠出貨</div>
+            </div>
+          </div>
+          <div className="flex items-start gap-3">
+            <span className="text-xl">⚠️</span>
+            <div>
+              <div className="text-white text-sm font-bold">小心詐騙電商</div>
+              <div className="text-gray-400 text-xs mt-1 leading-relaxed">本站為 <span className="text-gray-200">pandora.js-store.com.tw</span> 唯一官方域名，請勿相信仿冒站點</div>
+            </div>
+          </div>
+          <div className="flex items-start gap-3">
+            <span className="text-xl">✅</span>
+            <div>
+              <div className="text-white text-sm font-bold">食品合規聲明</div>
+              <div className="text-gray-400 text-xs mt-1 leading-relaxed">本站商品為食品，非藥品，不具醫療療效</div>
+            </div>
+          </div>
+        </div>
+      </div>
       <div className="max-w-[1290px] mx-auto px-5 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* Brand & Company Info */}
@@ -56,6 +82,7 @@ function FooterInner() {
             <div className="text-sm text-gray-400 space-y-1.5">
               <p>產品由 <span className="text-gray-300">法芮可有限公司</span> 提供</p>
               <p>統一編號：90445399</p>
+              <p>公司地址：110 臺北市信義區忠孝東路五段 510 號 26 樓</p>
               <p>
                 客服信箱：
                 <a href="mailto:contact@freeco.cc" className="text-gray-300 hover:text-white transition-colors">

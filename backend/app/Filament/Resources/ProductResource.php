@@ -110,6 +110,17 @@ class ProductResource extends Resource
                             ->preload()
                             ->label('商品分類'),
                     ]),
+
+                    Section::make('衛福部健康食品認證')->schema([
+                        Forms\Components\TextInput::make('hf_cert_no')
+                            ->label('認證字號')
+                            ->placeholder('例：衛部健食字第 A00455 號')
+                            ->helperText('僅限衛福部核可的健康食品填寫，前台會顯示小綠人 badge。'),
+                        Forms\Components\TextInput::make('hf_cert_claim')
+                            ->label('核可保健功效')
+                            ->placeholder('例：輔助調節血脂')
+                            ->helperText('與認證字號同一份核可文件上的功效宣稱，不得自行擴增。'),
+                    ])->collapsible()->collapsed(fn ($record) => ! $record?->hf_cert_no),
                 ])->columnSpan(1),
             ])->columns(3);
     }
