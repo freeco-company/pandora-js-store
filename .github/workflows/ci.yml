@@ -46,12 +46,16 @@ jobs:
         run: |
           cp .env.example .env
           php artisan key:generate --ansi
-          sed -i 's|^DB_CONNECTION=.*|DB_CONNECTION=mysql|' .env
-          sed -i 's|^DB_HOST=.*|DB_HOST=127.0.0.1|' .env
-          sed -i 's|^DB_PORT=.*|DB_PORT=3306|' .env
-          sed -i 's|^DB_DATABASE=.*|DB_DATABASE=pandora_test|' .env
-          sed -i 's|^DB_USERNAME=.*|DB_USERNAME=root|' .env
-          sed -i 's|^DB_PASSWORD=.*|DB_PASSWORD=root|' .env
+          # .env.example only has DB_CONNECTION=sqlite — overwrite with full MySQL block
+          sed -i '/^DB_/d' .env
+          cat >> .env <<EOF
+          DB_CONNECTION=mysql
+          DB_HOST=127.0.0.1
+          DB_PORT=3306
+          DB_DATABASE=pandora_test
+          DB_USERNAME=root
+          DB_PASSWORD=root
+          EOF
 
       - name: Migrate
         working-directory: backend
