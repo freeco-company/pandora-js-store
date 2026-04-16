@@ -63,7 +63,7 @@ jobs:
 
       - name: Run phpunit
         working-directory: backend
-        run: php artisan test --parallel
+        run: php artisan test
 
   frontend:
     name: Frontend type-check + build
