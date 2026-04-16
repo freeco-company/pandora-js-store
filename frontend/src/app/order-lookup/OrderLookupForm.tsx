@@ -261,6 +261,8 @@ export default function OrderLookupForm() {
 }
 
 function MyOrdersList({ orders, loading }: { orders: Order[] | null; loading: boolean }) {
+  const [openId, setOpenId] = useState<string | null>(null);
+
   if (loading) {
     return (
       <div className="py-12 text-center text-sm text-gray-500">載入訂單中…</div>
@@ -287,45 +289,121 @@ function MyOrdersList({ orders, loading }: { orders: Order[] | null; loading: bo
       </div>
       {orders.map((o) => {
         const status = STATUS_MAP[o.status] || { label: o.status, color: 'bg-gray-100 text-gray-800' };
+        const isOpen = openId === o.order_number;
         return (
           <div
             key={o.order_number}
-            className="bg-white border border-[#e7d9cb] rounded-2xl p-4 sm:p-5 hover:shadow-md transition-shadow"
+            className="bg-white border border-[#e7d9cb] rounded-2xl overflow-hidden transition-shadow"
           >
-            <div className="flex items-start justify-between gap-3 mb-2">
-              <div className="min-w-0">
-                <div className="text-[11px] text-gray-400 font-bold tracking-wide">
-                  #{o.order_number}
-                </div>
-                <div className="text-[11px] text-gray-500 mt-0.5">
-                  {new Date(o.created_at).toLocaleDateString('zh-TW', { year: 'numeric', month: 'long', day: 'numeric' })}
-                </div>
-              </div>
-              <span className={`shrink-0 px-2.5 py-1 rounded-full text-[10px] font-black ${status.color}`}>
-                {status.label}
-              </span>
-            </div>
-            <div className="flex items-center gap-3 mt-3">
-              <div className="flex -space-x-2 shrink-0">
-                {o.items.slice(0, 3).map((it, i) => (
-                  <div
-                    key={it.product_id + '-' + i}
-                    className="w-10 h-10 rounded-full bg-gray-100 border-2 border-white overflow-hidden"
-                  >
-                    {it.image ? (
-                      <Image src={imageUrl(it.image)!} alt={it.name} width={40} height={40} className="object-cover w-full h-full" />
-                    ) : null}
+            <button
+              type="button"
+              onClick={() => setOpenId(isOpen ? null : o.order_number)}
+              className="w-full text-left p-4 sm:p-5 hover:bg-[#fdf7ef]/50 transition-colors"
+            >
+              <div className="flex items-start justify-between gap-3 mb-2">
+                <div className="min-w-0">
+                  <div className="text-[11px] text-gray-400 font-bold tracking-wide">
+                    #{o.order_number}
                   </div>
-                ))}
+                  <div className="text-[11px] text-gray-500 mt-0.5">
+                    {new Date(o.created_at).toLocaleDateString('zh-TW', { year: 'numeric', month: 'long', day: 'numeric' })}
+                  </div>
+                </div>
+                <span className={`shrink-0 px-2.5 py-1 rounded-full text-[10px] font-black ${status.color}`}>
+                  {status.label}
+                </span>
               </div>
-              <div className="flex-1 min-w-0 text-xs text-gray-600 truncate">
-                {o.items.map((it) => it.name).join('、')}
+              <div className="flex items-center gap-3 mt-3">
+                <div className="flex -space-x-2 shrink-0">
+                  {o.items.slice(0, 3).map((it, i) => (
+                    <div
+                      key={`${it.product_id}-${i}`}
+                      className="w-10 h-10 rounded-full bg-gradient-to-br from-[#fdf7ef] to-[#f7eee3] border-2 border-white overflow-hidden flex items-center justify-center"
+                    >
+                      {it.image ? (
+                        <Image src={imageUrl(it.image)!} alt={it.name} width={40} height={40} className="object-cover w-full h-full" />
+                      ) : (
+                        <span className="text-lg">🛍️</span>
+                      )}
+                    </div>
+                  ))}
+                  {o.items.length > 3 && (
+                    <div className="w-10 h-10 rounded-full bg-slate-100 border-2 border-white flex items-center justify-center text-[10px] font-black text-slate-500">
+                      +{o.items.length - 3}
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0 text-xs text-gray-600 truncate">
+                  {o.items.map((it) => it.name).join('、')}
+                </div>
               </div>
-            </div>
-            <div className="mt-3 flex items-center justify-between">
-              <span className="text-sm font-black text-[#9F6B3E]">{formatPrice(o.total)}</span>
-              <span className="text-[10px] text-gray-400">共 {o.items.reduce((s, it) => s + it.quantity, 0)} 件</span>
-            </div>
+              <div className="mt-3 flex items-center justify-between">
+                <span className="text-sm font-black text-[#9F6B3E]">{formatPrice(o.total)}</span>
+                <span className="text-[11px] text-[#9F6B3E] font-black">
+                  {isOpen ? '收合 ▲' : '詳情 ▼'}
+                </span>
+              </div>
+            </button>
+
+            {/* Accordion detail */}
+            {isOpen && (
+              <div className="px-4 sm:px-5 pb-5 border-t border-dashed border-[#e7d9cb] space-y-4 bg-[#fdf7ef]/30">
+                <div className="pt-4">
+                  <div className="text-[10px] font-black text-[#7a5836] tracking-wider mb-2">商品</div>
+                  <div className="space-y-2">
+                    {o.items.map((it, i) => (
+                      <div key={`${it.product_id}-d-${i}`} className="flex items-center gap-3 bg-white rounded-xl p-2">
+                        <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-[#fdf7ef] to-[#f7eee3] overflow-hidden shrink-0 flex items-center justify-center">
+                          {it.image ? (
+                            <Image src={imageUrl(it.image)!} alt={it.name} width={48} height={48} className="object-cover w-full h-full" />
+                          ) : (
+                            <span className="text-lg">🛍️</span>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-xs font-black text-gray-900 truncate">{it.name}</div>
+                          <div className="text-[11px] text-gray-500">{formatPrice(it.unit_price)} × {it.quantity}</div>
+                        </div>
+                        <div className="text-sm font-black text-[#9F6B3E] shrink-0">{formatPrice(it.subtotal)}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <div className="text-[10px] font-black text-[#7a5836] tracking-wider mb-2">配送資訊</div>
+                  <div className="bg-white rounded-xl p-3 text-xs space-y-1">
+                    <div><span className="text-gray-500">方式：</span><span className="text-gray-800 font-black">{SHIPPING_MAP[o.shipping_method] || o.shipping_method}</span></div>
+                    <div><span className="text-gray-500">收件人：</span><span className="text-gray-800">{o.shipping_name} · {o.shipping_phone}</span></div>
+                    {o.shipping_store_name && (
+                      <div><span className="text-gray-500">取貨門市：</span><span className="text-gray-800">{o.shipping_store_name}</span></div>
+                    )}
+                    {o.shipping_address && (
+                      <div><span className="text-gray-500">地址：</span><span className="text-gray-800">{o.shipping_address}</span></div>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <div className="text-[10px] font-black text-[#7a5836] tracking-wider mb-2">付款</div>
+                  <div className="bg-white rounded-xl p-3 text-xs">
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-500">{PAYMENT_MAP[o.payment_method] || o.payment_method}</span>
+                      <span className="text-sm font-black text-[#9F6B3E]">{formatPrice(o.total)}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {o.status === 'pending' && o.payment_method === 'ecpay_credit' && (
+                  <Link
+                    href={`/order-lookup?order=${o.order_number}`}
+                    className="block text-center px-4 py-2.5 rounded-full bg-[#9F6B3E] text-white font-black text-sm hover:bg-[#85572F]"
+                  >
+                    前往付款 →
+                  </Link>
+                )}
+              </div>
+            )}
           </div>
         );
       })}

@@ -272,9 +272,21 @@ class OrderController extends Controller
     {
         $customer = $request->user();
         $orders = Order::where('customer_id', $customer->id)
-            ->with(['items'])
+            ->with(['items.product:id,slug,image'])                 // image+slug for list thumbs
             ->orderByDesc('created_at')
             ->paginate($request->get('per_page', 20));
+
+        // Flatten product.image + product.slug onto each item (FE reads item.image / item.slug)
+        $orders->getCollection()->transform(function ($o) {
+            $o->items->transform(function ($it) {
+                $p = $it->product;
+                $it->setAttribute('image', $p?->image);
+                $it->setAttribute('slug', $p?->slug);
+                unset($it->product);
+                return $it;
+            });
+            return $o;
+        });
 
         return response()->json($orders);
     }

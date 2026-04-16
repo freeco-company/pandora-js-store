@@ -180,17 +180,20 @@ export default function CheckoutPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // UX: if user chose CVS pickup but hasn't picked a store yet, auto-open
-    // the map picker instead of blocking with a validation error.
+    // Always validate the base form first (name, email, phone, recipient
+    // name/phone if not same-as-customer). That way fields like 電話 are
+    // caught BEFORE we try to open the CVS map.
+    if (!validate(form as unknown as Record<string, any>, validationRules)) {
+      return;
+    }
+
+    // If CVS pickup and no store yet, auto-open the map instead of
+    // blocking with a validation error (everything else is valid by here).
     if (isCvs && (!form.shipping_store_id || !form.shipping_store_name)) {
       const sub = form.shipping_method === 'cvs_family' ? 'FAMI' : 'UNIMART';
       const cod = form.payment_method === 'cod' ? 1 : 0;
       window.open(`${API_URL}/logistics/cvs/init?sub=${sub}&cod=${cod}`, '_blank', 'noopener');
-      toast('請先於新分頁選擇取貨門市');
-      return;
-    }
-
-    if (!validate(form as unknown as Record<string, any>, validationRules)) {
+      toast('請先於新分頁選擇取貨門市，選完會自動回填');
       return;
     }
 
@@ -223,7 +226,35 @@ export default function CheckoutPage() {
       if (order._serendipity) showSerendipity(order._serendipity);
 
       clearCart();
-      // Give celebrations a moment to play before navigating away
+
+      // ECPay credit cards need a hand-off to their hosted payment page;
+      // COD / bank transfer can go straight to the order-complete thank-you.
+      if (form.payment_method === 'ecpay_credit') {
+        try {
+          const pay = await fetchApi<{ action: string; params: Record<string, string> }>('/payment/create', {
+            method: 'POST',
+            body: JSON.stringify({ order_number: order.order_number }),
+          });
+          const f = document.createElement('form');
+          f.method = 'POST';
+          f.action = pay.action;
+          for (const [k, v] of Object.entries(pay.params)) {
+            const i = document.createElement('input');
+            i.type = 'hidden';
+            i.name = k;
+            i.value = String(v);
+            f.appendChild(i);
+          }
+          document.body.appendChild(f);
+          f.submit();                        // navigates the window away
+          return;
+        } catch (e: any) {
+          toast(`ECPay 付款跳轉失敗：${e?.message ?? ''}，請稍後重試`, 'error');
+          setSubmitting(false);
+          return;
+        }
+      }
+
       setTimeout(() => {
         router.push(`/order-complete?order=${order.order_number}`);
       }, (order._achievements?.length || 0) > 0 ? 1200 : 0);
