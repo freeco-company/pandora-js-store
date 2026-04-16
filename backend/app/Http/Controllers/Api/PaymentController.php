@@ -67,13 +67,24 @@ class PaymentController extends Controller
             ]);
 
             if ($wasUnpaid) {
+                $fresh = $order->fresh();
                 try {
-                    $this->orderController->runCelebrations($order->fresh());
+                    $this->orderController->runCelebrations($fresh);
                 } catch (\Throwable $e) {
                     Log::error('Failed to run celebrations after ECPay callback', [
                         'order_number' => $order->order_number,
                         'error' => $e->getMessage(),
                     ]);
+                }
+
+                // For CVS orders, book the shipment now that payment cleared.
+                // Gated by ECPAY_LOGISTICS_AUTO; always also reachable via the
+                // "重新建立物流" admin row action.
+                if (
+                    config('services.ecpay.logistics_auto')
+                    && in_array($fresh->shipping_method, ['cvs_711', 'cvs_family'])
+                ) {
+                    $this->orderController->tryCreateLogistics($fresh);
                 }
             }
         } else {

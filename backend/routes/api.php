@@ -71,5 +71,10 @@ Route::get('/logistics/cvs/init', [LogisticsController::class, 'init']);
 Route::post('/logistics/cvs/callback', [LogisticsController::class, 'callback'])->withoutMiddleware(['web']);
 Route::get('/logistics/cvs/pick/{token}', [LogisticsController::class, 'pick']);
 
+// ECPay Express/Create 建立物流單 — 回傳 AllPayLogisticsID 等資訊
+// 綠界這兩條 callback 都是 server-to-server POST，沒有 CSRF
+Route::post('/logistics/ecpay/reply', [LogisticsController::class, 'ecpayReply'])->withoutMiddleware(['web']);
+Route::post('/logistics/ecpay/status', [LogisticsController::class, 'ecpayStatus'])->withoutMiddleware(['web']);
+
 // Back-in-stock notify
 Route::post('/products/{slug}/notify-stock', [StockNotificationController::class, 'subscribe']);

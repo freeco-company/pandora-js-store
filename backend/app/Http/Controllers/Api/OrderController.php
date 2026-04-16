@@ -11,6 +11,7 @@ use App\Models\CustomerAddress;
 use App\Models\Order;
 use App\Models\Product;
 use App\Services\CartPricingService;
+use App\Services\EcpayLogisticsService;
 use App\Services\OrderAchievementEvaluator;
 use App\Services\OutfitService;
 use App\Services\SerendipityService;
@@ -28,6 +29,7 @@ class OrderController extends Controller
         private OutfitService $outfitService,
         private SerendipityService $serendipity,
         private \App\Services\AchievementService $achievements,
+        private EcpayLogisticsService $logistics,
     ) {}
 
     public function store(Request $request): JsonResponse
@@ -152,6 +154,18 @@ class OrderController extends Controller
             [$awardedCodes, $newOutfits, $serendipity] = $this->runCelebrations($order);
         }
 
+        // COD + CVS orders: book logistics immediately (seller ships and
+        // collects cash at pickup, so the shipment can be created at order
+        // time). ecpay_credit + CVS defer to payment-callback path.
+        // Gated by ECPAY_LOGISTICS_AUTO so user can sandbox-test first.
+        if (
+            config('services.ecpay.logistics_auto')
+            && $order->payment_method === 'cod'
+            && in_array($order->shipping_method, ['cvs_711', 'cvs_family'])
+        ) {
+            $this->tryCreateLogistics($order);
+        }
+
         // Send order confirmation email
         try {
             Mail::to($request->input('customer.email'))->send(new OrderConfirmation($order));
@@ -178,6 +192,24 @@ class OrderController extends Controller
      *
      * @return array{0: array<int,string>, 1: array<int,string>, 2: ?array}
      */
+    /**
+     * Safely attempt CVS shipment creation. Never raises — a failed
+     * shipment create must not block the order from being created. The
+     * admin will see the error in logistics_status_msg + Dashboard
+     * "待建立物流" widget and can retry manually.
+     */
+    public function tryCreateLogistics(Order $order): void
+    {
+        try {
+            $this->logistics->createCvsShipment($order);
+        } catch (\Throwable $e) {
+            Log::warning('CVS auto-logistics create failed, will need manual retry', [
+                'order' => $order->order_number,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
     public function runCelebrations(Order $order): array
     {
         $customer = Customer::findOrFail($order->customer_id);

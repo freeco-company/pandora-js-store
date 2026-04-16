@@ -52,6 +52,14 @@ return [
         'hash_iv' => env('ECPAY_HASH_IV'),
         'mode' => env('ECPAY_MODE', 'sandbox'),
         'frontend_url' => env('FRONTEND_URL', 'https://pandora.js-store.com.tw'),
+        // Sender info for CVS logistics (Express/Create). Required on every
+        // shipment — ECPay rejects empty sender fields.
+        'sender_name' => env('ECPAY_SENDER_NAME', '法芮可有限公司'),
+        'sender_cellphone' => env('ECPAY_SENDER_CELLPHONE'),
+        // Auto-trigger CVS shipment creation on order paid / COD created.
+        // Leave unset during first-time testing; flip to true once the
+        // first few manual sandbox shipments succeed.
+        'logistics_auto' => (bool) env('ECPAY_LOGISTICS_AUTO', false),
     ],
 
 ];

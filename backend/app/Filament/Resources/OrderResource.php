@@ -233,6 +233,34 @@ class OrderResource extends Resource
             ->defaultPaginationPageOption(24)
             ->defaultSort('created_at', 'desc')
             ->recordUrl(fn ($record) => Pages\EditOrder::getUrl(['record' => $record]))
+            ->actions([
+                \Filament\Actions\Action::make('create_logistics')
+                    ->label('建立物流單')
+                    ->icon('heroicon-o-building-storefront')
+                    ->color('warning')
+                    ->visible(fn ($record) => in_array($record->shipping_method, ['cvs_711', 'cvs_family'])
+                        && ! $record->ecpay_logistics_id
+                        && $record->payment_status === 'paid')
+                    ->requiresConfirmation()
+                    ->modalHeading('向綠界建立超商物流單？')
+                    ->modalDescription(fn ($record) => "訂單 {$record->order_number}（{$record->total}）將送往綠界 Express/Create，成功後自動回填物流編號與寄件編號。")
+                    ->action(function ($record) {
+                        try {
+                            app(\App\Services\EcpayLogisticsService::class)->createCvsShipment($record);
+                            \Filament\Notifications\Notification::make()
+                                ->title('已建立物流單 ✓')
+                                ->body("物流編號 {$record->fresh()->ecpay_logistics_id}")
+                                ->success()
+                                ->send();
+                        } catch (\Throwable $e) {
+                            \Filament\Notifications\Notification::make()
+                                ->title('建立物流單失敗')
+                                ->body($e->getMessage())
+                                ->danger()
+                                ->send();
+                        }
+                    }),
+            ])
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
                     ->options([

@@ -3,10 +3,14 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Order;
+use App\Services\EcpayLogisticsService;
+use App\Services\EcpayService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 /**
@@ -123,5 +127,87 @@ HTML;
         }
         Cache::forget($key);
         return response()->json($data);
+    }
+
+    /**
+     * ECPay Express/Create reply URL — they re-POST the create response
+     * here asynchronously. The synchronous HTTP response to our /Express/Create
+     * call is already the authoritative one; this is just belt-and-braces
+     * in case of intermittent failures.
+     */
+    public function ecpayReply(Request $request, EcpayService $ecpay): string
+    {
+        $data = $request->all();
+        if (! $ecpay->verifyCallback($data)) {
+            return '0|CheckMacValue Error';
+        }
+        Log::info('ECPay logistics reply callback', ['data' => $data]);
+        return '1|OK';
+    }
+
+    /**
+     * ECPay C2C status updates (parcel arrived at store / picked up /
+     * returned / etc). We mirror the status into the order row.
+     *
+     * Key RtnCodes (partial, from ECPay logistics spec):
+     *   2030 — 商品已送達門市，待取貨   → status=shipped
+     *   2031 — 消費者已取貨           → status=completed
+     *   2032 — 商品已退回原門市（逾期未取）→ status=cod_no_pickup
+     *   3022/3024 — 商品已送回寄件人     → status=returned
+     */
+    public function ecpayStatus(Request $request, EcpayService $ecpay): string
+    {
+        $data = $request->all();
+        if (! $ecpay->verifyCallback($data)) {
+            return '0|CheckMacValue Error';
+        }
+
+        $allPayLogisticsId = (string) ($data['AllPayLogisticsID'] ?? '');
+        $merchantTradeNo = (string) ($data['MerchantTradeNo'] ?? '');
+        $rtnCode = (int) ($data['RtnCode'] ?? 0);
+        $rtnMsg = (string) ($data['RtnMsg'] ?? '');
+
+        $order = Order::where('ecpay_logistics_id', $allPayLogisticsId)
+            ->orWhere('order_number', $merchantTradeNo)
+            ->first();
+
+        if (! $order) {
+            Log::warning('ECPay logistics status for unknown order', ['data' => $data]);
+            return '1|OK';
+        }
+
+        $newStatus = match (true) {
+            $rtnCode === 2030 => 'shipped',
+            $rtnCode === 2031 => 'completed',
+            $rtnCode === 2032 => $order->payment_method === 'cod' ? 'cod_no_pickup' : 'cancelled',
+            in_array($rtnCode, [3022, 3024], true) => 'cancelled',
+            default => null,
+        };
+
+        $updates = ['logistics_status_msg' => "[{$rtnCode}] {$rtnMsg}"];
+        if ($newStatus) {
+            $updates['status'] = $newStatus;
+        }
+        $order->update($updates);
+
+        Log::info('ECPay logistics status', [
+            'order' => $order->order_number,
+            'rtn_code' => $rtnCode,
+            'new_status' => $newStatus,
+        ]);
+
+        return '1|OK';
+    }
+
+    /** Admin-triggered manual shipment create. Used by the OrderResource row action. */
+    public function adminCreate(int $orderId, EcpayLogisticsService $logistics): JsonResponse
+    {
+        $order = Order::findOrFail($orderId);
+        try {
+            $result = $logistics->createCvsShipment($order);
+            return response()->json(['ok' => true, 'result' => $result, 'order' => $order->fresh()]);
+        } catch (\Throwable $e) {
+            return response()->json(['ok' => false, 'message' => $e->getMessage()], 422);
+        }
     }
 }
