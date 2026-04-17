@@ -52,6 +52,45 @@ export function organizationSchema() {
 }
 
 /**
+ * LocalBusiness — surfaces in Google Maps / local search / AI overviews.
+ * Inherits from Organization for linked-data continuity.
+ */
+export function localBusinessSchema() {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'OnlineStore',
+    '@id': `${siteUrl}/#localbusiness`,
+    name: '婕樂纖仙女館',
+    alternateName: ['JEROSSE 婕樂纖仙女館', 'Fairy Pandora', 'FP'],
+    url: siteUrl,
+    logo: `${siteUrl}/favicon.svg`,
+    description:
+      'JEROSSE 婕樂纖官方正品授權經銷商。提供保健食品、美容保養、體重管理產品，三階梯定價讓你買越多省越多。',
+    telephone: '+886-978-005-177',
+    email: 'care@js-store.com.tw',
+    address: {
+      '@type': 'PostalAddress',
+      addressCountry: 'TW',
+      addressLocality: '台北市',
+      addressRegion: '台灣',
+    },
+    priceRange: 'NT$590–NT$3,980',
+    currenciesAccepted: 'TWD',
+    paymentAccepted: '信用卡, ATM, 超商代碼',
+    areaServed: {
+      '@type': 'Country',
+      name: 'TW',
+    },
+    sameAs: [
+      'https://www.instagram.com/pandorasdo/',
+      'https://lin.ee/62wj7qa',
+      'https://pandora.js-store.com.tw',
+    ],
+    parentOrganization: { '@id': `${siteUrl}/#organization` },
+  };
+}
+
+/**
  * WebSite with SearchAction — gives Google result a Sitelinks search box
  * pointing at our internal /products?q= handler.
  */
@@ -147,6 +186,7 @@ export function howToSchema() {
 /**
  * Product schema helper — includes seller, sku, brand for Google Merchant
  * Center and Shopping rich results.
+ * Uses AggregateOffer when multiple price tiers exist (3-tier pricing).
  */
 export function productSchema(product: {
   name: string;
@@ -154,33 +194,83 @@ export function productSchema(product: {
   image?: string | null;
   slug: string;
   price: number;
+  comboPrice?: number | null;
+  vipPrice?: number | null;
   isActive: boolean;
   sku?: string | null;
 }) {
+  const url = `${siteUrl}/products/${product.slug}`;
+  const availability = product.isActive
+    ? 'https://schema.org/InStock'
+    : 'https://schema.org/OutOfStock';
+  const priceValidUntil = new Date(
+    new Date().getFullYear(), 11, 31,
+  ).toISOString().split('T')[0];
+
+  // Use AggregateOffer when combo/vip tiers exist
+  const hasMultiplePrices = product.comboPrice || product.vipPrice;
+  const lowestPrice = Math.min(
+    product.price,
+    product.comboPrice || product.price,
+    product.vipPrice || product.price,
+  );
+
+  const offers = hasMultiplePrices
+    ? {
+        '@type': 'AggregateOffer',
+        lowPrice: lowestPrice,
+        highPrice: product.price,
+        priceCurrency: 'TWD',
+        offerCount: [product.price, product.comboPrice, product.vipPrice].filter(Boolean).length,
+        availability,
+        url,
+        offers: [
+          {
+            '@type': 'Offer',
+            name: '單件零售價',
+            price: product.price,
+            priceCurrency: 'TWD',
+            availability,
+            priceValidUntil,
+          },
+          ...(product.comboPrice ? [{
+            '@type': 'Offer',
+            name: '搭配價（任選 2 件）',
+            price: product.comboPrice,
+            priceCurrency: 'TWD',
+            availability,
+            priceValidUntil,
+          }] : []),
+          ...(product.vipPrice ? [{
+            '@type': 'Offer',
+            name: 'VIP 價（滿 $4,000）',
+            price: product.vipPrice,
+            priceCurrency: 'TWD',
+            availability,
+            priceValidUntil,
+          }] : []),
+        ],
+      }
+    : {
+        '@type': 'Offer',
+        price: product.price,
+        priceCurrency: 'TWD',
+        availability,
+        url,
+        seller: { '@id': `${siteUrl}/#organization` },
+        priceValidUntil,
+      };
+
   return {
     '@context': 'https://schema.org',
     '@type': 'Product',
     name: product.name,
     description: product.description,
     image: product.image || undefined,
-    url: `${siteUrl}/products/${product.slug}`,
+    url,
     brand: { '@type': 'Brand', name: 'JEROSSE 婕樂纖' },
     sku: product.sku || product.slug,
-    offers: {
-      '@type': 'Offer',
-      price: product.price,
-      priceCurrency: 'TWD',
-      availability: product.isActive
-        ? 'https://schema.org/InStock'
-        : 'https://schema.org/OutOfStock',
-      url: `${siteUrl}/products/${product.slug}`,
-      seller: { '@id': `${siteUrl}/#organization` },
-      priceValidUntil: new Date(
-        new Date().getFullYear(),
-        11,
-        31,
-      ).toISOString().split('T')[0],
-    },
+    offers,
   };
 }
 

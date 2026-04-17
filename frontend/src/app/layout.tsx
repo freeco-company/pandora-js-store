@@ -14,6 +14,9 @@ import Analytics from '@/components/Analytics';
 import CustomCursor from '@/components/CustomCursor';
 import MobileDrawer from '@/components/MobileDrawer';
 import MobileBottomNavWrapper from '@/components/MobileBottomNavWrapper';
+import dynamic from 'next/dynamic';
+
+const WebVitals = dynamic(() => import('@/components/WebVitals'), { ssr: false });
 // LenisProvider removed — conflicts with GSAP ScrollTrigger, causes scroll to freeze
 // import LenisProvider from '@/components/LenisProvider';
 
@@ -80,6 +83,10 @@ export default function RootLayout({
     <html lang="zh-TW" className="h-full antialiased">
       <head>
         <meta name="theme-color" content="#e7d9cb" />
+        {/* OpenSearch autodiscovery — lets browsers offer site search in the URL bar */}
+        <link rel="search" type="application/opensearchdescription+xml" title="婕樂纖仙女館" href="/opensearch.xml" />
+        {/* RSS feed autodiscovery — AI crawlers and aggregators use this */}
+        <link rel="alternate" type="application/rss+xml" title="婕樂纖仙女館 — 專欄文章" href="/articles/feed.xml" />
         {/* Preconnect to storage origin for faster LCP on product/article hero images */}
         {storageOrigin && (
           <>
@@ -115,6 +122,7 @@ export default function RootLayout({
                     <Analytics />
                     <MobileDrawer />
                     <MobileBottomNavWrapper />
+                    <WebVitals />
                   </MobileMenuProvider>
                 </SerendipityProvider>
               </CelebrationProvider>

@@ -123,6 +123,29 @@ class ProductResource extends Resource
                             ->placeholder('例：輔助調節血脂')
                             ->helperText('與認證字號同一份核可文件上的功效宣稱，不得自行擴增。'),
                     ])->collapsible()->collapsed(fn ($record) => ! $record?->hf_cert_no),
+
+                    Section::make('SEO 設定')->schema([
+                        Forms\Components\TextInput::make('seoMeta.title')
+                            ->label('Meta Title')
+                            ->placeholder('留空則使用商品名稱')
+                            ->maxLength(70)
+                            ->helperText('建議 60 字內，Google 搜尋結果標題'),
+                        Forms\Components\Textarea::make('seoMeta.description')
+                            ->label('Meta Description')
+                            ->placeholder('留空則使用簡短描述')
+                            ->rows(3)
+                            ->maxLength(160)
+                            ->helperText('建議 120-160 字，Google 搜尋結果摘要'),
+                        Forms\Components\TextInput::make('seoMeta.focus_keyword')
+                            ->label('Focus Keyword')
+                            ->placeholder('例：婕樂纖酵素'),
+                        Forms\Components\FileUpload::make('seoMeta.og_image')
+                            ->image()
+                            ->directory('seo')
+                            ->disk('public')
+                            ->label('OG Image')
+                            ->helperText('社群分享圖，建議 1200×630px。留空使用封面圖。'),
+                    ])->collapsible()->collapsed(fn ($record) => ! $record?->seoMeta?->title),
                 ])->columnSpan(1),
             ])->columns(3);
     }

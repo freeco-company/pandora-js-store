@@ -36,16 +36,11 @@ class ProductController extends Controller
         ]));
 
         $payload = Cache::remember($cacheKey, self::CACHE_TTL, function () use ($request) {
-            // Hide campaign products outside their campaign period.
-            // Products with no campaigns are always visible.
+            // Campaign products belong on their campaign page only —
+            // never show them in the regular product listing.
             $query = Product::where('is_active', true)
                 ->with(['categories', 'seoMeta'])
-                ->where(function ($q) {
-                    $q->whereDoesntHave('campaigns')
-                      ->orWhereHas('campaigns', fn ($cq) =>
-                          $cq->active()
-                      );
-                });
+                ->whereDoesntHave('campaigns');
 
             if ($request->filled('q')) {
                 $keyword = $request->q;
@@ -66,7 +61,8 @@ class ProductController extends Controller
             return $products->toArray();
         });
 
-        return response()->json($payload);
+        return response()->json($payload)
+            ->header('Cache-Control', 'public, max-age=60, s-maxage=600, stale-while-revalidate=300');
     }
 
     public function show(string $slug): JsonResponse
@@ -100,7 +96,8 @@ class ProductController extends Controller
             return $data;
         });
 
-        return response()->json($payload);
+        return response()->json($payload)
+            ->header('Cache-Control', 'public, max-age=60, s-maxage=600, stale-while-revalidate=300');
     }
 
     public function categories(): JsonResponse
@@ -109,7 +106,8 @@ class ProductController extends Controller
             return ProductCategory::withCount('products')->orderBy('sort_order')->get()->toArray();
         });
 
-        return response()->json($payload);
+        return response()->json($payload)
+            ->header('Cache-Control', 'public, max-age=60, s-maxage=600, stale-while-revalidate=300');
     }
 
     /**

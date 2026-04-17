@@ -21,6 +21,12 @@ export default function robots(): MetadataRoute.Robots {
           '/register',
         ],
       },
+      // Explicitly allow AI search crawlers (opt-in for GEO visibility)
+      { userAgent: 'GPTBot', allow: '/' },
+      { userAgent: 'Google-Extended', allow: '/' },
+      { userAgent: 'PerplexityBot', allow: '/' },
+      { userAgent: 'ClaudeBot', allow: '/' },
+      { userAgent: 'Applebot-Extended', allow: '/' },
     ],
     sitemap: [
       `${siteUrl}/sitemap.xml`,

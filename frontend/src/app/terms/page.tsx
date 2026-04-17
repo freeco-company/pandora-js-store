@@ -4,6 +4,11 @@ export const metadata: Metadata = {
   title: '服務條款',
   description: '婕樂纖仙女館服務條款，說明使用本網站及購物服務之相關規範與約定。',
   alternates: { canonical: '/terms' },
+  openGraph: {
+    title: '服務條款',
+    description: '婕樂纖仙女館服務條款，說明使用本網站及購物服務之相關規範與約定。',
+    type: 'website',
+  },
 };
 
 export default function TermsPage() {

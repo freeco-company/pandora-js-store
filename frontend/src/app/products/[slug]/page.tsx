@@ -136,6 +136,8 @@ export default async function ProductDetailPage({ params }: Props) {
     image: product.image ? imageUrl(product.image) : null,
     slug: product.slug,
     price: product.price,
+    comboPrice: product.combo_price,
+    vipPrice: product.vip_price,
     isActive: product.is_active,
     sku: product.slug,
   });

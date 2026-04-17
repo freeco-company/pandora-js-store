@@ -62,16 +62,8 @@ class GenerateSitemap extends Command
             ->orderBy('published_at', 'desc')
             ->chunk(100, function ($articles) use (&$xml, $baseUrl, &$articleCount) {
                 foreach ($articles as $article) {
-                    $prefix = match ($article->source_type) {
-                        'blog'      => '/articles/blog/',
-                        'news'      => '/articles/news/',
-                        'brand'     => '/articles/brand/',
-                        'recommend' => '/articles/recommend/',
-                        default     => '/articles/',
-                    };
-
                     $xml .= $this->buildUrlEntry(
-                        $baseUrl . $prefix . $article->slug,
+                        $baseUrl . '/articles/' . $article->slug,
                         ($article->published_at ?? $article->updated_at)->toDateString(),
                         'monthly',
                         '0.7'

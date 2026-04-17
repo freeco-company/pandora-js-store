@@ -3,9 +3,11 @@
 namespace App\Providers;
 
 use App\Models\Article;
+use App\Models\Campaign;
 use App\Models\Order;
 use App\Models\Product;
 use App\Observers\ArticleComplianceObserver;
+use App\Observers\CampaignObserver;
 use App\Observers\OrderObserver;
 use App\Observers\ProductComplianceObserver;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -36,6 +38,9 @@ class AppServiceProvider extends ServiceProvider
 
         // Auto-blacklist on COD no-pickup
         Order::observe(OrderObserver::class);
+
+        // Bust product cache when campaigns change
+        Campaign::observe(CampaignObserver::class);
     }
 
     private function configureRateLimiting(): void

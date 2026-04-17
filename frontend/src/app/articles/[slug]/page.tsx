@@ -134,13 +134,20 @@ export default async function ArticleDetailPage({ params }: Props) {
     <>
     <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(articleJsonLd, breadcrumbs) }} />
     <article className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
-      {/* Breadcrumb */}
-      <nav className="mb-6 text-sm text-gray-500">
-        <Link href="/articles" className="hover:text-[#9F6B3E] transition-colors">
-          文章列表
+      {/* Breadcrumb (visual, complements JSON-LD) */}
+      <nav className="mb-6 flex items-center gap-2 text-xs text-gray-500 overflow-hidden" aria-label="麵包屑">
+        <Link href="/" className="hover:text-[#9F6B3E] transition-colors shrink-0">首頁</Link>
+        <span className="text-gray-300">/</span>
+        <Link href="/articles" className="hover:text-[#9F6B3E] transition-colors shrink-0">專欄文章</Link>
+        <span className="text-gray-300">/</span>
+        <Link
+          href={`/articles?type=${article.source_type === 'news' ? 'blog,news' : article.source_type}`}
+          className="hover:text-[#9F6B3E] transition-colors shrink-0"
+        >
+          {sourceLabel}
         </Link>
-        <span className="mx-2">/</span>
-        <span className="text-gray-900">{article.title}</span>
+        <span className="text-gray-300">/</span>
+        <span className="text-gray-700 truncate">{article.title}</span>
       </nav>
 
       {/* Header */}

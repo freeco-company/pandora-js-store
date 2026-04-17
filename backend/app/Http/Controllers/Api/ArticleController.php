@@ -64,7 +64,8 @@ class ArticleController extends Controller
             return $articles->toArray();
         });
 
-        return response()->json($payload);
+        return response()->json($payload)
+            ->header('Cache-Control', 'public, max-age=60, s-maxage=600, stale-while-revalidate=300');
     }
 
     public function show(string $slug): JsonResponse
@@ -81,7 +82,8 @@ class ArticleController extends Controller
             return $this->normalizeArticle($article)->toArray();
         });
 
-        return response()->json($payload);
+        return response()->json($payload)
+            ->header('Cache-Control', 'public, max-age=60, s-maxage=600, stale-while-revalidate=300');
     }
 
     public function categories(Request $request): JsonResponse
@@ -95,7 +97,8 @@ class ArticleController extends Controller
             return $query->get()->toArray();
         });
 
-        return response()->json($payload);
+        return response()->json($payload)
+            ->header('Cache-Control', 'public, max-age=60, s-maxage=600, stale-while-revalidate=300');
     }
 
     private function normalizeArticle(Article $article): Article
