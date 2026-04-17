@@ -17,7 +17,7 @@ export default function ProductCardGrid({ products, staggerKey }: ProductCardGri
     <div
       key={staggerKey}
       ref={ref as React.Ref<HTMLDivElement>}
-      className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-5"
+      className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4"
     >
       {products.map((product, index) => (
         <div
