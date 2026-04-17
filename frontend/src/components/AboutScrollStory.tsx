@@ -1,292 +1,246 @@
 'use client';
 
 /**
- * /about 全螢幕 scroll story：從仙女到潘朵拉
+ * /about scrollytelling — continuous flow, not scene-swapping.
  *
- * 5 幕：種子 → 萌芽 → 成長 → 蛻變 → 綻放
- * 每一幕的 SVG、文字、背景色都隨 scroll progress 連續變化。
+ * Pattern: sticky visual panel + scrolling text sections.
+ * As each text section enters the viewport, the visual evolves
+ * (scale, color, elements appear) via CSS transitions — not JS
+ * animation frames. Feels like one long page, not separate acts.
+ *
+ * Inspired by artbank.tfaf.org.tw / fenc.com / touchstone.tw style.
  */
 
-import ScrollStory, { type Act } from './ScrollStory';
+import { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 
+const SECTIONS = [
+  {
+    id: 'seed',
+    tagline: 'THE BEGINNING',
+    title: '每位女性心裡，都住著一位仙女',
+    body: '只是有時候忘了。忘了自己可以更好、可以更自信、可以不用將就。婕樂纖是那個提醒你的契機 — 不是變成別人，而是找回自己。',
+  },
+  {
+    id: 'grow',
+    tagline: 'DISCOVERY',
+    title: '遇見婕樂纖的那一天',
+    body: '從一盒開始嘗試。三階梯定價讓你沒有門檻壓力，組合價和 VIP 價讓持續變得划算。一顆種子，悄悄種在心裡。',
+  },
+  {
+    id: 'transform',
+    tagline: 'TRANSFORMATION',
+    title: '改變，正在發生',
+    body: '營養師陪伴班和陪跑班不只是服務，是一群人陪你走的旅程。飲食指導、持續追蹤、階段檢視 — 你不是一個人在堅持。',
+  },
+  {
+    id: 'bloom',
+    tagline: 'BLOSSOM',
+    title: '從仙女，到潘朵拉',
+    body: '花開了。不是因為外在的改變，而是因為你打開了那個屬於自己的盒子。潘朵拉的盒子裡裝的不是災難 — 是希望、是健康、是自信。',
+    cta: true,
+  },
+];
+
+// Lerp helper
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 
-function ease(t: number) {
-  return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
-}
+export default function AboutScrollStory() {
+  const [activeIdx, setActiveIdx] = useState(0);
+  const sectionRefs = useRef<(HTMLDivElement | null)[]>([]);
 
-// ── Act 1: 種子 ──────────────────────────────────────────────
-function SeedScene({ progress }: { progress: number }) {
-  const p = ease(progress);
-  const seedScale = lerp(0.3, 1, p);
-  const textOpacity = p < 0.2 ? p * 5 : p > 0.8 ? (1 - p) * 5 : 1;
+  useEffect(() => {
+    const observers = sectionRefs.current.map((el, i) => {
+      if (!el) return null;
+      const obs = new IntersectionObserver(
+        ([entry]) => {
+          if (entry.isIntersecting) setActiveIdx(i);
+        },
+        { threshold: 0.5, rootMargin: '-10% 0px -40% 0px' },
+      );
+      obs.observe(el);
+      return obs;
+    });
+    return () => observers.forEach((obs) => obs?.disconnect());
+  }, []);
 
-  return (
-    <div className="relative w-full h-full flex flex-col items-center justify-center px-8">
-      {/* Seed SVG */}
-      <svg viewBox="0 0 100 100" className="w-32 h-32 sm:w-48 sm:h-48" style={{ transform: `scale(${seedScale})` }}>
-        <ellipse cx="50" cy="80" rx="30" ry="6" fill="rgba(255,255,255,0.05)" />
-        <ellipse cx="50" cy="65" rx={lerp(4, 8, p)} ry={lerp(5, 10, p)} fill="#8B6914" />
-        <ellipse cx="50" cy="62" rx={lerp(3, 6, p)} ry={lerp(3, 7, p)} fill="#A67C00" />
-        {/* Tiny crack opening */}
-        {p > 0.5 && (
-          <path
-            d={`M${50 - lerp(0, 2, (p - 0.5) * 2)} ${65 - lerp(0, 4, (p - 0.5) * 2)} Q50 ${60 - lerp(0, 6, (p - 0.5) * 2)} ${50 + lerp(0, 2, (p - 0.5) * 2)} ${65 - lerp(0, 4, (p - 0.5) * 2)}`}
-            stroke="#7ab87a"
-            strokeWidth="1.5"
-            fill="none"
-            opacity={lerp(0, 1, (p - 0.5) * 2)}
-          />
-        )}
-      </svg>
-      <div className="mt-8 text-center" style={{ opacity: textOpacity }}>
-        <h2 className="text-2xl sm:text-4xl font-black text-white/90 tracking-tight">
-          每位女性心裡
-        </h2>
-        <h2 className="text-2xl sm:text-4xl font-black text-[#f7c79a] tracking-tight mt-1">
-          都住著一位仙女
-        </h2>
-      </div>
-    </div>
-  );
-}
-
-// ── Act 2: 萌芽 ──────────────────────────────────────────────
-function SproutScene({ progress }: { progress: number }) {
-  const p = ease(progress);
-  const stemH = lerp(0, 25, p);
-  const leafScale = lerp(0, 1, Math.max(0, (p - 0.4) / 0.6));
-  const textOpacity = p < 0.15 ? p * 6 : p > 0.85 ? (1 - p) * 6 : 1;
+  // Visual state derived from active section
+  const progress = activeIdx / (SECTIONS.length - 1); // 0→1
 
   return (
-    <div className="relative w-full h-full flex flex-col items-center justify-center px-8">
-      <svg viewBox="0 0 100 100" className="w-40 h-40 sm:w-56 sm:h-56">
-        {/* Soil */}
-        <ellipse cx="50" cy="85" rx="35" ry="5" fill="rgba(139,105,20,0.3)" />
-        {/* Stem growing up */}
-        <path
-          d={`M50 85 Q50 ${85 - stemH * 0.5} 50 ${85 - stemH}`}
-          stroke="#7ab87a"
-          strokeWidth={lerp(1.5, 3, p)}
-          fill="none"
-          strokeLinecap="round"
-        />
-        {/* Left leaf */}
-        <ellipse
-          cx={50 - lerp(0, 12, leafScale)}
-          cy={85 - stemH + 5}
-          rx={lerp(0, 8, leafScale)}
-          ry={lerp(0, 4, leafScale)}
-          fill="#8ccf8c"
-          transform={`rotate(-30 ${50 - lerp(0, 12, leafScale)} ${85 - stemH + 5})`}
-          opacity={leafScale}
-        />
-        {/* Right leaf */}
-        <ellipse
-          cx={50 + lerp(0, 12, leafScale)}
-          cy={85 - stemH + 5}
-          rx={lerp(0, 8, leafScale)}
-          ry={lerp(0, 4, leafScale)}
-          fill="#8ccf8c"
-          transform={`rotate(30 ${50 + lerp(0, 12, leafScale)} ${85 - stemH + 5})`}
-          opacity={leafScale}
-        />
-      </svg>
-      <div className="mt-6 text-center" style={{ opacity: textOpacity }}>
-        <h2 className="text-2xl sm:text-4xl font-black text-white/90 tracking-tight">
-          遇見婕樂纖的那一天
-        </h2>
-        <p className="text-sm sm:text-lg text-white/50 mt-3 max-w-md">
-          一顆種子悄悄種在心裡，對健康有了新的想像
-        </p>
-      </div>
-    </div>
-  );
-}
+    <div className="relative">
+      {/* ── Sticky visual panel (left on desktop, top on mobile) ── */}
+      <div className="lg:flex lg:min-h-screen">
+        {/* Visual — sticky */}
+        <div className="lg:sticky lg:top-0 lg:h-screen lg:w-1/2 flex items-center justify-center overflow-hidden transition-colors duration-1000"
+          style={{
+            backgroundColor: [
+              '#1a1410', // seed: dark
+              '#1e2e1a', // grow: forest
+              '#fdf7ef', // transform: warm cream
+              '#fdf7ef', // bloom: warm cream
+            ][activeIdx] || '#1a1410',
+          }}
+        >
+          {/* Mobile: fixed height. Desktop: full viewport */}
+          <div className="h-[50vh] lg:h-full w-full flex items-center justify-center relative p-8">
+            <MorphingVisual progress={progress} activeIdx={activeIdx} />
+          </div>
+        </div>
 
-// ── Act 3: 成長 ──────────────────────────────────────────────
-function GrowScene({ progress }: { progress: number }) {
-  const p = ease(progress);
-  const bodyR = lerp(0, 14, p);
-  const stemTop = lerp(60, 38, p);
-  const leafRx = lerp(6, 12, p);
-  const textOpacity = p < 0.15 ? p * 6 : p > 0.85 ? (1 - p) * 6 : 1;
-  const faceOpacity = p > 0.4 ? Math.min(1, (p - 0.4) * 3) : 0;
-
-  return (
-    <div className="relative w-full h-full flex flex-col items-center justify-center px-8">
-      <svg viewBox="0 0 100 100" className="w-48 h-48 sm:w-64 sm:h-64">
-        <ellipse cx="50" cy="90" rx="22" ry="5" fill="rgba(0,0,0,0.08)" />
-        <rect x="32" y="72" width="36" height="18" rx="3" fill="#b8826b" />
-        <rect x="30" y="70" width="40" height="5" rx="2" fill="#9F6B3E" />
-        {/* Stem */}
-        <path d={`M50 72 Q50 ${lerp(72, stemTop, 0.5)} 50 ${stemTop}`} stroke="#7ab87a" strokeWidth="3" fill="none" strokeLinecap="round" />
-        {/* Leaves */}
-        <ellipse cx={50 - leafRx - 2} cy={stemTop + 12} rx={leafRx} ry={leafRx * 0.55} fill="#8ccf8c" transform={`rotate(-25 ${50 - leafRx - 2} ${stemTop + 12})`} />
-        <ellipse cx={50 + leafRx + 2} cy={stemTop + 12} rx={leafRx} ry={leafRx * 0.55} fill="#8ccf8c" transform={`rotate(25 ${50 + leafRx + 2} ${stemTop + 12})`} />
-        {/* Body */}
-        {bodyR > 1 && <circle cx="50" cy={stemTop} r={bodyR} fill="#9edc9e" />}
-        {/* Face */}
-        <g opacity={faceOpacity}>
-          <circle cx="46" cy={stemTop - 2} r="1.3" fill="#3d2e22" />
-          <circle cx="54" cy={stemTop - 2} r="1.3" fill="#3d2e22" />
-          <path d={`M47 ${stemTop + 3} Q50 ${stemTop + 5} 53 ${stemTop + 3}`} stroke="#3d2e22" strokeWidth="1.2" fill="none" strokeLinecap="round" />
-        </g>
-      </svg>
-      <div className="mt-4 text-center" style={{ opacity: textOpacity }}>
-        <h2 className="text-2xl sm:text-4xl font-black text-[#3d2e22] tracking-tight">
-          找到最適合自己的方式
-        </h2>
-        <p className="text-sm sm:text-lg text-[#7a5836]/60 mt-3 max-w-md">
-          三階梯定價、營養師陪伴，讓改變可以持續
-        </p>
-      </div>
-    </div>
-  );
-}
-
-// ── Act 4: 蛻變（花瓣展開）────────────────────────────────────
-function TransformScene({ progress }: { progress: number }) {
-  const p = ease(progress);
-  const petalR = lerp(0, 30, p);
-  const petalOpacity = Math.min(1, p * 2);
-  const textOpacity = p < 0.15 ? p * 6 : p > 0.85 ? (1 - p) * 6 : 1;
-  const bgPetalCount = Math.floor(lerp(0, 12, p));
-
-  return (
-    <div className="relative w-full h-full flex flex-col items-center justify-center px-8 overflow-hidden">
-      {/* Background floating petals */}
-      <div className="absolute inset-0 pointer-events-none">
-        {Array.from({ length: bgPetalCount }).map((_, i) => {
-          const x = (i * 37 + 13) % 100;
-          const y = (i * 53 + 20) % 100;
-          const rot = i * 47;
-          const size = 15 + (i % 3) * 10;
-          return (
-            <svg
-              key={i}
-              className="absolute icon-float"
-              style={{
-                left: `${x}%`,
-                top: `${y}%`,
-                width: size,
-                height: size,
-                animationDelay: `${i * 0.3}s`,
-                opacity: 0.15 + (i % 3) * 0.1,
-              }}
-              viewBox="0 0 20 20"
+        {/* Text sections — scroll naturally */}
+        <div className="lg:w-1/2">
+          {SECTIONS.map((s, i) => (
+            <div
+              key={s.id}
+              ref={(el) => { sectionRefs.current[i] = el; }}
+              className="min-h-screen flex items-center"
             >
-              <ellipse cx="10" cy="10" rx="8" ry="5" fill="#ffc6d1" transform={`rotate(${rot} 10 10)`} />
-            </svg>
-          );
-        })}
-      </div>
-
-      {/* Center flower unfurling */}
-      <svg viewBox="0 0 100 100" className="w-56 h-56 sm:w-72 sm:h-72 relative z-10">
-        {/* Petals expanding from center */}
-        {[0, 72, 144, 216, 288].map((deg) => (
-          <g key={deg} transform={`rotate(${deg} 50 50)`}>
-            <ellipse
-              cx="50"
-              cy={50 - petalR}
-              rx={lerp(0, 12, p)}
-              ry={lerp(0, 8, p)}
-              fill="url(#storyPetalGrad)"
-              opacity={petalOpacity}
-            />
-          </g>
-        ))}
-        {/* Center */}
-        <circle cx="50" cy="50" r={lerp(2, 8, p)} fill="#fff176" opacity={petalOpacity} />
-        <circle cx="50" cy="50" r={lerp(1, 5, p)} fill="#ffee58" opacity={petalOpacity} />
-        <defs>
-          <linearGradient id="storyPetalGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor="#ffecf1" />
-            <stop offset="100%" stopColor="#ff8fa8" />
-          </linearGradient>
-        </defs>
-      </svg>
-      <div className="mt-4 text-center relative z-10" style={{ opacity: textOpacity }}>
-        <h2 className="text-2xl sm:text-4xl font-black text-white tracking-tight">
-          改變正在發生
-        </h2>
-        <p className="text-sm sm:text-lg text-white/60 mt-3 max-w-md">
-          一天一天，你開始看見自己的不同
-        </p>
+              <div className={`p-8 sm:p-12 lg:p-16 max-w-xl transition-all duration-700 ${activeIdx === i ? 'opacity-100 translate-y-0 blur-0' : 'opacity-20 translate-y-8 blur-[2px]'}`}>
+                <div className="text-[10px] font-black tracking-[0.4em] mb-4" style={{
+                  color: i <= 1 ? 'rgba(231,217,203,0.7)' : '#9F6B3E',
+                }}>{s.tagline}</div>
+                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black leading-tight tracking-tight" style={{
+                  color: i <= 1 ? '#f7eee3' : '#3d2e22',
+                }}>{s.title}</h2>
+                <p className="mt-5 text-sm sm:text-base leading-relaxed" style={{
+                  color: i <= 1 ? 'rgba(247,238,227,0.6)' : 'rgba(61,46,34,0.6)',
+                }}>{s.body}</p>
+                {s.cta && (
+                  <div className="mt-8">
+                    <Link
+                      href="/products"
+                      className="inline-flex items-center gap-2 px-7 py-3.5 bg-[#9F6B3E] text-white font-black rounded-full hover:bg-[#85572F] transition-all shadow-lg shadow-[#9F6B3E]/20 min-h-[48px]"
+                    >
+                      開始我的蛻變旅程 →
+                    </Link>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
 }
 
-// ── Act 5: 綻放（全螢幕花朵 + 金色光芒）──────────────────────
-function BloomScene({ progress }: { progress: number }) {
-  const p = ease(progress);
-  const glowScale = lerp(0.5, 1.5, p);
-  const textOpacity = p > 0.2 ? Math.min(1, (p - 0.2) * 2) : 0;
-  const rayOpacity = lerp(0, 0.3, p);
+/**
+ * The visual that lives in the sticky panel.
+ * Morphs continuously based on which text section is active.
+ * All transitions via CSS (duration-1000) for buttery feel.
+ */
+function MorphingVisual({ progress, activeIdx }: { progress: number; activeIdx: number }) {
+  // SVG attributes transition via inline style + CSS transition
+  const stemH = lerp(5, 34, progress);
+  const bodyR = lerp(0, 12, Math.max(0, progress - 0.2) / 0.8);
+  const leafScale = lerp(0, 1, Math.max(0, (progress - 0.15) / 0.5));
+  const petalScale = lerp(0, 1, Math.max(0, (progress - 0.6) / 0.4));
+  const faceOpacity = progress > 0.3 ? 1 : 0;
+  const sparkleOpacity = progress > 0.85 ? 1 : 0;
+  const glowOpacity = lerp(0, 0.4, Math.max(0, (progress - 0.7) / 0.3));
+
+  const svgSize = activeIdx >= 2 ? 'w-56 h-56 sm:w-72 sm:h-72 lg:w-80 lg:h-80' : 'w-40 h-40 sm:w-56 sm:h-56 lg:w-64 lg:h-64';
 
   return (
-    <div className="relative w-full h-full flex flex-col items-center justify-center px-8 overflow-hidden">
-      {/* Radial gold rays */}
+    <div className="relative flex items-center justify-center">
+      {/* Glow backdrop */}
       <div
-        className="absolute inset-0 pointer-events-none"
+        className="absolute w-[120%] h-[120%] rounded-full transition-all duration-1000"
         style={{
-          background: `radial-gradient(circle, rgba(252,213,97,${rayOpacity}) 0%, transparent 70%)`,
-          transform: `scale(${glowScale})`,
+          background: `radial-gradient(circle, rgba(255,205,210,${glowOpacity}) 0%, transparent 70%)`,
+          transform: `scale(${lerp(0.5, 1.3, progress)})`,
         }}
       />
 
-      {/* Full bloom flower — large */}
-      <svg viewBox="0 0 100 100" className="w-64 h-64 sm:w-80 sm:h-80 relative z-10">
-        {/* Outer glow */}
-        <circle cx="50" cy="50" r={lerp(20, 45, p)} fill="rgba(255,205,210,0.15)" />
+      <svg viewBox="0 0 100 100" className={`relative transition-all duration-700 ${svgSize}`}>
+        <defs>
+          <linearGradient id="stPetal" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor="#ffecf1" />
+            <stop offset="100%" stopColor="#ff8fa8" />
+          </linearGradient>
+          <linearGradient id="stLeaf" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#a7e3a7" />
+            <stop offset="100%" stopColor="#6faa6f" />
+          </linearGradient>
+        </defs>
 
-        {/* 5 large petals */}
-        {[0, 72, 144, 216, 288].map((deg, i) => (
-          <g key={deg} transform={`rotate(${deg} 50 50)`}>
-            <path
-              d={`M50 ${50 - lerp(8, 35, p)} C ${55 + lerp(0, 5, p)} ${50 - lerp(8, 35, p)}, ${58 + lerp(0, 5, p)} ${50 - lerp(4, 15, p)}, ${58 + lerp(0, 3, p)} 50 C ${58 + lerp(0, 3, p)} ${50 + lerp(4, 5, p)}, ${52} ${50 + lerp(2, 3, p)}, 50 50 C 48 ${50 + lerp(2, 3, p)}, ${42 - lerp(0, 3, p)} ${50 + lerp(4, 5, p)}, ${42 - lerp(0, 3, p)} 50 C ${42 - lerp(0, 5, p)} ${50 - lerp(4, 15, p)}, ${45 - lerp(0, 5, p)} ${50 - lerp(8, 35, p)}, 50 ${50 - lerp(8, 35, p)} Z`}
-              fill={i % 2 === 0 ? '#ffc6d1' : '#ffb3c6'}
-              opacity={lerp(0.5, 1, p)}
-            />
-          </g>
-        ))}
+        {/* Pot — fades in at 25%+ */}
+        <g className="transition-opacity duration-1000" style={{ opacity: progress > 0.25 ? 1 : 0 }}>
+          <ellipse cx="50" cy="90" rx="22" ry="5" fill="rgba(0,0,0,0.08)" />
+          <rect x="32" y="72" width="36" height="18" rx="3" fill="#b8826b" />
+          <rect x="30" y="70" width="40" height="5" rx="2" fill="#9F6B3E" />
+        </g>
 
-        {/* Inner stamen */}
-        <circle cx="50" cy="50" r={lerp(3, 8, p)} fill="#fff176" />
-        <circle cx="50" cy="50" r={lerp(2, 5, p)} fill="#ffee58" />
-        {[0, 60, 120, 180, 240, 300].map((a) => {
-          const r = lerp(2, 5, p);
-          const x = 50 + Math.cos((a * Math.PI) / 180) * r;
-          const y = 50 + Math.sin((a * Math.PI) / 180) * r;
-          return <circle key={a} cx={x} cy={y} r={lerp(0.3, 1, p)} fill="#f9a825" />;
-        })}
+        {/* Seed — visible early, fades as stem grows */}
+        <g className="transition-opacity duration-700" style={{ opacity: progress < 0.2 ? 1 : 0 }}>
+          <ellipse cx="50" cy="75" rx="6" ry="8" fill="#8B6914" />
+          <ellipse cx="50" cy="73" rx="4" ry="5" fill="#A67C00" />
+        </g>
+
+        {/* Stem */}
+        <path
+          d={`M50 72 Q50 ${72 - stemH * 0.5} 50 ${72 - stemH}`}
+          stroke="#7ab87a"
+          strokeWidth={lerp(1.5, 3, progress)}
+          fill="none"
+          strokeLinecap="round"
+          className="transition-all duration-700"
+        />
+
+        {/* Leaves */}
+        <g className="transition-all duration-700" style={{ opacity: leafScale }}>
+          <ellipse cx={50 - lerp(0, 14, leafScale)} cy={72 - stemH + 10} rx={lerp(0, 10, leafScale)} ry={lerp(0, 5.5, leafScale)} fill="url(#stLeaf)" transform={`rotate(-25 ${50 - lerp(0, 14, leafScale)} ${72 - stemH + 10})`} />
+          <ellipse cx={50 + lerp(0, 14, leafScale)} cy={72 - stemH + 10} rx={lerp(0, 10, leafScale)} ry={lerp(0, 5.5, leafScale)} fill="url(#stLeaf)" transform={`rotate(25 ${50 + lerp(0, 14, leafScale)} ${72 - stemH + 10})`} />
+        </g>
+
+        {/* Body */}
+        {bodyR > 1 && (
+          <circle cx="50" cy={72 - stemH} r={bodyR} fill="#9edc9e" className="transition-all duration-700" />
+        )}
+
+        {/* Petals */}
+        <g className="transition-all duration-1000" style={{ opacity: petalScale }}>
+          {[0, 72, 144, 216, 288].map((deg) => (
+            <g key={deg} transform={`rotate(${deg} 50 ${72 - stemH - bodyR - 4})`}>
+              <ellipse
+                cx="50"
+                cy={72 - stemH - bodyR - 4 - lerp(0, 10, petalScale)}
+                rx={lerp(0, 7, petalScale)}
+                ry={lerp(0, 5, petalScale)}
+                fill="url(#stPetal)"
+              />
+            </g>
+          ))}
+          <circle cx="50" cy={72 - stemH - bodyR - 4} r={lerp(0, 3, petalScale)} fill="#fff176" />
+        </g>
+
+        {/* Face */}
+        <g className="transition-opacity duration-500" style={{ opacity: faceOpacity }}>
+          {activeIdx >= 3 ? (
+            // Excited
+            <>
+              <path d={`M44 ${70 - stemH} Q46 ${68 - stemH} 48 ${70 - stemH}`} stroke="#3d2e22" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+              <path d={`M52 ${70 - stemH} Q54 ${68 - stemH} 56 ${70 - stemH}`} stroke="#3d2e22" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+              <path d={`M46 ${75 - stemH} Q50 ${79 - stemH} 54 ${75 - stemH}`} stroke="#3d2e22" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+            </>
+          ) : (
+            // Neutral/happy
+            <>
+              <circle cx="46" cy={70 - stemH} r="1.3" fill="#3d2e22" />
+              <circle cx="54" cy={70 - stemH} r="1.3" fill="#3d2e22" />
+              <path d={`M47 ${75 - stemH} Q50 ${77 - stemH} 53 ${75 - stemH}`} stroke="#3d2e22" strokeWidth="1.2" fill="none" strokeLinecap="round" />
+            </>
+          )}
+        </g>
+
+        {/* Sparkles */}
+        <g className="transition-opacity duration-700 icon-pulse" style={{ opacity: sparkleOpacity }}>
+          <path d="M28 30 l1 2.5 l2.5 1 l-2.5 1 l-1 2.5 l-1 -2.5 l-2.5 -1 l2.5 -1 z" fill="#fff9c4" />
+          <path d="M72 24 l0.8 1.8 l1.8 0.8 l-1.8 0.8 l-0.8 1.8 l-0.8 -1.8 l-1.8 -0.8 l1.8 -0.8 z" fill="#fff9c4" />
+          <path d="M24 50 l0.6 1.2 l1.2 0.6 l-1.2 0.6 l-0.6 1.2 l-0.6 -1.2 l-1.2 -0.6 l1.2 -0.6 z" fill="#fff9c4" />
+        </g>
       </svg>
-
-      <div className="mt-6 text-center relative z-10" style={{ opacity: textOpacity }}>
-        <h2 className="text-3xl sm:text-5xl font-black text-[#3d2e22] tracking-tight leading-tight">
-          從仙女
-          <br />
-          <span className="text-[#9F6B3E]">到潘朵拉</span>
-        </h2>
-        <p className="text-sm sm:text-lg text-[#7a5836]/70 mt-4 max-w-lg mx-auto">
-          花開了。你把這份美好分享給身邊的人。
-        </p>
-      </div>
     </div>
   );
-}
-
-// ── Assembled story ──────────────────────────────────────────
-export default function AboutScrollStory() {
-  const acts: Act[] = [
-    { bg: ['#1a1410', '#1a2a1a'], render: (p) => <SeedScene progress={p} /> },
-    { bg: ['#1a2a1a', '#2a3a2a'], render: (p) => <SproutScene progress={p} /> },
-    { bg: ['#2a3a2a', '#fdf7ef'], render: (p) => <GrowScene progress={p} /> },
-    { bg: ['#fdf7ef', '#f8bbd0'], render: (p) => <TransformScene progress={p} /> },
-    { bg: ['#f8bbd0', '#fdf7ef'], render: (p) => <BloomScene progress={p} /> },
-  ];
-
-  return <ScrollStory acts={acts} />;
 }
