@@ -36,6 +36,16 @@ class CustomerController extends Controller
         $earned = $customer->achievements()->get(['code', 'awarded_at']);
         $ownedOutfits = $customer->outfits()->get(['code', 'unlocked_at']);
 
+        // XP: bronze=10, silver=25, gold=50, computed from earned achievements
+        $xpByTier = ['bronze' => 10, 'silver' => 25, 'gold' => 50];
+        $catalog = AchievementCatalog::all();
+        $totalXp = $earned->sum(function ($a) use ($catalog, $xpByTier) {
+            $tier = $catalog[$a->code]['tier'] ?? 'bronze';
+            return $xpByTier[$tier] ?? 10;
+        });
+        $level = (int) floor($totalXp / 100) + 1;
+        $xpInLevel = $totalXp % 100;
+
         return response()->json([
             'customer' => [
                 'id' => $customer->id,
@@ -44,6 +54,10 @@ class CustomerController extends Controller
                 'streak_days' => $customer->streak_days,
                 'total_orders' => $customer->total_orders,
                 'total_spent' => (int) $customer->total_spent,
+                'total_xp' => $totalXp,
+                'level' => $level,
+                'xp_in_level' => $xpInLevel,
+                'referral_code' => $customer->referral_code,
                 'current_outfit' => $customer->current_outfit,
                 'current_backdrop' => $customer->current_backdrop,
                 'activation_progress' => $customer->activation_progress ?? [],

@@ -119,6 +119,31 @@ class OrderResource extends Resource
                     Forms\Components\DateTimePicker::make('logistics_created_at')
                         ->label('物流建立時間')
                         ->disabled(),
+                    Forms\Components\Actions::make([
+                        Forms\Components\Actions\Action::make('clear_logistics')
+                            ->label('清除物流單（重新建立用）')
+                            ->icon('heroicon-o-trash')
+                            ->color('danger')
+                            ->requiresConfirmation()
+                            ->modalHeading('確定清除物流單資料？')
+                            ->modalDescription('清除後可重新點擊「建立物流單」按鈕建立新的物流單。')
+                            ->visible(fn ($record) => (bool) $record?->ecpay_logistics_id)
+                            ->action(function ($record) {
+                                $record->update([
+                                    'ecpay_logistics_id' => null,
+                                    'cvs_payment_no' => null,
+                                    'cvs_validation_no' => null,
+                                    'booking_note' => null,
+                                    'logistics_status_msg' => null,
+                                    'logistics_created_at' => null,
+                                ]);
+                                \Filament\Notifications\Notification::make()
+                                    ->title('物流單已清除')
+                                    ->body('可回到訂單列表點擊「建立物流單」重新建立。')
+                                    ->success()
+                                    ->send();
+                            }),
+                    ])->columnSpanFull(),
                 ])->columns(2)->collapsible()->collapsed(fn ($record) => ! $record?->shipping_method || ! str_starts_with($record->shipping_method, 'cvs_')),
 
                 \Filament\Schemas\Components\Section::make('備註')->schema([
@@ -308,7 +333,9 @@ class OrderResource extends Resource
 
     public static function getRelations(): array
     {
-        return [];
+        return [
+            RelationManagers\ItemsRelationManager::class,
+        ];
     }
 
     public static function getPages(): array

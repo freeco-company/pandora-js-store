@@ -194,6 +194,10 @@ export interface CustomerGamificationState {
   streak_days: number;
   total_orders: number;
   total_spent: number;
+  total_xp: number;
+  level: number;
+  xp_in_level: number;
+  referral_code: string | null;
   current_outfit: string | null;
   current_backdrop: string | null;
   activation_progress: {
