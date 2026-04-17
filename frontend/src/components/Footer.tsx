@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import Icons from './SvgIcons';
 
 const HIDE_ON_PATHS = ['/cart', '/checkout', '/order-complete'];
 
@@ -45,12 +46,12 @@ function FooterInner() {
       <div className="bg-gradient-to-b md:bg-gradient-to-r from-[#2a1f17] via-[#1e1e1e] to-[#2a1f17] border-b border-white/5">
         <div className="max-w-[1290px] mx-auto px-5 sm:px-6 lg:px-8 py-5 grid grid-cols-1 md:grid-cols-3 gap-4">
           {([
-            ['🔒', 'JEROSSE 官方正品授權', '法芮可有限公司授權經銷，每件商品皆為原廠出貨'],
-            ['⚠️', '小心詐騙電商', '認明官方域名 pandora.js-store.com.tw'],
-            ['✅', '食品合規聲明', '本站商品為食品，非藥品，不具醫療療效'],
-          ] as const).map(([icon, title, desc]) => (
+            { icon: <Icons.Lock className="w-4 h-4 text-[#e7d9cb] icon-shimmer" />, title: 'JEROSSE 官方正品授權', desc: '法芮可有限公司授權經銷，每件商品皆為原廠出貨' },
+            { icon: <Icons.AlertTriangle className="w-4 h-4 text-[#E8A93B] icon-pulse" />, title: '小心詐騙電商', desc: '認明官方域名 pandora.js-store.com.tw' },
+            { icon: <Icons.CheckCircle className="w-4 h-4 text-[#4A9D5F] icon-float" />, title: '食品合規聲明', desc: '本站商品為食品，非藥品，不具醫療療效' },
+          ]).map(({ icon, title, desc }) => (
             <div key={title} className="flex items-center gap-3 md:items-start px-2 py-1.5 md:p-0">
-              <span className="text-lg shrink-0 w-8 h-8 flex items-center justify-center rounded-lg bg-white/5">{icon}</span>
+              <span className="shrink-0 w-8 h-8 flex items-center justify-center rounded-lg bg-white/5">{icon}</span>
               <div className="min-w-0">
                 <div className="text-white text-[13px] font-bold">{title}</div>
                 <div className="text-gray-400 text-[11px] mt-0.5 leading-snug">{desc}</div>

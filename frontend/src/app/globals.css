@@ -55,6 +55,18 @@ body {
 /* Min touch target — ensure 44x44 tap targets on mobile */
 .touch-target { min-height: 44px; min-width: 44px; }
 
+/* ─── SVG icon micro-animations ─── */
+@keyframes icon-sway { 0%,100% { transform: rotate(0deg); } 50% { transform: rotate(6deg); } }
+@keyframes icon-pulse { 0%,100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.12); opacity: 0.85; } }
+@keyframes icon-float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+@keyframes icon-spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+@keyframes icon-shimmer { 0%,100% { opacity: 0.7; } 50% { opacity: 1; } }
+.icon-sway { animation: icon-sway 3s ease-in-out infinite; transform-origin: bottom center; }
+.icon-pulse { animation: icon-pulse 2.5s ease-in-out infinite; }
+.icon-float { animation: icon-float 3s ease-in-out infinite; }
+.icon-spin { animation: icon-spin-slow 8s linear infinite; }
+.icon-shimmer { animation: icon-shimmer 2s ease-in-out infinite; }
+
 /* iOS tap highlight removal for buttons */
 button, a { -webkit-tap-highlight-color: transparent; }
 

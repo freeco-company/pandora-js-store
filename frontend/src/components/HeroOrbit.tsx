@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Mascot from './Mascot';
+import Icons from './SvgIcons';
 import { useAuth } from './AuthProvider';
 import { useToast } from './Toast';
 import { getCustomerDashboard, type CustomerDashboard } from '@/lib/api';
@@ -145,78 +146,76 @@ export default function HeroOrbit({ size = 420, className = '' }: Props) {
           top: '4%', right: '-8%',
         }}
       >
-        <div style={{ fontSize: bigEmoji, lineHeight: 1 }}>🌿</div>
+        <Icons.Leaf className={`text-[#4A9D5F] icon-sway`} style={{ width: bigEmoji, height: bigEmoji }} />
         <div className="font-black text-[#4A9D5F] mt-0.5" style={{ fontSize: label }}>健康內在</div>
       </button>
 
       {/* 美容外在 (right-bottom) */}
       <button
         type="button"
-        onClick={() => tap('beauty', '美容保養 · 綻放光彩 ✨', '/products?category=beauty')}
+        onClick={() => tap('beauty', '美容保養 · 綻放光彩', '/products?category=beauty')}
         className={`absolute bg-white shadow-2xl flex flex-col items-center justify-center hero-orbit-b rounded-2xl cursor-pointer transition-transform duration-300 ${tapped === 'beauty' ? 'scale-110' : 'active:scale-95'}`}
         style={{
           width: bigBadge, height: bigBadge,
           bottom: '4%', right: '-4%',
         }}
       >
-        <div style={{ fontSize: bigEmoji, lineHeight: 1 }}>✨</div>
+        <Icons.Sparkles className={`text-[#E0748C] icon-pulse`} style={{ width: bigEmoji, height: bigEmoji }} />
         <div className="font-black text-[#E0748C] mt-0.5" style={{ fontSize: label }}>美容外在</div>
       </button>
 
       {/* 玉山獎 (left-bottom) */}
       <button
         type="button"
-        onClick={() => tap('award', '2025 玉山獎 · 25 座大獎 🏆', '/about')}
+        onClick={() => tap('award', '2025 玉山獎 · 25 座大獎', '/about')}
         className={`absolute bg-gradient-to-br from-[#9F6B3E] to-[#85572F] shadow-2xl flex flex-col items-center justify-center hero-orbit-c text-white rounded-2xl cursor-pointer transition-transform duration-300 ${tapped === 'award' ? 'scale-110' : 'active:scale-95'}`}
         style={{
           width: midBadge, height: midBadge,
           bottom: '12%', left: '-8%',
         }}
       >
-        <div style={{ fontSize: midEmoji, lineHeight: 1 }}>🏆</div>
+        <Icons.Trophy className="text-white icon-shimmer" style={{ width: midEmoji, height: midEmoji }} />
         <div className="font-black mt-0.5" style={{ fontSize: label }}>玉山獎</div>
       </button>
 
       {/* 健康食品認證 (top-left) */}
       <button
         type="button"
-        onClick={() => tap('cert', '衛福部健康食品認證 · 小綠人 🏅', '/products')}
+        onClick={() => tap('cert', '衛福部健康食品認證', '/products')}
         className={`absolute bg-gradient-to-br from-[#e8f5e9] to-[#c8e6c9] shadow-lg flex flex-col items-center justify-center hero-orbit-e rounded-2xl border border-[#a5d6a7] cursor-pointer transition-transform duration-300 ${tapped === 'cert' ? 'scale-110' : 'active:scale-95'}`}
         style={{
           width: midBadge, height: midBadge,
           top: '18%', left: '-12%',
         }}
       >
-        <div style={{ fontSize: midEmoji, lineHeight: 1 }}>🏅</div>
+        <Icons.Shield className="text-[#2e7d32] icon-float" style={{ width: midEmoji, height: midEmoji }} />
         <div className="font-black text-[#2e7d32] mt-0.5" style={{ fontSize: label }}>小綠人認證</div>
       </button>
 
-      {/* 💎 VIP bubble (left-middle) */}
+      {/* VIP bubble (left-middle) */}
       <button
         type="button"
-        onClick={() => tap('vip', '滿 $4,000 解鎖 VIP 價 💎', '/products')}
+        onClick={() => tap('vip', '滿 $4,000 解鎖 VIP 價', '/products')}
         className={`absolute bg-white/90 backdrop-blur shadow-lg flex items-center justify-center hero-orbit-d rounded-full cursor-pointer transition-transform duration-300 ${tapped === 'vip' ? 'scale-125' : 'active:scale-90'}`}
         style={{
           width: smBadge, height: smBadge,
           top: '40%', left: '-14%',
         }}
       >
-        <span style={{ fontSize: smEmoji, lineHeight: 1 }}>💎</span>
+        <Icons.Diamond className="text-[#9F6B3E] icon-pulse" style={{ width: smEmoji, height: smEmoji }} />
       </button>
 
       {/* 3 階梯 (bottom-center) */}
       <button
         type="button"
-        onClick={() => tap('tier', '3 階梯定價 · 買越多越便宜 👑', '/products')}
+        onClick={() => tap('tier', '3 階梯定價 · 買越多越便宜', '/products')}
         className={`absolute bg-white/95 backdrop-blur-sm shadow-lg flex flex-col items-center justify-center hero-orbit-f rounded-xl cursor-pointer transition-transform duration-300 ${tapped === 'tier' ? 'scale-110' : 'active:scale-95'}`}
         style={{
           width: midBadge, height: Math.round(midBadge * 0.7),
           bottom: '-4%', left: '30%',
         }}
       >
-        <div className="flex gap-0.5" style={{ fontSize: Math.round(smEmoji * 0.7) }}>
-          <span>🌱</span><span>🎀</span><span>👑</span>
-        </div>
+        <Icons.TierSteps className="text-[#9F6B3E] icon-shimmer" style={{ width: smEmoji, height: smEmoji }} />
         <div className="font-black text-[#9F6B3E] mt-0.5" style={{ fontSize: label }}>3 階梯定價</div>
       </button>
 

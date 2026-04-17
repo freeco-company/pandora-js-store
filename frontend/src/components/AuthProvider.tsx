@@ -52,18 +52,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         Accept: 'application/json',
       },
     })
-      .then((res) => {
-        if (!res.ok) throw new Error('Unauthorized');
-        return res.json();
-      })
-      .then((data: Customer) => {
+      .then(async (res) => {
+        if (res.status === 401 || res.status === 403) {
+          // Token genuinely revoked or expired — clear it
+          localStorage.removeItem(TOKEN_KEY);
+          setToken(null);
+          setCustomer(null);
+          return;
+        }
+        if (!res.ok) {
+          // Network error, server down (e.g. during deploy) — keep token,
+          // don't log the user out. They'll re-verify next page load.
+          return;
+        }
+        const data: Customer = await res.json();
         setCustomer(data);
       })
       .catch(() => {
-        // Token invalid — clear it
-        localStorage.removeItem(TOKEN_KEY);
-        setToken(null);
-        setCustomer(null);
+        // Fetch itself failed (offline, DNS, etc.) — keep token intact.
+        // User stays "logged in" with stale customer data until next
+        // successful verification. Much better UX than force-logout on
+        // every deploy or network hiccup.
       })
       .finally(() => {
         setLoading(false);
