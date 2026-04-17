@@ -1,6 +1,6 @@
 import Link from 'next/link';
-import Image from 'next/image';
 import { getArticles, imageUrl } from '@/lib/api';
+import ImageWithFallback, { LogoPlaceholder } from './ImageWithFallback';
 
 /**
  * Server-rendered "相關閱讀" strip.
@@ -36,7 +36,7 @@ export default async function RelatedArticles() {
           >
             <div className="aspect-[16/10] bg-gradient-to-br from-[#fdf7ef] to-[#f7eee3] relative overflow-hidden">
               {a.featured_image ? (
-                <Image
+                <ImageWithFallback
                   src={imageUrl(a.featured_image)!}
                   alt={a.title}
                   fill
@@ -44,7 +44,7 @@ export default async function RelatedArticles() {
                   className="object-cover transition-transform duration-500 group-hover:scale-105"
                 />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-3xl text-[#9F6B3E]/40">📖</div>
+                <LogoPlaceholder />
               )}
             </div>
             <div className="p-4">

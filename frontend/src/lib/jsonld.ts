@@ -30,14 +30,14 @@ export function organizationSchema() {
       'JEROSSE 婕樂纖官方正品授權經銷商。健康保健食品、美容保養、體重管理、葉黃素、益生菌、口服玻尿酸。1+1 搭配價、滿額 VIP 優惠。',
     sameAs: [
       'https://www.instagram.com/pandorasdo/',
-      'https://lin.ee/pandorasdo',
+      'https://lin.ee/62wj7qa',
     ],
     contactPoint: {
       '@type': 'ContactPoint',
       contactType: 'customer service',
       availableLanguage: ['zh-TW', 'zh-Hant'],
       areaServed: 'TW',
-      url: 'https://lin.ee/pandorasdo',
+      url: 'https://lin.ee/62wj7qa',
     },
     foundingDate: '2020',
     founder: {

@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { type Banner, type Product, imageUrl } from '@/lib/api';
+import ImageWithFallback from './ImageWithFallback';
 
 interface BannerSlide {
   id: string;
@@ -88,7 +88,7 @@ export default function HeroBanner({
               className="absolute inset-0 hidden sm:block"
               style={i === current ? { animation: 'ken-burns 5s ease-out forwards' } : undefined}
             >
-              <Image
+              <ImageWithFallback
                 src={slide.desktopImage}
                 alt={slide.title}
                 fill
@@ -104,7 +104,7 @@ export default function HeroBanner({
               className="absolute inset-0 sm:hidden"
               style={i === current ? { animation: 'ken-burns 5s ease-out forwards' } : undefined}
             >
-              <Image
+              <ImageWithFallback
                 src={slide.mobileImage}
                 alt={slide.title}
                 fill

@@ -75,8 +75,16 @@ class ScrapeJerosseArticles extends Command
         'magazine-recommendation'        => '雜誌推薦',
     ];
 
+    /**
+     * Category slugs to skip entirely (won't be imported).
+     */
+    private const SKIP_CATEGORIES = [
+        'celebrity-recommendation',
+    ];
+
     private int $articlesImported = 0;
     private int $imagesDownloaded = 0;
+    private int $skipped = 0;
     private int $errors = 0;
     private int $sanitized = 0;
 
@@ -122,6 +130,7 @@ class ScrapeJerosseArticles extends Command
             [
                 ['Articles imported', $this->articlesImported],
                 ['Images downloaded', $this->imagesDownloaded],
+                ['Skipped (excluded)', $this->skipped],
                 ['Sanitized (legal)', $this->sanitized],
                 ['Errors', $this->errors],
             ]
@@ -251,6 +260,11 @@ class ScrapeJerosseArticles extends Command
         $slug = trim($path, '/');
         $slug = Str::slug($slug);
 
+        // Skip category/archive index pages (e.g. /recommend/ or /brand-category/award-recognition/)
+        if (preg_match('#^https?://[^/]+/[^/]+/?$#', $url) || str_contains($url, '-category/')) {
+            return;
+        }
+
         // Skip if already imported (by source_url)
         if (Article::where('source_url', $url)->exists()) {
             return;
@@ -268,6 +282,13 @@ class ScrapeJerosseArticles extends Command
         }
 
         $html = $response->body();
+
+        // Detect category early so we can skip unwanted ones before heavy processing
+        $categorySlug = $this->detectCategory($url, $html, $sourceType);
+        if ($categorySlug && in_array($categorySlug, self::SKIP_CATEGORIES, true)) {
+            $this->skipped++;
+            return;
+        }
 
         // Parse the page
         $title = $this->extractTitle($html);
@@ -325,8 +346,7 @@ class ScrapeJerosseArticles extends Command
             'promo_ends_at'  => $promoEndsAt,
         ]);
 
-        // Attach category
-        $categorySlug = $this->detectCategory($url, $html, $sourceType);
+        // Attach category (slug already detected above)
         if ($categorySlug) {
             $category = ArticleCategory::where('slug', $categorySlug)->first();
             if ($category) {

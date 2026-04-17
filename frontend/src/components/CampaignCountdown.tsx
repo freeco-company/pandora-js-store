@@ -9,8 +9,9 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { imageUrl } from '@/lib/api';
+import ImageWithFallback, { LogoPlaceholder } from './ImageWithFallback';
+import SiteIcon from '@/components/SiteIcon';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
 
@@ -197,22 +198,24 @@ function CountdownSection({ campaign }: { campaign: Campaign }) {
           100% { transform: translateX(-50%); }
         }
 
-        @keyframes sphere-in {
-          0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
-          60% { transform: translate(-50%, -50%) scale(1.05); opacity: 1; }
-          100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        @keyframes flower-in {
+          0% { transform: scale(0) rotate(-20deg); opacity: 0; }
+          60% { transform: scale(1.1) rotate(5deg); opacity: 1; }
+          100% { transform: scale(1) rotate(0deg); opacity: 1; }
         }
-        @keyframes sphere-pulse {
-          0%, 100% { transform: translate(-50%, -50%) scale(1); }
-          50% { transform: translate(-50%, -50%) scale(1.06); }
+        @keyframes flower-breathe {
+          0%, 100% { transform: scale(1) rotate(0deg); }
+          50% { transform: scale(1.04) rotate(2deg); }
         }
-        @keyframes sphere-expand {
-          0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
-          100% { transform: translate(-50%, -50%) scale(8); opacity: 0; }
+        @keyframes flower-bloom {
+          0% { transform: scale(1) rotate(0deg); opacity: 1; }
+          40% { transform: scale(1.5) rotate(15deg); opacity: 0.9; }
+          100% { transform: scale(3) rotate(45deg); opacity: 0; filter: blur(3px); }
         }
-        @keyframes ring-out {
-          0% { transform: translate(-50%, -50%) scale(1); opacity: 0.5; }
-          100% { transform: translate(-50%, -50%) scale(4); opacity: 0; }
+        @keyframes petal-drift {
+          0% { opacity: 1; transform: translate(var(--sx), var(--sy)) rotate(var(--sr)) scale(var(--ps)); }
+          70% { opacity: 0.7; }
+          100% { opacity: 0; transform: translate(var(--px), calc(var(--py) + 40px)) rotate(var(--pr)) scale(calc(var(--ps)*0.7)); }
         }
         @keyframes card-fly {
           0% { opacity: 0; transform: scale(0.3) translateY(40px); filter: blur(8px); }
@@ -239,50 +242,133 @@ function CountdownSection({ campaign }: { campaign: Campaign }) {
           70% { box-shadow: 0 0 0 6px rgba(192,57,43,0); }
           100% { box-shadow: 0 0 0 0 rgba(192,57,43,0); }
         }
+        @keyframes badge-wobble {
+          0%, 100% { transform: rotate(-4deg) scale(1); }
+          50% { transform: rotate(4deg) scale(1.06); }
+        }
       `}</style>
 
-      {/* ── Central sphere ── */}
+      {/* ── Central seed → leaf burst ── */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none" aria-hidden>
-        {/* Glow behind sphere */}
+        {/* Glow behind seed */}
         {active && (
           <div
-            className="absolute left-1/2 top-1/2 w-[350px] h-[350px] rounded-full"
+            className="absolute left-1/2 top-1/2 w-[300px] h-[300px] rounded-full"
             style={{
-              background: 'radial-gradient(circle, rgba(159,107,62,0.2) 0%, transparent 70%)',
+              background: 'radial-gradient(circle, rgba(122,184,122,0.2) 0%, rgba(159,107,62,0.1) 40%, transparent 70%)',
               animation: bursting ? 'sphere-expand 1.2s cubic-bezier(0.16,1,0.3,1) forwards' : 'glow-breathe 2s ease-in-out infinite',
             }}
           />
         )}
 
-        {/* The sphere itself */}
+        {/* Flower — multi-layered, rotates in, breathes, then blooms open */}
         {active && !settled && (
           <div
-            className="absolute left-1/2 top-1/2 w-[180px] h-[180px] sm:w-[220px] sm:h-[220px] rounded-full"
+            className="absolute left-1/2 top-1/2"
             style={{
-              background: 'radial-gradient(circle at 35% 35%, #f7dbb8 0%, #d4a574 40%, #9F6B3E 80%, #7a5128 100%)',
-              boxShadow: '0 20px 60px rgba(159,107,62,0.3), inset 0 -8px 20px rgba(0,0,0,0.15), inset 0 8px 20px rgba(255,255,255,0.3)',
+              marginLeft: -70, marginTop: -70,
               animation: bursting
-                ? 'sphere-expand 1.2s cubic-bezier(0.16,1,0.3,1) forwards'
-                : 'sphere-in 0.8s cubic-bezier(0.16,1,0.3,1) forwards, sphere-pulse 1.5s ease-in-out 0.8s infinite',
+                ? 'flower-bloom 1s cubic-bezier(0.16,1,0.3,1) forwards'
+                : 'flower-in 0.8s cubic-bezier(0.16,1,0.3,1) forwards, flower-breathe 2s ease-in-out 0.8s infinite',
             }}
-          />
+          >
+            <svg width="140" height="140" viewBox="0 0 140 140" fill="none">
+              {/* Outer petals — warm pink */}
+              {[0, 60, 120, 180, 240, 300].map((deg) => (
+                <g key={`o${deg}`} transform={`rotate(${deg} 70 70)`}>
+                  <ellipse cx="70" cy="26" rx="22" ry="30" fill="#f4a0b5" opacity="0.6" />
+                  <ellipse cx="70" cy="30" rx="16" ry="22" fill="#f7b8c8" opacity="0.4" />
+                </g>
+              ))}
+              {/* Middle petals — soft coral */}
+              {[30, 90, 150, 210, 270, 330].map((deg) => (
+                <g key={`m${deg}`} transform={`rotate(${deg} 70 70)`}>
+                  <ellipse cx="70" cy="34" rx="18" ry="24" fill="#e8875a" opacity="0.5" />
+                  <ellipse cx="70" cy="37" rx="12" ry="16" fill="#f0a882" opacity="0.4" />
+                </g>
+              ))}
+              {/* Inner petals — brand gold */}
+              {[15, 75, 135, 195, 255, 315].map((deg) => (
+                <ellipse key={`i${deg}`} cx="70" cy="42" rx="14" ry="18" fill="#d4a574" opacity="0.6" transform={`rotate(${deg} 70 70)`} />
+              ))}
+              {/* Center */}
+              <circle cx="70" cy="70" r="20" fill="#9F6B3E" opacity="0.9" />
+              <circle cx="70" cy="70" r="14" fill="#c8835a" />
+              <circle cx="70" cy="70" r="8" fill="#f7dbb8" />
+              {/* Center dots */}
+              {[0, 60, 120, 180, 240, 300].map((deg) => {
+                const r = 5;
+                const x = 70 + Math.cos((deg * Math.PI) / 180) * r;
+                const y = 70 + Math.sin((deg * Math.PI) / 180) * r;
+                return <circle key={`d${deg}`} cx={x} cy={y} r="1.5" fill="#9F6B3E" opacity="0.5" />;
+              })}
+              {/* Highlight */}
+              <circle cx="64" cy="64" r="4" fill="white" opacity="0.25" />
+            </svg>
+          </div>
         )}
 
-        {/* Expanding rings on burst */}
-        {bursting && (
-          <>
-            <div
-              className="absolute left-1/2 top-1/2 w-[200px] h-[200px] rounded-full border-2 border-[#9F6B3E]/30"
-              style={{ animation: 'ring-out 1.5s cubic-bezier(0.16,1,0.3,1) forwards' }}
-            />
-            <div
-              className="absolute left-1/2 top-1/2 w-[200px] h-[200px] rounded-full border border-[#d4a574]/20"
-              style={{ animation: 'ring-out 1.8s cubic-bezier(0.16,1,0.3,1) 0.15s forwards' }}
-            />
-          </>
-        )}
-
-        {/* Post-burst: removed, replaced by continuous ripples above */}
+        {/* Petals drifting — large, few, natural float like cherry blossoms */}
+        {bursting && (() => {
+          const petals: { sx: number; sy: number; sr: number; x: number; y: number; size: number; rot: number; color: string; delay: number; scale: number; dur: number }[] = [];
+          const colors = ['#f4a0b5', '#f7b8c8', '#fce4ec', '#e8875a', '#f0a882', '#d4a574', '#f7dbb8'];
+          const startRadius = 60; // start from a circle, not center point
+          for (let i = 0; i < 12; i++) {
+            const angle = (i / 12) * 360 + Math.sin(i * 7) * 20;
+            const endDist = 250 + (i % 3) * 200;
+            const rad = (angle * Math.PI) / 180;
+            const startRot = -30 + (i * 41) % 60;
+            petals.push({
+              // start position — on a circle around flower
+              sx: Math.cos(rad) * startRadius,
+              sy: Math.sin(rad) * startRadius,
+              sr: startRot,
+              // end position — far out
+              x: Math.cos(rad) * endDist + (Math.sin(i * 4) * 60),
+              y: Math.sin(rad) * endDist * 0.6,
+              size: 80 + (i % 3) * 25,
+              rot: startRot + (-100 + (i * 97) % 200),
+              color: colors[i % colors.length],
+              delay: i * 0.03,
+              scale: 1 + (i % 3) * 0.15,
+              dur: 1.8 + (i % 3) * 0.4,
+            });
+          }
+          return petals.map((p, i) => (
+            <svg
+              key={i}
+              className="absolute left-1/2 top-1/2"
+              width={p.size} height={p.size}
+              viewBox="0 0 80 80"
+              style={{
+                opacity: 0,
+                marginLeft: -p.size / 2,
+                marginTop: -p.size / 2,
+                ['--sx' as string]: `${p.sx}px`,
+                ['--sy' as string]: `${p.sy}px`,
+                ['--sr' as string]: `${p.sr}deg`,
+                ['--px' as string]: `${p.x}px`,
+                ['--py' as string]: `${p.y}px`,
+                ['--pr' as string]: `${p.rot}deg`,
+                ['--ps' as string]: `${p.scale}`,
+                animation: `petal-drift ${p.dur}s cubic-bezier(0.1,0.6,0.3,1) ${p.delay}s forwards`,
+              }}
+            >
+              {/* Petal shape — soft, rounded like a cherry blossom petal */}
+              <path
+                d="M40 6 C22 10 8 24 8 42 C8 52 14 60 24 66 C30 70 36 74 40 76 C44 74 50 70 56 66 C66 60 72 52 72 42 C72 24 58 10 40 6Z"
+                fill={p.color}
+              />
+              {/* Inner fold line — gives 3D depth */}
+              <path
+                d="M40 14 C38 28 38 48 40 68"
+                stroke="white" strokeWidth="1.5" opacity="0.25" strokeLinecap="round" fill="none"
+              />
+              {/* Subtle highlight */}
+              <ellipse cx="32" cy="32" rx="8" ry="14" fill="white" opacity="0.12" transform="rotate(-20 32 32)" />
+            </svg>
+          ));
+        })()}
       </div>
 
       {/* ── Content: flies out from center after burst ── */}
@@ -388,15 +474,15 @@ function CountdownSection({ campaign }: { campaign: Campaign }) {
                 <Link
                   key={p.id}
                   href={`/products/${p.slug}`}
-                  className="sm:w-[220px] group bg-white rounded-3xl overflow-hidden border border-[#e7d9cb]/60 shadow-md shadow-[#9F6B3E]/[0.04] hover:shadow-xl hover:shadow-[#9F6B3E]/[0.12] hover:-translate-y-2 transition-all duration-500"
+                  className="sm:w-[220px] group relative bg-white rounded-3xl border border-[#e7d9cb]/60 shadow-md shadow-[#9F6B3E]/[0.04] hover:shadow-xl hover:shadow-[#9F6B3E]/[0.12] hover:-translate-y-2 transition-all duration-500"
                   style={{
                     opacity: 0,
                     animation: bursting ? `card-fly 0.9s cubic-bezier(0.16,1,0.3,1) ${0.15 + i * 0.12}s forwards` : 'none',
                   }}
                 >
-                  <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-[#fdf7ef] to-[#f7eee3]">
+                  <div className="relative aspect-square overflow-hidden rounded-t-3xl bg-gradient-to-br from-[#fdf7ef] to-[#f7eee3]">
                     {p.image ? (
-                      <Image
+                      <ImageWithFallback
                         src={imageUrl(p.image)!}
                         alt={p.name}
                         fill
@@ -404,32 +490,45 @@ function CountdownSection({ campaign }: { campaign: Campaign }) {
                         className="object-cover transition-transform duration-700 group-hover:scale-105"
                       />
                     ) : (
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <svg className="w-12 h-12 text-[#9F6B3E]/10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0 0 22.5 18.75V5.25A2.25 2.25 0 0 0 20.25 3H3.75A2.25 2.25 0 0 0 1.5 5.25v13.5A2.25 2.25 0 0 0 3.75 21Z" />
-                        </svg>
-                      </div>
-                    )}
-                    {pct > 0 && (
-                      <div className="absolute top-3 left-3 px-2.5 py-1 rounded-xl bg-[#c0392b] text-white text-[11px] font-black shadow-md shadow-[#c0392b]/30">
-                        -{pct}%
-                      </div>
+                      <LogoPlaceholder />
                     )}
                   </div>
-                  <div className="p-4">
+                  {/* Discount cloud badge — outside image div, overflows card */}
+                  {pct > 0 && (
+                    <div
+                      className="absolute -top-5 -right-4 z-20"
+                      style={{ animation: settled ? 'badge-wobble 4s ease-in-out infinite' : 'none' }}
+                    >
+                      <div className="relative w-[72px] h-[56px] sm:w-[84px] sm:h-[64px] flex items-center justify-center">
+                        <svg className="absolute inset-0 w-full h-full drop-shadow-lg" viewBox="0 0 120 90" fill="none">
+                          <path d="M30 70 C10 70 0 58 4 46 C0 36 8 24 22 22 C24 10 36 2 50 4 C58 -2 72 -2 82 6 C90 2 104 8 108 20 C118 26 120 42 112 52 C118 62 112 74 98 76 C94 84 82 90 70 86 C62 92 48 90 42 82 C34 86 20 80 30 70Z" fill="#c0392b" />
+                        </svg>
+                        <div className="relative text-center leading-none -mt-0.5">
+                          <div className="text-white font-black text-xl sm:text-2xl" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.15)' }}>{pct}</div>
+                          <div className="text-white/80 font-black text-[7px] sm:text-[8px] tracking-wider -mt-0.5">%OFF</div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  <div className="p-3.5">
                     <div className="text-sm font-bold text-gray-700 line-clamp-1 mb-2 group-hover:text-[#9F6B3E] transition-colors">
                       {p.name}
                     </div>
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-xl font-black text-[#9F6B3E]">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xl font-black text-[#c0392b]">
                         ${(p.campaign_price ?? p.price).toLocaleString()}
                       </span>
                       {saved > 0 && (
-                        <span className="text-xs text-gray-400 line-through">
+                        <span className="text-[11px] text-gray-400 line-through">
                           ${p.price.toLocaleString()}
                         </span>
                       )}
                     </div>
+                    {saved > 0 && (
+                      <div className="mt-1.5 text-[11px] font-black text-[#c0392b]/70">
+                        現省 ${saved.toLocaleString()}
+                      </div>
+                    )}
                   </div>
                 </Link>
               );
@@ -466,12 +565,12 @@ function CountdownSection({ campaign }: { campaign: Campaign }) {
       {settled && (
         <div className="absolute inset-0 pointer-events-none z-0 hidden lg:block" aria-hidden>
           {[
-            { l: '3%', t: '15%', icon: '🛡️', text: '官方正品', bg: 'bg-white', delay: 0 },
-            { l: '88%', t: '12%', icon: '⏰', text: '限量搶購', bg: 'bg-white', delay: 0.8 },
-            { l: '2%', t: '72%', icon: '🎀', text: '搭配更划算', bg: 'bg-white', delay: 0.4 },
-            { l: '85%', t: '78%', icon: '💝', text: '母親節限定', bg: 'bg-white', delay: 1.2 },
-            { l: '15%', t: '90%', icon: '🚚', text: '快速出貨', bg: 'bg-white', delay: 1.6 },
-            { l: '75%', t: '5%', icon: '✨', text: 'VIP 優惠', bg: 'bg-white', delay: 0.6 },
+            { l: '3%', t: '15%', iconName: 'shield', color: '#4A9D5F', text: '官方正品', bg: 'bg-white', delay: 0 },
+            { l: '88%', t: '12%', iconName: 'target', color: '#C0392B', text: '限量搶購', bg: 'bg-white', delay: 0.8 },
+            { l: '2%', t: '72%', iconName: 'ribbon', color: '#E0748C', text: '搭配更划算', bg: 'bg-white', delay: 0.4 },
+            { l: '85%', t: '78%', iconName: 'gift', color: '#C0392B', text: '母親節限定', bg: 'bg-white', delay: 1.2 },
+            { l: '15%', t: '90%', iconName: 'truck', color: '#D4762C', text: '快速出貨', bg: 'bg-white', delay: 1.6 },
+            { l: '75%', t: '5%', iconName: 'sparkle', color: '#E8A93B', text: 'VIP 優惠', bg: 'bg-white', delay: 0.6 },
           ].map((tag, i) => (
             <div
               key={i}
@@ -482,7 +581,7 @@ function CountdownSection({ campaign }: { campaign: Campaign }) {
                 animation: `card-fly 0.7s cubic-bezier(0.16,1,0.3,1) ${tag.delay}s forwards, float-tag ${3.5 + i * 0.3}s ease-in-out ${tag.delay + 0.7}s infinite`,
               }}
             >
-              <span className="text-base">{tag.icon}</span>
+              <SiteIcon name={tag.iconName} size={16} color={tag.color} />
               <span className="text-[10px] font-black text-[#7a5836] whitespace-nowrap">{tag.text}</span>
             </div>
           ))}

@@ -72,6 +72,60 @@ class AuthController extends Controller
     }
 
     /**
+     * Return the LINE OAuth redirect URL.
+     */
+    public function redirectToLine(): JsonResponse
+    {
+        $url = Socialite::driver('line')->stateless()->redirect()->getTargetUrl();
+
+        return response()->json(['url' => $url]);
+    }
+
+    /**
+     * Handle LINE OAuth callback — find or create Customer, redirect to frontend with token.
+     */
+    public function handleLineCallback(Request $request)
+    {
+        $frontendUrl = config('app.frontend_url', 'http://localhost:3000');
+
+        try {
+            $lineUser = Socialite::driver('line')->stateless()->user();
+        } catch (\Exception $e) {
+            return redirect()->to($frontendUrl . '/auth/line/callback?error=auth_failed');
+        }
+
+        $lineId = $lineUser->getId();
+        $name = $lineUser->getName() ?: 'LINE 會員';
+        $email = $lineUser->getEmail(); // May be null — LINE email is optional
+
+        // Try matching by line_id first
+        $customer = Customer::where('line_id', $lineId)->first();
+
+        if (!$customer && $email) {
+            // Try matching by email (link LINE to existing account)
+            $customer = Customer::where('email', $email)->first();
+            if ($customer) {
+                $customer->update(['line_id' => $lineId, 'name' => $name]);
+            }
+        }
+
+        if (!$customer) {
+            // Create new customer
+            $customer = Customer::create([
+                'line_id' => $lineId,
+                'name' => $name,
+                'email' => $email ?? $lineId . '@line.user',
+                'membership_level' => 'regular',
+                'password' => bcrypt(\Illuminate\Support\Str::random(32)),
+            ]);
+        }
+
+        $token = $customer->createToken('line-auth')->plainTextToken;
+
+        return redirect()->to($frontendUrl . '/auth/line/callback?token=' . urlencode($token));
+    }
+
+    /**
      * Return the currently authenticated customer.
      */
     public function me(Request $request): JsonResponse

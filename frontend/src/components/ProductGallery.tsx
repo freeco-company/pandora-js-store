@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import Image from 'next/image';
 import { imageUrl } from '@/lib/api';
+import ImageWithFallback, { LogoPlaceholder } from './ImageWithFallback';
 
 export default function ProductGallery({
   mainImage,
@@ -30,10 +30,8 @@ export default function ProductGallery({
 
   if (allImages.length === 0) {
     return (
-      <div className="relative aspect-square bg-gray-50 rounded-[10px] overflow-hidden flex items-center justify-center text-gray-300">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1} stroke="currentColor" className="w-24 h-24">
-          <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0 0 22.5 18.75V5.25A2.25 2.25 0 0 0 20.25 3H3.75A2.25 2.25 0 0 0 1.5 5.25v13.5A2.25 2.25 0 0 0 3.75 21Z" />
-        </svg>
+      <div className="relative aspect-square bg-gray-50 rounded-[10px] overflow-hidden">
+        <LogoPlaceholder />
       </div>
     );
   }
@@ -42,7 +40,7 @@ export default function ProductGallery({
     <div>
       {/* Main Image */}
       <div className="relative aspect-square bg-gray-50 rounded-[10px] overflow-hidden">
-        <Image
+        <ImageWithFallback
           src={allImages[selected]}
           alt={productName}
           fill
@@ -63,7 +61,7 @@ export default function ProductGallery({
                 i === selected ? 'border-[#9F6B3E]' : 'border-transparent'
               }`}
             >
-              <Image
+              <ImageWithFallback
                 src={img}
                 alt={`${productName} - ${i + 1}`}
                 fill

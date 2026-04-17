@@ -18,19 +18,38 @@ export const metadata: Metadata = {
 export default async function ArticlesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ type?: string; page?: string }>;
+  searchParams: Promise<{ type?: string; page?: string; category?: string }>;
 }) {
-  const { type, page } = await searchParams;
+  const { type, page, category } = await searchParams;
   const currentPage = parseInt(page || '1', 10);
   const initialType = type || '';
+  const initialCategory = category || '';
 
-  let initialArticles: Awaited<ReturnType<typeof getArticles>>['data'] = [];
-  let initialLastPage = 1;
-  try {
-    const result = await getArticles(initialType || undefined, currentPage);
-    initialArticles = result.data;
-    initialLastPage = result.last_page;
-  } catch {}
+  // Collect all subcategory slugs across all tabs
+  const allSubcategories = ARTICLE_TABS
+    .flatMap((t) => (t.subcategories ?? []).map((s) => ({ type: t.key, slug: s.key })));
+
+  // Fetch current page + per-type totals + subcategory totals in parallel
+  const typeKeys = ARTICLE_TABS.filter((t) => t.key !== '').map((t) => t.key);
+  const [mainResult, ...restCounts] = await Promise.all([
+    getArticles(initialType || undefined, currentPage, 12, initialCategory || undefined).catch(() => null),
+    ...typeKeys.map((k) => getArticles(k, 1, 1).then((r) => r.total).catch(() => 0)),
+    ...allSubcategories.map((s) => getArticles(s.type, 1, 1, s.slug).then((r) => r.total).catch(() => 0)),
+  ]);
+
+  const typeCounts = restCounts.slice(0, typeKeys.length) as number[];
+  const subCounts = restCounts.slice(typeKeys.length) as number[];
+
+  const initialArticles = mainResult?.data ?? [];
+  const initialLastPage = mainResult?.last_page ?? 1;
+
+  // Only include tab keys that have articles
+  const liveTabKeys = typeKeys.filter((_, i) => typeCounts[i] > 0);
+
+  // Only include subcategory keys that have articles
+  const liveSubcategoryKeys = allSubcategories
+    .filter((_, i) => subCounts[i] > 0)
+    .map((s) => s.slug);
 
   const activeTab = ARTICLE_TABS.find((t) => t.key === initialType);
 
@@ -88,6 +107,9 @@ export default async function ArticlesPage({
           initialType={initialType}
           initialLastPage={initialLastPage}
           initialPage={currentPage}
+          initialCategory={initialCategory}
+          liveTabKeys={liveTabKeys}
+          liveSubcategoryKeys={liveSubcategoryKeys}
         />
       </div>
     </div>

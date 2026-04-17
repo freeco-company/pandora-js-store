@@ -2,8 +2,8 @@
 
 import { useRef, useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { type Product, imageUrl } from '@/lib/api';
+import ImageWithFallback, { LogoPlaceholder } from './ImageWithFallback';
 import { formatPrice } from '@/lib/format';
 import { ProductBadges } from './HealthFoodBadge';
 import { useCart } from './CartProvider';
@@ -80,7 +80,7 @@ export default function ProductCard({ product }: { product: Product }) {
         <div className="relative aspect-square bg-gray-50 overflow-hidden">
           {product.image ? (
             <>
-              <Image
+              <ImageWithFallback
                 src={imageUrl(product.image)!}
                 alt={product.name}
                 fill
@@ -91,11 +91,7 @@ export default function ProductCard({ product }: { product: Product }) {
               <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none bg-gradient-to-t from-[#9F6B3E]/20 via-transparent to-transparent" />
             </>
           ) : (
-            <div className="w-full h-full flex items-center justify-center text-gray-300">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1} stroke="currentColor" className="w-16 h-16">
-                <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0 0 22.5 18.75V5.25A2.25 2.25 0 0 0 20.25 3H3.75A2.25 2.25 0 0 0 1.5 5.25v13.5A2.25 2.25 0 0 0 3.75 21Z" />
-              </svg>
-            </div>
+            <LogoPlaceholder />
           )}
           {isOutOfStock && (
             <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
@@ -119,16 +115,25 @@ export default function ProductCard({ product }: { product: Product }) {
 
         <div className="mb-2 sm:mb-3">
           {hasDiscount ? (
-            <div className="flex items-baseline gap-1 sm:gap-2">
-              <span className="text-sm sm:text-lg font-bold text-[#9F6B3E]">
-                {formatPrice(product.combo_price ?? product.price)}
-              </span>
-              <span className="text-xs sm:text-sm text-gray-400 line-through">
-                {formatPrice(product.price)}
-              </span>
+            <div>
+              <div className="flex items-baseline gap-1.5 sm:gap-2">
+                <span className="text-lg sm:text-2xl font-black text-[#c0392b] leading-none">
+                  {formatPrice(product.combo_price ?? product.price)}
+                </span>
+                <span className="text-[11px] sm:text-sm text-gray-400 line-through">
+                  {formatPrice(product.price)}
+                </span>
+              </div>
+              {product.combo_price && product.price - product.combo_price > 0 && (
+                <div className="mt-1 inline-flex items-center px-1.5 py-0.5 rounded-full bg-[#c0392b]/10">
+                  <span className="text-[10px] font-black text-[#c0392b]">
+                    省 {formatPrice(product.price - product.combo_price)}
+                  </span>
+                </div>
+              )}
             </div>
           ) : (
-            <span className="text-sm sm:text-lg font-bold text-[#9F6B3E]">
+            <span className="text-lg sm:text-2xl font-black text-[#c0392b] leading-none">
               {formatPrice(product.price)}
             </span>
           )}

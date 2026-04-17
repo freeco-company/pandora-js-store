@@ -9,6 +9,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import SiteIcon from '@/components/SiteIcon';
 
 export default function HealthBeautyNarrative() {
   const ref = useRef<HTMLDivElement>(null);
@@ -84,7 +85,7 @@ export default function HealthBeautyNarrative() {
           </div>
           <div className="relative h-full flex items-center justify-end pr-4 sm:pr-16 py-8">
             <div className="text-right max-w-[220px] sm:max-w-xs" style={{ opacity: textOpacity, transform: `translateY(${textY}px)`, transition: 'opacity 0.4s, transform 0.6s cubic-bezier(0.2, 0.9, 0.3, 1)' }}>
-              <div className="text-4xl sm:text-6xl mb-2">🌿</div>
+              <div className="mb-2"><SiteIcon name="leaf" size={48} className="sm:w-16 sm:h-16 text-[#4A9D5F]" /></div>
               <div className="text-[10px] sm:text-xs font-black tracking-[0.3em] text-white/90 mb-2">HEALTH · 內在健康</div>
               <h3 className="text-2xl sm:text-4xl font-black text-white leading-tight mb-3">
                 由內而外<br />
@@ -137,7 +138,7 @@ export default function HealthBeautyNarrative() {
           </div>
           <div className="relative h-full flex items-center justify-start pl-4 sm:pl-16 py-8">
             <div className="text-left max-w-[220px] sm:max-w-xs" style={{ opacity: textOpacity, transform: `translateY(${textY}px)`, transition: 'opacity 0.4s, transform 0.6s cubic-bezier(0.2, 0.9, 0.3, 1)' }}>
-              <div className="text-4xl sm:text-6xl mb-2">✨</div>
+              <div className="mb-2"><SiteIcon name="sparkle" size={48} className="sm:w-16 sm:h-16 text-[#E0748C]" /></div>
               <div className="text-[10px] sm:text-xs font-black tracking-[0.3em] text-white/95 mb-2">BEAUTY · 外在光彩</div>
               <h3 className="text-2xl sm:text-4xl font-black text-white leading-tight mb-3">
                 水光透亮<br />

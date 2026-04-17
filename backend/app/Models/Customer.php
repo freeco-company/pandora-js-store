@@ -12,7 +12,7 @@ class Customer extends Model
 
     protected $fillable = [
         'name', 'email', 'phone', 'password', 'is_vip',
-        'google_id', 'membership_level',
+        'google_id', 'line_id', 'membership_level',
         'address_city', 'address_district', 'address_detail', 'address_zip',
         'wp_user_id',
         'streak_days', 'last_active_date', 'current_outfit', 'current_backdrop',

@@ -17,6 +17,7 @@ import {
 } from '@/lib/api';
 import { ACHIEVEMENT_CATALOG, TIER_GRADIENTS } from '@/lib/achievements';
 import { formatPrice } from '@/lib/format';
+import SiteIcon from '@/components/SiteIcon';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
 
@@ -114,7 +115,7 @@ export default function RecapPage() {
             <span className="text-xs text-white/70">本月消費</span>
           </div>
           <div className="mt-1 flex items-center gap-3 text-[11px] text-white/80">
-            <span>🛒 {thisMonthStats.count} 筆訂單</span>
+            <span><SiteIcon name="cart" size={14} className="inline" /> {thisMonthStats.count} 筆訂單</span>
             {deltaPct !== null && (
               <span className={deltaPct >= 0 ? 'text-[#fcd561]' : 'text-pink-200'}>
                 {deltaPct >= 0 ? '▲' : '▼'} 比上月 {Math.abs(deltaPct)}%
@@ -126,9 +127,9 @@ export default function RecapPage() {
 
       {/* Lifetime card grid */}
       <section className="grid grid-cols-3 gap-3">
-        <StatCard emoji="🔥" label="連續造訪" value={`${data.customer.streak_days} 天`} />
-        <StatCard emoji="🛍️" label="累積訂單" value={`${data.customer.total_orders} 筆`} />
-        <StatCard emoji="💰" label="累積消費" value={`NT$${data.customer.total_spent.toLocaleString()}`} />
+        <StatCard emoji="fire" label="連續造訪" value={`${data.customer.streak_days} 天`} />
+        <StatCard emoji="shopping-bag" label="累積訂單" value={`${data.customer.total_orders} 筆`} />
+        <StatCard emoji="money-bag" label="累積消費" value={`NT$${data.customer.total_spent.toLocaleString()}`} />
       </section>
 
       {/* Achievement progress */}
@@ -136,7 +137,7 @@ export default function RecapPage() {
         <div className="flex items-center justify-between mb-3">
           <div>
             <div className="text-[10px] font-black tracking-[0.2em] text-[#7a5836]">ACHIEVEMENTS</div>
-            <h2 className="text-lg font-black text-slate-800 mt-0.5">🏆 成就進度</h2>
+            <h2 className="text-lg font-black text-slate-800 mt-0.5"><SiteIcon name="trophy" size={18} className="inline" /> 成就進度</h2>
           </div>
           <span className="text-sm font-black text-[#9F6B3E]">{earnedCount} / {totalCount}</span>
         </div>
@@ -148,7 +149,7 @@ export default function RecapPage() {
         </div>
         {nextAchievement && (
           <div className={`bg-gradient-to-br ${TIER_GRADIENTS[nextAchievement.tier]} rounded-2xl p-4 flex items-center gap-3 opacity-80`}>
-            <div className="text-4xl">{nextAchievement.emoji}</div>
+            <div className="text-4xl"><SiteIcon name={nextAchievement.emoji} size={40} /></div>
             <div className="flex-1">
               <div className="text-[10px] font-black text-[#5a4234]">下一個目標</div>
               <div className="text-sm font-black text-[#3d2e22]">{nextAchievement.name}</div>
@@ -162,7 +163,7 @@ export default function RecapPage() {
       {orders.length > 0 && (
         <section className="bg-white rounded-3xl border border-[#e7d9cb] p-5 sm:p-6">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-lg font-black text-slate-800">📦 最近訂單</h2>
+            <h2 className="text-lg font-black text-slate-800"><SiteIcon name="package" size={18} className="inline" /> 最近訂單</h2>
             <Link href="/order-lookup" className="text-xs font-black text-[#9F6B3E]">全部 →</Link>
           </div>
           <div className="space-y-2">
@@ -181,7 +182,7 @@ export default function RecapPage() {
 
       {/* Share CTA */}
       <section className="bg-gradient-to-br from-[#fdf7ef] to-[#f7eee3] rounded-3xl p-5 sm:p-6 border border-[#e7d9cb] text-center">
-        <div className="text-3xl">🌸</div>
+        <SiteIcon name="cherry-blossom" size={32} className="text-[#E0748C]" />
         <h3 className="text-base font-black text-slate-800 mt-2">享受仙女生活？</h3>
         <p className="text-[11px] text-slate-500 mt-1 mb-4">邀請朋友一起，雙方都能獲得成就 + 經驗值</p>
         <Link
@@ -198,7 +199,7 @@ export default function RecapPage() {
 function StatCard({ emoji, label, value }: { emoji: string; label: string; value: string }) {
   return (
     <div className="bg-white rounded-2xl border border-[#e7d9cb] p-4 text-center">
-      <div className="text-2xl">{emoji}</div>
+      <div className="flex justify-center"><SiteIcon name={emoji} size={24} /></div>
       <div className="text-[10px] font-black text-slate-400 tracking-wider mt-1">{label}</div>
       <div className="text-sm sm:text-base font-black text-slate-800 mt-0.5">{value}</div>
     </div>

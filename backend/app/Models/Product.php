@@ -57,4 +57,16 @@ class Product extends Model
     {
         return $this->campaigns()->active()->first();
     }
+
+    /**
+     * Whether this product is part of a currently-running campaign.
+     * Appended to every API response so the frontend cart can apply
+     * the campaign VIP override rule.
+     */
+    public function getIsCampaignAttribute(): bool
+    {
+        return $this->campaigns()->active()->exists();
+    }
+
+    protected $appends = ['is_campaign'];
 }

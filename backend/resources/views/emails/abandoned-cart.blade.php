@@ -33,7 +33,7 @@
            style="display: inline-block; padding: 12px 28px; background: #9F6B3E; color: #fff; text-decoration: none; border-radius: 999px; font-weight: bold; margin: 4px;">
           繼續結帳 →
         </a>
-        <a href="https://lin.ee/pandorasdo" target="_blank"
+        <a href="https://lin.ee/62wj7qa" target="_blank"
            style="display: inline-block; padding: 12px 28px; background: #06C755; color: #fff; text-decoration: none; border-radius: 999px; font-weight: bold; margin: 4px;">
           💬 LINE 客服
         </a>

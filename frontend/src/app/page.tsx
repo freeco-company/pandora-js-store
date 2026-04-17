@@ -12,6 +12,8 @@ import FloatingShapes from '@/components/FloatingShapes';
 import LogoLoader from '@/components/LogoLoader';
 import HeroOrbit from '@/components/HeroOrbit';
 import { organizationSchema, websiteSchema, jsonLdScript } from '@/lib/jsonld';
+import { categoryVisual } from '@/lib/category-visual';
+import SiteIcon from '@/components/SiteIcon';
 
 // Below-the-fold — lazy load to shrink initial JS payload
 const MarqueeKeywords = dynamic(() => import('@/components/MarqueeKeywords'));
@@ -356,15 +358,15 @@ export default async function HomePage() {
           <ScrollReveal variant="fade-up">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
               {[
-                { emoji: '⬡', icon: '<svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>', t: '多元支付 / 貨到付款', d: '刷卡分期・超商取貨' },
-                { emoji: '⟐', t: '全館現貨・快速出貨', d: '24H 內發貨' },
-                { emoji: '🛡️', t: '官方授權・正品保證', d: '防偽標籤可驗證' },
-                { emoji: '✚', t: '專業營養師諮詢', d: '1 對 1 真人服務' },
+                { icon: 'credit-card', color: '#2980B9', t: '多元支付 / 貨到付款', d: '刷卡分期・超商取貨' },
+                { icon: 'truck', color: '#D4762C', t: '全館現貨・快速出貨', d: '24H 內發貨' },
+                { icon: 'shield', color: '#4A9D5F', t: '官方授權・正品保證', d: '防偽標籤可驗證' },
+                { icon: 'headset', color: '#9F6B3E', t: '專業諮詢', d: '1 對 1 真人服務' },
               ].map((item, i) => (
                 <ScrollReveal key={i} variant="fade-up" delay={i * 100}>
                   <div className="flex flex-col items-center gap-3 p-4 rounded-2xl hover:bg-white/60 transition-colors">
-                    <div className="w-14 h-14 rounded-2xl bg-white shadow-sm flex items-center justify-center text-3xl">
-                      {item.emoji}
+                    <div className="w-14 h-14 rounded-2xl bg-white shadow-sm flex items-center justify-center">
+                      <SiteIcon name={item.icon} size={28} color={item.color} />
                     </div>
                     <div>
                       <p className="font-black text-gray-900 text-sm">{item.t}</p>
@@ -378,76 +380,62 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* 8. Categories */}
-      {categories.length > 0 && (
-        <section className="bg-white py-20">
-          <div className="max-w-[1290px] mx-auto px-5 sm:px-6 lg:px-8">
-            <ScrollReveal variant="fade-up">
-              <div className="text-center mb-10 sm:mb-14">
-                <div className="text-[10px] font-black tracking-[0.3em] text-[#9F6B3E] mb-2">CATEGORIES</div>
-                <TextReveal as="h2" text="商品分類" className="text-3xl sm:text-4xl font-bold text-gray-900" stagger={80} />
-                <p className="text-sm text-gray-500 mt-3">依需求挑選，找到最適合你的仙女配方</p>
-              </div>
-            </ScrollReveal>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-5">
-              {categories.slice(0, 6).map((cat, i) => {
-                // Visual tokens by category slug/name — unified height, distinct color
-                const visual: { emoji: string; grad: string; ring: string; accent: string } =
-                  cat.slug === 'slimming' || cat.name.includes('體重')
-                    ? { emoji: '⚡', grad: 'from-[#fef6e4] to-[#fbe4b0]', ring: 'ring-[#e0a43a]/20', accent: 'text-[#b37908]' }
-                  : cat.slug === 'health' || cat.name.includes('健康保健')
-                    ? { emoji: '🛡️', grad: 'from-[#e6f5ef] to-[#c3e5d3]', ring: 'ring-[#4a9d5f]/20', accent: 'text-[#2f6b3e]' }
-                  : cat.slug === 'beauty' || cat.name.includes('美容保養')
-                    ? { emoji: '✨', grad: 'from-[#fde8f0] to-[#f7c2d2]', ring: 'ring-[#E0748C]/20', accent: 'text-[#9c3e55]' }
-                  : cat.name.includes('健康活力')
-                    ? { emoji: '🌿', grad: 'from-[#ecf7d9] to-[#cae89e]', ring: 'ring-[#6b9e3c]/20', accent: 'text-[#4a6e27]' }
-                  : cat.name.includes('健康維持')
-                    ? { emoji: '♻', grad: 'from-[#e3f1ee] to-[#b7dad1]', ring: 'ring-[#388a7a]/20', accent: 'text-[#256358]' }
-                  : cat.name.includes('美容美體')
-                    ? { emoji: '✿', grad: 'from-[#fde3ec] to-[#f9b3c9]', ring: 'ring-[#d04d7d]/20', accent: 'text-[#8e2350]' }
-                    : { emoji: '❋', grad: 'from-[#fdf7ef] to-[#f7eee3]', ring: 'ring-[#9F6B3E]/20', accent: 'text-[#9F6B3E]' };
-
-                return (
-                  <ScrollReveal key={cat.id} variant="zoom-in" delay={i * 70}>
-                    <Link
-                      href={`/products?category=${cat.slug}`}
-                      className={`group relative block rounded-3xl bg-gradient-to-br ${visual.grad} ring-1 ${visual.ring} overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-400`}
-                      data-cursor="card"
-                      data-cursor-label="查看"
-                    >
-                      {/* Decorative corner orb */}
-                      <span className="absolute -top-6 -right-6 w-20 h-20 rounded-full bg-white/40 blur-xl" aria-hidden />
-                      <span className="absolute -bottom-4 -left-4 w-16 h-16 rounded-full bg-white/30 blur-lg" aria-hidden />
-
-                      {/* Content — fixed height for consistency */}
-                      <div className="relative aspect-[5/4] p-5 flex flex-col justify-between">
-                        <div className="flex items-start justify-between">
-                          <span className="text-4xl sm:text-5xl drop-shadow-sm transition-transform duration-400 group-hover:scale-110 group-hover:rotate-[-6deg]">
-                            {visual.emoji}
-                          </span>
-                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full bg-white/70 backdrop-blur text-[10px] font-black ${visual.accent} shrink-0`}>
-                            {cat.products_count ?? 0}
-                          </span>
-                        </div>
-
-                        <div>
-                          <h3 className="text-base sm:text-lg font-black text-gray-900 leading-tight line-clamp-2 min-h-[2.4em]">
-                            {cat.name}
-                          </h3>
-                          <div className={`mt-1.5 text-[11px] font-black ${visual.accent} inline-flex items-center gap-1`}>
-                            探索系列
-                            <span className="transition-transform duration-300 group-hover:translate-x-0.5">→</span>
+      {/* 8. Categories — uses shared categoryVisual(), filters empty + 未分類 */}
+      {(() => {
+        const visibleCats = categories.filter(
+          (c) => (c.products_count ?? 0) > 0 && c.name !== '未分類',
+        ).slice(0, 6);
+        if (visibleCats.length === 0) return null;
+        return (
+          <section className="bg-white py-20">
+            <div className="max-w-[1290px] mx-auto px-5 sm:px-6 lg:px-8">
+              <ScrollReveal variant="fade-up">
+                <div className="text-center mb-10 sm:mb-14">
+                  <div className="text-[10px] font-black tracking-[0.3em] text-[#9F6B3E] mb-2">CATEGORIES</div>
+                  <TextReveal as="h2" text="商品分類" className="text-3xl sm:text-4xl font-bold text-gray-900" stagger={80} />
+                  <p className="text-sm text-gray-500 mt-3">依需求挑選，找到最適合你的仙女配方</p>
+                </div>
+              </ScrollReveal>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-5">
+                {visibleCats.map((cat, i) => {
+                  const v = categoryVisual(cat.name);
+                  return (
+                    <ScrollReveal key={cat.id} variant="zoom-in" delay={i * 70}>
+                      <Link
+                        href={`/products?category=${cat.slug}`}
+                        className="group relative block rounded-3xl overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-400"
+                        style={{ background: `linear-gradient(135deg, ${v.ringTint}40, ${v.ringTint})`, boxShadow: `inset 0 0 0 1px ${v.ringTint}` }}
+                        data-cursor="card"
+                        data-cursor-label="查看"
+                      >
+                        <span className="absolute -top-6 -right-6 w-20 h-20 rounded-full bg-white/40 blur-xl" aria-hidden />
+                        <span className="absolute -bottom-4 -left-4 w-16 h-16 rounded-full bg-white/30 blur-lg" aria-hidden />
+                        <div className="relative aspect-[5/4] p-5 flex flex-col justify-between">
+                          <div className="flex items-start justify-between">
+                            <span className="drop-shadow-sm transition-transform duration-400 group-hover:scale-110 group-hover:rotate-[-6deg]" style={{ color: v.accent }}>
+                              <SiteIcon name={v.icon} size={44} />
+                            </span>
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-white/70 backdrop-blur text-[10px] font-black shrink-0" style={{ color: v.accent }}>
+                              {cat.products_count ?? 0}
+                            </span>
+                          </div>
+                          <div>
+                            <h3 className="text-base sm:text-lg font-black text-gray-900 leading-tight line-clamp-2 min-h-[2.4em]">{cat.name}</h3>
+                            <div className="mt-1.5 text-[11px] font-black inline-flex items-center gap-1" style={{ color: v.accent }}>
+                              探索系列
+                              <span className="transition-transform duration-300 group-hover:translate-x-0.5">→</span>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </Link>
-                  </ScrollReveal>
-                );
-              })}
+                      </Link>
+                    </ScrollReveal>
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        </section>
-      )}
+          </section>
+        );
+      })()}
 
       {/* 9. Final CTA — warm not black */}
       <section

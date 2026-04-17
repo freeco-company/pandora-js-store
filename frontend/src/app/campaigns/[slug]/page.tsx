@@ -1,9 +1,10 @@
 import { notFound } from 'next/navigation';
-import Image from 'next/image';
 import { imageUrl } from '@/lib/api';
+import ImageWithFallback from '@/components/ImageWithFallback';
 import ProductCardGrid from '@/components/ProductCardGrid';
 import FloatingShapes from '@/components/FloatingShapes';
 import ScrollReveal from '@/components/ScrollReveal';
+import SiteIcon from '@/components/SiteIcon';
 import type { Product } from '@/lib/api';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
@@ -34,9 +35,16 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const campaign = await getCampaign(slug);
   if (!campaign) return { title: '活動不存在' };
+  const ogImage = campaign.image ? imageUrl(campaign.image) : undefined;
   return {
     title: campaign.name,
     description: campaign.description || `${campaign.name} — 限時活動，整車享 VIP 價`,
+    alternates: { canonical: `/campaigns/${slug}` },
+    openGraph: {
+      title: campaign.name,
+      description: campaign.description || `${campaign.name} — 限時活動`,
+      ...(ogImage ? { images: [ogImage] } : {}),
+    },
   };
 }
 
@@ -58,7 +66,7 @@ export default async function CampaignPage({ params }: { params: Promise<{ slug:
             <div className="text-center max-w-2xl mx-auto">
               {campaign.image && (
                 <div className="mb-6 mx-auto w-32 h-32 sm:w-40 sm:h-40 rounded-3xl overflow-hidden shadow-2xl">
-                  <Image
+                  <ImageWithFallback
                     src={imageUrl(campaign.image)!}
                     alt={campaign.name}
                     width={160}
@@ -78,7 +86,7 @@ export default async function CampaignPage({ params }: { params: Promise<{ slug:
                 </p>
               )}
               <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/15 backdrop-blur text-xs font-bold">
-                <span>🔥</span>
+                <SiteIcon name="fire" size={14} />
                 {isEnded ? (
                   <span>活動已結束</span>
                 ) : (
@@ -105,7 +113,7 @@ export default async function CampaignPage({ params }: { params: Promise<{ slug:
 
       {isEnded && (
         <section className="max-w-2xl mx-auto px-5 py-20 text-center">
-          <div className="text-5xl mb-4">🕐</div>
+          <div className="mb-4"><SiteIcon name="target" size={48} className="text-[#9F6B3E]/30" /></div>
           <h2 className="text-2xl font-black text-slate-800">此活動已結束</h2>
           <p className="text-sm text-slate-500 mt-2">感謝您的參與，期待下次活動！</p>
           <a href="/products" className="inline-flex items-center gap-2 mt-6 px-6 py-3 bg-[#9F6B3E] text-white font-black rounded-full hover:bg-[#85572F] transition-colors">

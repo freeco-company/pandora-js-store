@@ -3,8 +3,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import Image from 'next/image';
 import { useCart } from '@/components/CartProvider';
+import ImageWithFallback, { LogoPlaceholder } from '@/components/ImageWithFallback';
 import { useAuth } from '@/components/AuthProvider';
 import { useFormValidation } from '@/hooks/useFormValidation';
 import { useToast } from '@/components/Toast';
@@ -18,6 +18,7 @@ import { TW_CITIES, districtsFor, zipFor } from '@/lib/tw-regions';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
 import { useCelebrate } from '@/components/Celebration';
+import SiteIcon from '@/components/SiteIcon';
 import { useSerendipity } from '@/components/Serendipity';
 
 type PaymentMethod = 'ecpay_credit' | 'cod' | 'bank_transfer';
@@ -524,7 +525,7 @@ export default function CheckoutPage() {
                     rel="noopener"
                     className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-br from-[#9F6B3E] to-[#85572F] text-white font-black text-sm shadow-md shadow-[#9F6B3E]/20 hover:opacity-90 transition-opacity"
                   >
-                    🏪 選擇{form.shipping_method === 'cvs_family' ? '全家' : '7-11'}門市 →
+                    <SiteIcon name="package" size={16} className="inline" /> 選擇{form.shipping_method === 'cvs_family' ? '全家' : '7-11'}門市 →
                   </a>
                   {(form.shipping_store_name || form.shipping_store_id) ? (
                     <div className="p-3 bg-[#fdf7ef] border border-[#e7d9cb] rounded-lg text-sm space-y-0.5">
@@ -629,7 +630,7 @@ export default function CheckoutPage() {
                       您過去曾有「貨到付款未取件」紀錄，依本站政策已停用此支付方式。
                       您仍可使用<strong>信用卡</strong>或<strong>銀行轉帳</strong>正常完成訂購。
                       若有疑問請透過{' '}
-                      <a href="https://lin.ee/pandorasdo" target="_blank" rel="noopener" className="underline font-black">
+                      <a href="https://lin.ee/62wj7qa" target="_blank" rel="noopener" className="underline font-black">
                         LINE 客服
                       </a>
                       聯繫。
@@ -656,7 +657,7 @@ export default function CheckoutPage() {
                     {errors.social_id && <p className="field-error-text">{errors.social_id}</p>}
                   </div>
                   <div className="flex items-start gap-2 p-3 bg-[#fdf7ef] border border-[#e7d9cb] rounded-lg text-[12px] text-[#7a5836] leading-relaxed">
-                    <span className="text-base shrink-0 mt-0.5">⚠️</span>
+                    <svg className="w-4 h-4 shrink-0 mt-0.5 text-amber-500" viewBox="0 0 20 20" fill="currentColor" aria-hidden><path fillRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.168 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 6a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 6zm0 9a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" /></svg>
                     <div>
                       <p className="font-black text-sm text-[#9F6B3E]">貨到付款注意事項</p>
                       <ul className="mt-1.5 space-y-1 list-disc list-inside marker:text-[#9F6B3E]">
@@ -701,7 +702,7 @@ export default function CheckoutPage() {
                   <div key={item.product.id} className="flex gap-3">
                     <div className="relative w-14 h-14 bg-white rounded-lg overflow-hidden shrink-0 border border-gray-100">
                       {item.product.image ? (
-                        <Image
+                        <ImageWithFallback
                           src={imageUrl(item.product.image)!}
                           alt={item.product.name}
                           fill
@@ -709,9 +710,7 @@ export default function CheckoutPage() {
                           className="object-cover"
                         />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-gray-300 text-xs">
-                          無圖
-                        </div>
+                        <LogoPlaceholder />
                       )}
                     </div>
                     <div className="flex-1 min-w-0">

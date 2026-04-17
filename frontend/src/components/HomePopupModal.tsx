@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { type Popup, imageUrl } from '@/lib/api';
+import ImageWithFallback from './ImageWithFallback';
 import { sanitizeHtml } from '@/lib/sanitize';
 
 const STORAGE_PREFIX = 'pandora-popup';
@@ -89,7 +89,7 @@ export default function HomePopupModal({ popups }: { popups: Popup[] }) {
 
       {img && (
         <div className="relative w-full aspect-[4/5]">
-          <Image
+          <ImageWithFallback
             src={img}
             alt={activePopup.title}
             fill

@@ -1,16 +1,22 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
-import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from 'react';
 import { getArticles, imageUrl, type Article } from '@/lib/api';
+import ImageWithFallback, { LogoPlaceholder } from './ImageWithFallback';
 import { ARTICLE_TABS, ARTICLE_TYPE_LABEL as TYPE_LABEL } from '@/lib/article-tabs';
+import CategoryPills, { type PillItem } from './CategoryPills';
 
 interface Props {
   initialArticles: Article[];
   initialType: string;
   initialLastPage: number;
   initialPage: number;
+  initialCategory?: string;
+  /** Keys of ARTICLE_TABS that have at least 1 article. When provided, empty tabs are hidden. */
+  liveTabKeys?: string[];
+  /** Subcategory slugs that have at least 1 article. When provided, empty subs are hidden. */
+  liveSubcategoryKeys?: string[];
 }
 
 export default function ArticleBrowser({
@@ -18,8 +24,12 @@ export default function ArticleBrowser({
   initialType,
   initialLastPage,
   initialPage,
+  initialCategory = '',
+  liveTabKeys,
+  liveSubcategoryKeys,
 }: Props) {
   const [type, setType] = useState(initialType);
+  const [category, setCategory] = useState(initialCategory);
   const [articles, setArticles] = useState<Article[]>(initialArticles);
   const [page, setPage] = useState(initialPage);
   const [lastPage, setLastPage] = useState(initialLastPage);
@@ -27,14 +37,13 @@ export default function ArticleBrowser({
   const [, startTransition] = useTransition();
   const reqId = useRef(0);
 
-  const load = useCallback(async (nextType: string, nextPage: number) => {
+  const load = useCallback(async (nextType: string, nextPage: number, nextCategory?: string) => {
     const id = ++reqId.current;
     setPhase('out');
-    // Let exit animation play briefly
     await new Promise((r) => setTimeout(r, 180));
     if (reqId.current !== id) return;
     try {
-      const result = await getArticles(nextType || undefined, nextPage);
+      const result = await getArticles(nextType || undefined, nextPage, 12, nextCategory || undefined);
       if (reqId.current !== id) return;
       setArticles(result.data);
       setLastPage(result.last_page);
@@ -43,36 +52,41 @@ export default function ArticleBrowser({
       setArticles([]);
       setLastPage(1);
     }
-    // Trigger enter on next frame
     requestAnimationFrame(() => setPhase('in'));
+  }, []);
+
+  const updateUrl = useCallback((t: string, p: number, cat: string) => {
+    const params = new URLSearchParams();
+    if (t) params.set('type', t);
+    if (cat) params.set('category', cat);
+    if (p > 1) params.set('page', String(p));
+    const qs = params.toString();
+    const url = qs ? `/articles?${qs}` : '/articles';
+    window.history.replaceState(null, '', url);
   }, []);
 
   const changeTab = (key: string) => {
     if (key === type) return;
     setType(key);
+    setCategory('');
     setPage(1);
-    // Update URL without full reload
-    const params = new URLSearchParams();
-    if (key) params.set('type', key);
-    const qs = params.toString();
-    const url = qs ? `/articles?${qs}` : '/articles';
-    startTransition(() => {
-      window.history.replaceState(null, '', url);
-    });
-    load(key, 1);
+    startTransition(() => updateUrl(key, 1, ''));
+    load(key, 1, '');
+  };
+
+  const changeCategory = (cat: string) => {
+    if (cat === category) return;
+    setCategory(cat);
+    setPage(1);
+    startTransition(() => updateUrl(type, 1, cat));
+    load(type, 1, cat);
   };
 
   const goPage = (p: number) => {
     if (p === page) return;
     setPage(p);
-    const params = new URLSearchParams();
-    if (type) params.set('type', type);
-    if (p > 1) params.set('page', String(p));
-    const qs = params.toString();
-    const url = qs ? `/articles?${qs}` : '/articles';
-    window.history.replaceState(null, '', url);
-    load(type, p);
-    // Scroll to top of grid
+    updateUrl(type, p, category);
+    load(type, p, category);
     document.getElementById('article-grid-top')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
@@ -82,72 +96,86 @@ export default function ArticleBrowser({
       const sp = new URLSearchParams(window.location.search);
       const t = sp.get('type') || '';
       const p = parseInt(sp.get('page') || '1', 10);
-      if (t !== type || p !== page) {
+      const cat = sp.get('category') || '';
+      if (t !== type || p !== page || cat !== category) {
         setType(t);
         setPage(p);
-        load(t, p);
+        setCategory(cat);
+        load(t, p, cat);
       }
     };
     window.addEventListener('popstate', onPop);
     return () => window.removeEventListener('popstate', onPop);
-  }, [type, page, load]);
+  }, [type, page, category, load]);
 
   const activeTab = ARTICLE_TABS.find((t) => t.key === type);
+  const subcategories = activeTab?.subcategories;
+
+  const pillItems: PillItem[] = useMemo(() => {
+    const live = liveTabKeys ? new Set(liveTabKeys) : null;
+    return ARTICLE_TABS
+      .filter((t) => t.key === '' || !live || live.has(t.key))
+      .map((t) => ({ key: t.key, label: t.label, icon: t.icon, iconColor: t.iconColor }));
+  }, [liveTabKeys]);
+
+  const subPillItems: PillItem[] | null = useMemo(() => {
+    if (!subcategories || subcategories.length === 0) return null;
+    const liveSubs = liveSubcategoryKeys ? new Set(liveSubcategoryKeys) : null;
+    const visible = subcategories.filter((s) => !liveSubs || liveSubs.has(s.key));
+    if (visible.length === 0) return null;
+    return [
+      { key: '', label: '全部' },
+      ...visible.map((s) => ({ key: s.key, label: s.label })),
+    ];
+  }, [subcategories, liveSubcategoryKeys]);
 
   return (
     <>
-      {/* Tabs */}
-      <div className="mb-6 sm:mb-8 -mx-4 sm:mx-0 sticky top-[64px] md:top-[80px] z-20 bg-white/85 backdrop-blur-md py-3 sm:py-0 sm:bg-transparent sm:backdrop-blur-none sm:static">
-        <div className="flex gap-2 px-4 sm:px-0 overflow-x-auto scrollbar-hide snap-x snap-mandatory">
-          {ARTICLE_TABS.map((tab, i) => {
-            const active = type === tab.key;
-            return (
-              <button
-                key={tab.key || 'all'}
-                onClick={() => changeTab(tab.key)}
-                className={`shrink-0 snap-start px-4 py-2 rounded-full text-sm font-black transition-all duration-300 inline-flex items-center gap-1.5 cursor-pointer ${
-                  active
-                    ? 'bg-gradient-to-br from-[#9F6B3E] to-[#85572F] text-white shadow-md shadow-[#9F6B3E]/30 scale-105'
-                    : 'bg-white border border-[#e7d9cb] text-gray-700 hover:border-[#9F6B3E] hover:text-[#9F6B3E]'
-                }`}
-                style={{
-                  opacity: 0,
-                  animation: `pill-in 0.4s cubic-bezier(0.2, 0.9, 0.3, 1.1) ${i * 50}ms forwards`,
-                }}
-              >
-                <span className="text-base">{tab.emoji}</span>
-                {tab.label}
-              </button>
-            );
-          })}
+      <CategoryPills items={pillItems} activeKey={type} onChange={changeTab} />
+      {subPillItems && (
+        <div className="-mt-2 mb-5">
+          <div className="flex flex-wrap gap-2">
+            {subPillItems.map((item) => {
+              const active = category === item.key;
+              return (
+                <button
+                  key={item.key || '__sub_all__'}
+                  onClick={() => changeCategory(item.key)}
+                  className={`min-h-[44px] px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-200 cursor-pointer ${
+                    active
+                      ? 'bg-[#9F6B3E]/15 text-[#9F6B3E] font-bold border-2 border-[#9F6B3E]/40 shadow-sm'
+                      : 'bg-white text-gray-600 border border-[#e7d9cb] hover:text-[#9F6B3E] hover:border-[#9F6B3E]/40'
+                  }`}
+                >
+                  {item.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
-        <style>{`
-          @keyframes pill-in {
-            from { opacity: 0; transform: translateY(8px); }
-            to { opacity: 1; transform: translateY(0); }
-          }
-          @keyframes card-in {
-            from { opacity: 0; transform: translateY(16px) scale(0.97); }
-            to { opacity: 1; transform: translateY(0) scale(1); }
-          }
-          .card-exit {
-            opacity: 0;
-            transform: translateY(-8px) scale(0.98);
-            transition: opacity 180ms ease-out, transform 180ms ease-out;
-            pointer-events: none;
-          }
-          .card-enter {
-            opacity: 0;
-            animation: card-in 450ms cubic-bezier(0.2, 0.9, 0.3, 1.1) forwards;
-          }
-        `}</style>
-      </div>
+      )}
+      <style>{`
+        @keyframes card-in {
+          from { opacity: 0; transform: translateY(16px) scale(0.97); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .card-exit {
+          opacity: 0;
+          transform: translateY(-8px) scale(0.98);
+          transition: opacity 180ms ease-out, transform 180ms ease-out;
+          pointer-events: none;
+        }
+        .card-enter {
+          opacity: 0;
+          animation: card-in 450ms cubic-bezier(0.2, 0.9, 0.3, 1.1) forwards;
+        }
+      `}</style>
 
       <div id="article-grid-top" className="scroll-mt-28" />
 
       {articles.length > 0 ? (
         <div
-          key={`${type}-${page}`}
+          key={`${type}-${category}-${page}`}
           className={`grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5 transition-opacity ${
             phase === 'out' ? 'opacity-0' : 'opacity-100'
           }`}
@@ -165,7 +193,7 @@ export default function ArticleBrowser({
             >
               <div className="relative aspect-[16/10] bg-gradient-to-br from-[#fdf7ef] to-[#f7eee3] overflow-hidden">
                 {article.featured_image ? (
-                  <Image
+                  <ImageWithFallback
                     src={imageUrl(article.featured_image)!}
                     alt={article.title}
                     fill
@@ -173,9 +201,7 @@ export default function ArticleBrowser({
                     className="object-cover transition-transform duration-[800ms] ease-[cubic-bezier(0.2,0.9,0.3,1)] group-hover:scale-[1.08]"
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-[#9F6B3E]/20">
-                    <svg className="w-12 h-12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.2}><path d="M4 19.5A2.5 2.5 0 016.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" /></svg>
-                  </div>
+                  <LogoPlaceholder />
                 )}
                 <span className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-white/90 backdrop-blur text-[10px] font-black text-[#9F6B3E] shadow-sm">
                   {TYPE_LABEL[article.source_type] || '文章'}
@@ -203,9 +229,13 @@ export default function ArticleBrowser({
             phase === 'out' ? 'opacity-0' : 'opacity-100'
           }`}
         >
-          <div className="text-5xl mb-4">📭</div>
+          <svg className="mx-auto w-16 h-16 mb-4 text-[#9F6B3E]/25" viewBox="0 0 48 48" fill="none" aria-hidden>
+            <rect x="8" y="16" width="32" height="22" rx="3" stroke="currentColor" strokeWidth="2" />
+            <path d="M8 22l16 10 16-10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            <path d="M20 16V10a4 4 0 018 0v6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          </svg>
           <p className="text-base font-black text-gray-700">這個分類還在準備中</p>
-          <p className="text-sm text-gray-500 mt-2">先看看其他分類吧 ✨</p>
+          <p className="text-sm text-gray-500 mt-2">先看看其他分類吧</p>
         </div>
       )}
 

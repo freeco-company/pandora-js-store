@@ -5,6 +5,7 @@ import { useState } from 'react';
 import FloatingShapes from '@/components/FloatingShapes';
 import ScrollReveal from '@/components/ScrollReveal';
 import TextReveal from '@/components/TextReveal';
+import SiteIcon from '@/components/SiteIcon';
 
 type Tab = 'self' | 'business';
 
@@ -59,7 +60,7 @@ export default function JoinPage() {
                 : 'text-[#7a5836] hover:bg-white/50'
             }`}
           >
-            🌱 自用加盟
+            <SiteIcon name="sprout" size={16} /> 自用加盟
           </button>
           <button
             onClick={() => setTab('business')}
@@ -69,7 +70,7 @@ export default function JoinPage() {
                 : 'text-[#7a5836] hover:bg-white/50'
             }`}
           >
-            💎 創業加盟
+            <SiteIcon name="diamond" size={16} /> 創業加盟
           </button>
         </div>
 
@@ -84,7 +85,7 @@ function SelfUsePanel() {
     <div className="space-y-8">
       <div className="bg-gradient-to-br from-[#fdf7ef] to-[#f7eee3] rounded-3xl p-6 sm:p-10 border border-[#e7d9cb]">
         <div className="flex items-center gap-3 mb-4">
-          <span className="text-5xl">🌱</span>
+          <SiteIcon name="sprout" size={48} className="text-[#4A9D5F]" />
           <div>
             <div className="text-[10px] font-black tracking-[0.3em] text-[#7a5836]">SELF-USE · 自用優惠</div>
             <h2 className="text-2xl sm:text-3xl font-black text-gray-900 mt-1">自用加盟 · NT$6,600</h2>
@@ -98,12 +99,12 @@ function SelfUsePanel() {
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {[
-            { i: '💰', t: '立即回本', d: '購買 2-3 盒主力商品就回本' },
-            { i: '♾️', t: '永久有效', d: '一次費用，之後都享會員價' },
-            { i: '🚫', t: '零業績壓力', d: '只為自己，不強制分享' },
+            { i: 'money-bag', t: '立即回本', d: '購買 2-3 盒主力商品就回本' },
+            { i: 'infinity', t: '永久有效', d: '一次費用，之後都享會員價' },
+            { i: 'no-pressure', t: '零業績壓力', d: '只為自己，不強制分享' },
           ].map((b, i) => (
             <div key={i} className="bg-white rounded-2xl p-4 border border-[#e7d9cb]">
-              <div className="text-2xl mb-2">{b.i}</div>
+              <div className="mb-2"><SiteIcon name={b.i} size={28} className="text-[#9F6B3E]" /></div>
               <div className="font-black text-gray-900 text-sm mb-1">{b.t}</div>
               <div className="text-xs text-gray-500">{b.d}</div>
             </div>
@@ -112,7 +113,7 @@ function SelfUsePanel() {
       </div>
 
       <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#e7d9cb]">
-        <h3 className="text-lg font-black text-gray-900 mb-4">📋 加盟流程</h3>
+        <h3 className="text-lg font-black text-gray-900 mb-4"><SiteIcon name="clipboard" size={20} className="text-[#9F6B3E]" /> 加盟流程</h3>
         <ol className="space-y-3">
           {[
             '私訊 LINE 或 IG 諮詢',
@@ -133,12 +134,12 @@ function SelfUsePanel() {
 
       <div className="text-center pt-4">
         <a
-          href="https://lin.ee/pandorasdo"
+          href="https://lin.ee/62wj7qa"
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-2 px-10 py-4 bg-[#9F6B3E] text-white font-black rounded-full shadow-lg hover:bg-[#85572F] transition-colors min-h-[52px]"
         >
-          💬 LINE 諮詢加入
+          <SiteIcon name="chat" size={18} /> LINE 諮詢加入
         </a>
         <p className="text-xs text-gray-500 mt-3">或先追蹤 IG <a href="https://www.instagram.com/pandorasdo/" target="_blank" rel="noopener noreferrer" className="font-black text-[#9F6B3E] underline">@pandorasdo</a></p>
       </div>
@@ -151,7 +152,7 @@ function BusinessPanel() {
     <div className="space-y-8">
       <div className="bg-gradient-to-br from-[#fef6e4] via-[#fdf7ef] to-[#f7eee3] rounded-3xl p-6 sm:p-10 border border-[#9F6B3E]/30">
         <div className="flex items-center gap-3 mb-4">
-          <span className="text-5xl">💎</span>
+          <SiteIcon name="diamond" size={48} className="text-[#9F6B3E]" />
           <div>
             <div className="text-[10px] font-black tracking-[0.3em] text-[#7a5836]">BUSINESS · 創業之路</div>
             <h2 className="text-2xl sm:text-3xl font-black text-gray-900 mt-1">創業加盟 · 一起打造事業</h2>
@@ -165,15 +166,15 @@ function BusinessPanel() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {[
-            { i: '📚', t: '系統化培訓', d: '產品、社群、服務、話術 40+ 小時課程' },
-            { i: '👩‍⚕️', t: '營養師支援', d: '每月 2 場線上直播，客戶問題即時解' },
-            { i: '📱', t: '現成素材庫', d: '貼文模板、直播腳本、圖文素材一應俱全' },
-            { i: '💸', t: '階梯式獎金', d: '隨業績與團隊規模成長，獎金結構清楚' },
-            { i: '🌸', t: '團隊陪伴', d: '月聚會、季旅遊、年度仙女大會' },
-            { i: '🎯', t: '個人品牌打造', d: '協助你建立 IG / 直播 / 個人定位' },
+            { i: 'book', t: '系統化培訓', d: '產品、社群、服務、話術 40+ 小時課程' },
+            { i: 'stethoscope', t: '營養師支援', d: '每月 2 場線上直播，客戶問題即時解' },
+            { i: 'phone', t: '現成素材庫', d: '貼文模板、直播腳本、圖文素材一應俱全' },
+            { i: 'money-bag', t: '階梯式獎金', d: '隨業績與團隊規模成長，獎金結構清楚' },
+            { i: 'cherry-blossom', t: '團隊陪伴', d: '月聚會、季旅遊、年度仙女大會' },
+            { i: 'target', t: '個人品牌打造', d: '協助你建立 IG / 直播 / 個人定位' },
           ].map((b, i) => (
             <div key={i} className="bg-white rounded-2xl p-4 border border-[#e7d9cb]">
-              <div className="text-2xl mb-2">{b.i}</div>
+              <div className="mb-2"><SiteIcon name={b.i} size={28} className="text-[#9F6B3E]" /></div>
               <div className="font-black text-gray-900 text-sm mb-1">{b.t}</div>
               <div className="text-xs text-gray-500 leading-relaxed">{b.d}</div>
             </div>
@@ -182,7 +183,7 @@ function BusinessPanel() {
       </div>
 
       <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#e7d9cb]">
-        <h3 className="text-lg font-black text-gray-900 mb-4">📋 創業加盟流程</h3>
+        <h3 className="text-lg font-black text-gray-900 mb-4"><SiteIcon name="clipboard" size={20} className="text-[#9F6B3E]" /> 創業加盟流程</h3>
         <ol className="space-y-3">
           {[
             '私訊 LINE / IG 說明你的想法',
@@ -215,12 +216,12 @@ function BusinessPanel() {
 
       <div className="text-center pt-4">
         <a
-          href="https://lin.ee/pandorasdo"
+          href="https://lin.ee/62wj7qa"
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-2 px-10 py-4 bg-gradient-to-br from-[#9F6B3E] to-[#85572F] text-white font-black rounded-full shadow-lg hover:from-[#85572F] hover:to-[#6b4424] transition-colors min-h-[52px]"
         >
-          💬 LINE 預約視訊面談
+          <SiteIcon name="chat" size={18} /> LINE 預約視訊面談
         </a>
         <p className="text-xs text-gray-500 mt-3 max-w-sm mx-auto">
           面談免費、無壓力。了解清楚再決定，FP 不催不逼。

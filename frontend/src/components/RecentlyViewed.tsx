@@ -1,9 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
 import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
 import { imageUrl } from '@/lib/api';
+import ImageWithFallback, { LogoPlaceholder } from './ImageWithFallback';
 import { formatPrice } from '@/lib/format';
 
 /**
@@ -37,14 +37,16 @@ export default function RecentlyViewed({
             className="shrink-0 snap-start w-32 sm:w-36 rounded-2xl bg-white border border-[#e7d9cb] overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all"
           >
             <div className="aspect-square bg-gradient-to-br from-[#fdf7ef] to-[#f7eee3] relative">
-              {p.image && (
-                <Image
+              {p.image ? (
+                <ImageWithFallback
                   src={imageUrl(p.image)!}
                   alt={p.name}
                   fill
                   sizes="144px"
                   className="object-cover"
                 />
+              ) : (
+                <LogoPlaceholder />
               )}
             </div>
             <div className="p-2">

@@ -7,6 +7,7 @@ import { useAuth } from './AuthProvider';
 import { useMobileMenu } from './MobileMenuContext';
 import SearchModal from './SearchModal';
 import Logo from './Logo';
+import SiteIcon from './SiteIcon';
 
 const NAV_LINKS = [
   { href: '/', label: '首頁' },
@@ -119,7 +120,7 @@ export default function Header() {
                         className="block px-4 py-2 text-sm font-bold text-gray-700 hover:bg-[#fdf7ef] transition-colors"
                         onClick={() => setAccountOpen(false)}
                       >
-                        🌱 我的仙女館
+                        <SiteIcon name="sprout" size={14} className="inline -mt-0.5" /> 我的仙女館
                       </Link>
                       <Link
                         href="/order-lookup"

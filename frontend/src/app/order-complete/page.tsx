@@ -8,6 +8,7 @@ import Mascot from '@/components/Mascot';
 import ScrollReveal from '@/components/ScrollReveal';
 import FloatingShapes from '@/components/FloatingShapes';
 import { useAuth } from '@/components/AuthProvider';
+import SiteIcon from '@/components/SiteIcon';
 import { getCustomerDashboard, type CustomerDashboard } from '@/lib/api';
 import { ACHIEVEMENT_CATALOG, stageFromStreak, TIER_GRADIENTS } from '@/lib/achievements';
 
@@ -52,7 +53,7 @@ function OrderCompleteContent() {
         <div className="relative max-w-3xl mx-auto px-5 sm:px-6 lg:px-8 py-14 sm:py-20 text-center">
           <ScrollReveal variant="zoom-in">
             <div className="inline-flex w-20 h-20 bg-gradient-to-br from-[#9F6B3E] to-[#85572F] rounded-full items-center justify-center text-4xl mb-5 shadow-xl shadow-[#9F6B3E]/30 celebrate-pop">
-              🎉
+              <SiteIcon name="party" size={40} className="text-white" />
             </div>
           </ScrollReveal>
           <ScrollReveal variant="fade-up" delay={150}>
@@ -92,13 +93,13 @@ function OrderCompleteContent() {
               href="/products"
               className="flex items-center justify-center px-6 py-3.5 bg-gradient-to-br from-[#9F6B3E] to-[#85572F] text-white font-black rounded-full shadow-lg shadow-[#9F6B3E]/30 hover:shadow-xl transition-all min-h-[52px]"
             >
-              🛍️ 繼續選購
+              <SiteIcon name="shopping-bag" size={20} /> 繼續選購
             </Link>
             <Link
               href="/account"
               className="flex items-center justify-center px-6 py-3.5 bg-white border-2 border-[#9F6B3E] text-[#9F6B3E] font-black rounded-full hover:bg-[#fdf7ef] transition-all min-h-[52px]"
             >
-              🌱 查看我的成就
+              <SiteIcon name="sprout" size={20} /> 查看我的成就
             </Link>
           </div>
         </ScrollReveal>
@@ -139,9 +140,11 @@ function OrderCompleteContent() {
                         距離下個里程碑 <span className="text-[#9F6B3E]">NT${(nextSpendMilestone - spent).toLocaleString()}</span>
                       </div>
                     </div>
-                    <span className="text-2xl">
-                      {nextSpendMilestone === 1000 ? '💰' : nextSpendMilestone === 5000 ? '💎' : '👑'}
-                    </span>
+                    <SiteIcon
+                      name={nextSpendMilestone === 1000 ? 'money-bag' : nextSpendMilestone === 5000 ? 'diamond' : 'crown'}
+                      size={28}
+                      className="text-[#9F6B3E]"
+                    />
                   </div>
                   <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
                     <div
@@ -162,7 +165,7 @@ function OrderCompleteContent() {
               <ScrollReveal variant="fade-up" delay={200}>
                 <div className="bg-white rounded-3xl p-5 sm:p-6 border border-[#e7d9cb] shadow-sm">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-sm font-black text-slate-800 flex items-center gap-1.5">🎯 接下來可能解鎖</h3>
+                    <h3 className="text-sm font-black text-slate-800 flex items-center gap-1.5"><SiteIcon name="target" size={16} /> 接下來可能解鎖</h3>
                     <Link href="/account" className="text-[10px] font-black text-[#9F6B3E]">
                       全部成就 →
                     </Link>
@@ -173,7 +176,7 @@ function OrderCompleteContent() {
                         key={def.code}
                         className={`aspect-square rounded-2xl p-2 flex flex-col items-center justify-center text-center bg-gradient-to-br ${TIER_GRADIENTS[def.tier]} opacity-75 ring-1 ring-white/40`}
                       >
-                        <div className="text-2xl mb-1">{def.emoji}</div>
+                        <div className="text-2xl mb-1"><SiteIcon name={def.emoji} size={28} /></div>
                         <div className="text-[10px] font-black leading-tight text-slate-800">
                           {def.name}
                         </div>
@@ -193,14 +196,14 @@ function OrderCompleteContent() {
         {!isLoggedIn && (
           <ScrollReveal variant="fade-up" delay={200}>
             <div className="bg-gradient-to-br from-[#fdf7ef] to-[#f7eee3] rounded-3xl p-5 sm:p-6 border border-[#e7d9cb] text-center">
-              <div className="text-3xl mb-2">🌱</div>
+              <div className="text-3xl mb-2"><SiteIcon name="sprout" size={32} className="text-[#4A9D5F]" /></div>
               <h3 className="text-base font-black text-slate-800">登入後可解鎖成就系統</h3>
               <p className="text-xs text-slate-500 mt-1 mb-4">本次訂單也會計入成就進度喔！</p>
               <Link
                 href="/account"
                 className="inline-flex items-center px-5 py-2.5 bg-[#9F6B3E] text-white text-sm font-black rounded-full hover:bg-[#85572F] transition-colors min-h-[44px]"
               >
-                🌱 登入解鎖
+                <SiteIcon name="sprout" size={18} /> 登入解鎖
               </Link>
             </div>
           </ScrollReveal>

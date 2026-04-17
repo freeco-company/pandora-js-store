@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import FloatingShapes from '@/components/FloatingShapes';
+import SiteIcon from '@/components/SiteIcon';
 import ScrollReveal from '@/components/ScrollReveal';
 import TextReveal from '@/components/TextReveal';
 import { breadcrumbSchema, faqSchema, jsonLdScript } from '@/lib/jsonld';
@@ -215,18 +216,18 @@ export default function FAQPage() {
           </p>
           <div className="flex flex-wrap gap-3 justify-center">
             <a
-              href="https://lin.ee/pandorasdo"
+              href="https://lin.ee/62wj7qa"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-6 py-3 bg-[#06C755] text-white font-black rounded-full shadow-md hover:bg-[#05b04c] transition-colors min-h-[48px]"
             >
-              💬 LINE 諮詢
+              <SiteIcon name="chat" size={16} className="inline" /> LINE 諮詢
             </a>
             <Link
               href="/join"
               className="inline-flex items-center gap-2 px-6 py-3 bg-white border-2 border-[#9F6B3E] text-[#9F6B3E] font-black rounded-full hover:bg-[#9F6B3E] hover:text-white transition-colors min-h-[48px]"
             >
-              🌱 加入 FP
+              <SiteIcon name="sprout" size={14} className="inline" /> 加入 FP
             </Link>
           </div>
         </section>

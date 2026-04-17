@@ -1,11 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { imageUrl } from '@/lib/api';
+import ImageWithFallback, { LogoPlaceholder } from '@/components/ImageWithFallback';
 import { formatPrice } from '@/lib/format';
 import { useAuth } from '@/components/AuthProvider';
+import SiteIcon from '@/components/SiteIcon';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
 
@@ -196,7 +197,7 @@ export default function OrderLookupForm() {
                 <div key={item.product_id} className="flex gap-3 items-center">
                   <div className="relative w-12 h-12 bg-gray-100 rounded-lg overflow-hidden shrink-0">
                     {item.image ? (
-                      <Image
+                      <ImageWithFallback
                         src={imageUrl(item.image)!}
                         alt={item.name}
                         fill
@@ -204,9 +205,7 @@ export default function OrderLookupForm() {
                         className="object-cover"
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-gray-300 text-xs">
-                        無圖
-                      </div>
+                      <LogoPlaceholder />
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -310,7 +309,7 @@ function MyOrdersList({ orders, loading }: { orders: Order[] | null; loading: bo
   if (!orders || orders.length === 0) {
     return (
       <div className="py-12 text-center">
-        <div className="text-5xl mb-3">📭</div>
+        <div className="mb-3"><SiteIcon name="mailbox" size={48} className="text-[#9F6B3E]/30" /></div>
         <p className="text-sm font-black text-gray-700">還沒有訂單</p>
         <Link
           href="/products"
@@ -360,9 +359,9 @@ function MyOrdersList({ orders, loading }: { orders: Order[] | null; loading: bo
                       className="w-10 h-10 rounded-full bg-gradient-to-br from-[#fdf7ef] to-[#f7eee3] border-2 border-white overflow-hidden flex items-center justify-center"
                     >
                       {it.image ? (
-                        <Image src={imageUrl(it.image)!} alt={it.name} width={40} height={40} className="object-cover w-full h-full" />
+                        <ImageWithFallback src={imageUrl(it.image)!} alt={it.name} width={40} height={40} className="object-cover w-full h-full" />
                       ) : (
-                        <span className="text-lg">🛍️</span>
+                        <LogoPlaceholder />
                       )}
                     </div>
                   ))}
@@ -394,9 +393,9 @@ function MyOrdersList({ orders, loading }: { orders: Order[] | null; loading: bo
                       <div key={`${it.product_id}-d-${i}`} className="flex items-center gap-3 bg-white rounded-xl p-2">
                         <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-[#fdf7ef] to-[#f7eee3] overflow-hidden shrink-0 flex items-center justify-center">
                           {it.image ? (
-                            <Image src={imageUrl(it.image)!} alt={it.name} width={48} height={48} className="object-cover w-full h-full" />
+                            <ImageWithFallback src={imageUrl(it.image)!} alt={it.name} width={48} height={48} className="object-cover w-full h-full" />
                           ) : (
-                            <span className="text-lg">🛍️</span>
+                            <LogoPlaceholder />
                           )}
                         </div>
                         <div className="flex-1 min-w-0">

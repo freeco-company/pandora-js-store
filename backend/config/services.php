@@ -41,6 +41,12 @@ return [
         'redirect' => env('GOOGLE_REDIRECT_URI', 'http://localhost:3000/auth/google/callback'),
     ],
 
+    'line' => [
+        'client_id' => env('LINE_CHANNEL_ID'),
+        'client_secret' => env('LINE_CHANNEL_SECRET'),
+        'redirect' => env('LINE_REDIRECT_URI', 'https://pandora-dev.js-store.com.tw/api/auth/line/callback'),
+    ],
+
     'discord' => [
         'compliance_webhook' => env('DISCORD_COMPLIANCE_WEBHOOK'),
         'orders_webhook'     => env('DISCORD_ORDERS_WEBHOOK'),

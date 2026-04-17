@@ -73,6 +73,8 @@ export interface Product {
   /** Badge codes: snq, monde_selection, clean_label, patent, official */
   badges?: string[] | null;
   created_at?: string;
+  /** True when product belongs to a currently-running campaign */
+  is_campaign?: boolean;
   /** Present when product belongs to an active campaign (running or upcoming) */
   active_campaign?: {
     id: number;
@@ -148,9 +150,9 @@ export interface PaginatedResponse<T> {
   total: number;
 }
 
-export const getArticles = (type?: string, page = 1, perPage = 12) =>
+export const getArticles = (type?: string, page = 1, perPage = 12, category?: string) =>
   getPublic<PaginatedResponse<Article>>(
-    `/articles?per_page=${perPage}&page=${page}${type ? `&type=${type}` : ''}`,
+    `/articles?per_page=${perPage}&page=${page}${type ? `&type=${type}` : ''}${category ? `&category=${category}` : ''}`,
     { tags: ['articles'] },
   );
 

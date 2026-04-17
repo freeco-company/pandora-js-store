@@ -27,14 +27,21 @@ export function calculateCartLocally(items: LocalCartItem[]): {
 } {
   const totalQuantity = items.reduce((sum, i) => sum + i.quantity, 0);
 
+  // Campaign VIP override: any campaign product + qty>=2 → straight to VIP
+  const hasCampaignItem = items.some((i) => i.product.is_campaign);
+
   let tier: PricingTier = 'regular';
   if (totalQuantity >= 2) {
-    tier = 'combo';
-    const comboTotal = items.reduce(
-      (sum, i) => sum + getPrice(i.product, 'combo') * i.quantity,
-      0
-    );
-    if (comboTotal >= VIP_THRESHOLD) tier = 'vip';
+    if (hasCampaignItem) {
+      tier = 'vip';
+    } else {
+      tier = 'combo';
+      const comboTotal = items.reduce(
+        (sum, i) => sum + getPrice(i.product, 'combo') * i.quantity,
+        0
+      );
+      if (comboTotal >= VIP_THRESHOLD) tier = 'vip';
+    }
   }
 
   const itemPrices = items.map((i) => {

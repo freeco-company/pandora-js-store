@@ -2,8 +2,10 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import ProductCard from './ProductCard';
+import CategoryPills, { type PillItem } from './CategoryPills';
 import { getProducts, type Product, type ProductCategory } from '@/lib/api';
 import { categoryVisual } from '@/lib/category-visual';
+import SiteIcon from '@/components/SiteIcon';
 
 const SORT_OPTIONS = [
   { value: '', label: '預設排序' },
@@ -120,70 +122,31 @@ export default function ProductBrowser({
   const activeCatObj = categories.find((c) => c.slug === category);
   const activeCatCount = activeCatObj?.products_count ?? null;
 
+  // Build pill items: "全部" + visible categories (hide 未分類 and empty)
+  const pillItems: PillItem[] = useMemo(() => {
+    const items: PillItem[] = [{ key: '', label: '全部', icon: 'sparkle', iconColor: '#E8A93B' }];
+    for (const cat of categories) {
+      if (cat.slug === 'uncategorized' || cat.name === '未分類') continue;
+      if (cat.products_count !== undefined && cat.products_count === 0) continue;
+      const v = categoryVisual(cat.name);
+      items.push({ key: cat.slug, label: cat.name, icon: v.icon, iconColor: v.accent });
+    }
+    return items;
+  }, [categories]);
+
   return (
     <>
-      {/* Category Pills — sticky bar with emoji + count badges */}
       {categories.length > 0 && (
-        <div className="mb-4 -mx-4 sm:mx-0 sticky top-[64px] md:top-[80px] z-20 bg-white/90 backdrop-blur-md py-3 sm:py-4 border-b border-[#e7d9cb]/60">
-          <div className="flex gap-2 px-4 sm:px-0 overflow-x-auto scrollbar-hide snap-x snap-mandatory">
-            <button
-              onClick={() => changeCategory('')}
-              className={`shrink-0 snap-start inline-flex items-center gap-1.5 pl-4 pr-3 py-2 rounded-full text-sm font-black transition-all duration-300 cursor-pointer ${
-                !category
-                  ? 'bg-gradient-to-br from-[#9F6B3E] to-[#85572F] text-white shadow-md shadow-[#9F6B3E]/30 scale-105'
-                  : 'bg-white border border-[#e7d9cb] text-gray-700 hover:border-[#9F6B3E] hover:text-[#9F6B3E]'
-              }`}
-              style={{ opacity: 0, animation: 'pill-in 0.4s cubic-bezier(0.2, 0.9, 0.3, 1.1) 0s forwards' }}
-            >
-              <span className="text-base">✨</span>
-              全部
-              {initialProducts.length > 0 && !category && (
-                <span className="inline-flex items-center justify-center min-w-[22px] h-5 px-1.5 rounded-full bg-white/20 text-[10px] font-black">
-                  {initialProducts.length}
-                </span>
-              )}
-            </button>
-            {categories.map((cat, i) => {
-              const v = categoryVisual(cat.name);
-              const active = category === cat.slug;
-              return (
-                <button
-                  key={cat.id}
-                  onClick={() => changeCategory(cat.slug)}
-                  className={`shrink-0 snap-start inline-flex items-center gap-1.5 pl-3 pr-3 py-2 rounded-full text-sm font-black transition-all duration-300 cursor-pointer ${
-                    active
-                      ? 'bg-gradient-to-br from-[#9F6B3E] to-[#85572F] text-white shadow-md shadow-[#9F6B3E]/30 scale-105'
-                      : 'bg-white border border-[#e7d9cb] text-gray-700 hover:border-[#9F6B3E] hover:text-[#9F6B3E]'
-                  }`}
-                  style={{ opacity: 0, animation: `pill-in 0.4s cubic-bezier(0.2, 0.9, 0.3, 1.1) ${(i + 1) * 50}ms forwards` }}
-                >
-                  <span className="text-base">{v.emoji}</span>
-                  {cat.name}
-                  {cat.products_count !== undefined && cat.products_count > 0 && (
-                    <span className={`inline-flex items-center justify-center min-w-[22px] h-5 px-1.5 rounded-full text-[10px] font-black ${
-                      active ? 'bg-white/20' : 'bg-[#fdf7ef] text-[#9F6B3E]'
-                    }`}>
-                      {cat.products_count}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-          <style>{`
-            @keyframes pill-in {
-              from { opacity: 0; transform: translateY(8px); }
-              to { opacity: 1; transform: translateY(0); }
-            }
-            @keyframes card-in {
-              from { opacity: 0; transform: translateY(16px) scale(0.97); }
-              to { opacity: 1; transform: translateY(0) scale(1); }
-            }
-            .pc-exit { opacity: 0; transform: translateY(-8px) scale(0.98); transition: opacity 180ms ease-out, transform 180ms ease-out; pointer-events: none; }
-            .pc-enter { opacity: 0; animation: card-in 450ms cubic-bezier(0.2, 0.9, 0.3, 1.1) forwards; }
-          `}</style>
-        </div>
+        <CategoryPills items={pillItems} activeKey={category} onChange={changeCategory} />
       )}
+      <style>{`
+        @keyframes card-in {
+          from { opacity: 0; transform: translateY(16px) scale(0.97); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .pc-exit { opacity: 0; transform: translateY(-8px) scale(0.98); transition: opacity 180ms ease-out, transform 180ms ease-out; pointer-events: none; }
+        .pc-enter { opacity: 0; animation: card-in 450ms cubic-bezier(0.2, 0.9, 0.3, 1.1) forwards; }
+      `}</style>
 
       {/* Toolbar — count + active filter chip + sort (single row on desktop) */}
       <div className="flex items-center justify-between gap-3 mb-6">
@@ -197,7 +160,7 @@ export default function ProductBrowser({
               className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#fdf7ef] border border-[#e7d9cb] text-xs font-black text-[#7a5836] hover:bg-[#f7eee3] transition-colors"
               aria-label="清除分類篩選"
             >
-              <span className="text-sm">{categoryVisual(activeCatObj.name).emoji}</span>
+              <SiteIcon name={categoryVisual(activeCatObj.name).icon} size={16} />
               {activeCatObj.name}
               {activeCatCount !== null && <span className="text-[#9F6B3E]">· {activeCatCount}</span>}
               <span className="ml-0.5 text-gray-400">✕</span>
@@ -252,9 +215,9 @@ export default function ProductBrowser({
             phase === 'out' ? 'opacity-0' : 'opacity-100'
           }`}
         >
-          <div className="text-5xl mb-4">🛍️</div>
+          <div className="mb-4"><SiteIcon name="shopping-bag" size={48} className="text-[#9F6B3E]/30" /></div>
           <p className="text-base font-black text-gray-700">這個分類還在準備中</p>
-          <p className="text-sm text-gray-500 mt-2">先看看其他分類吧 ✨</p>
+          <p className="text-sm text-gray-500 mt-2">先看看其他分類吧</p>
         </div>
       )}
     </>

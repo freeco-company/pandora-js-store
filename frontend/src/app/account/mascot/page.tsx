@@ -13,6 +13,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
+import SiteIcon from '@/components/SiteIcon';
 import Mascot from '@/components/Mascot';
 import LogoLoader from '@/components/LogoLoader';
 import {
@@ -120,7 +121,7 @@ export default function MascotHomePage() {
           <div className="text-center">
             <div className="text-[10px] font-black tracking-[0.3em] text-[#9F6B3E]">SPROUT HOME</div>
             <div className="text-sm font-black text-slate-700 flex items-center gap-1.5 mt-0.5">
-              🔥 連續 {data.customer.streak_days} 天
+              <SiteIcon name="fire" size={14} className="inline" /> 連續 {data.customer.streak_days} 天
             </div>
           </div>
           <div className="w-10" />
@@ -139,8 +140,8 @@ export default function MascotHomePage() {
           <div className="absolute -top-4 -right-10 bg-white rounded-2xl px-3 py-2 shadow-md border border-[#e7d9cb] text-[11px] font-black text-slate-700 mascot-wiggle">
             {dirty
               ? previewCanSave
-                ? '✨ 好看呀～要留下來嗎？'
-                : '🔒 這件還沒解鎖呢'
+                ? <><SiteIcon name="sparkle" size={14} className="inline" /> 好看呀～要留下來嗎？</>
+                : <><SiteIcon name="lock" size={12} className="inline" /> 這件還沒解鎖呢</>
               : '嗨 ~ 今天想換什麼？'}
           </div>
         </div>
@@ -176,7 +177,7 @@ export default function MascotHomePage() {
                 : 'bg-slate-200 text-slate-400 cursor-not-allowed'
             }`}
           >
-            {saving ? '儲存中…' : previewCanSave ? '💖 儲存裝扮' : '🔒 未解鎖'}
+            {saving ? '儲存中…' : previewCanSave ? <><SiteIcon name="sparkle" size={14} className="inline" /> 儲存裝扮</> : <><SiteIcon name="lock" size={14} className="inline" /> 未解鎖</>}
           </button>
           <style jsx>{`
             @keyframes save-bar-in {
@@ -194,7 +195,7 @@ export default function MascotHomePage() {
           <div className="flex gap-1 pt-4">
             {(['outfit', 'backdrop', 'achievements'] as const).map((t) => {
               const active = tab === t;
-              const label = t === 'outfit' ? '👒 服裝' : t === 'backdrop' ? '🎨 背景' : '🏆 成就';
+              const label = t === 'outfit' ? <><SiteIcon name="ribbon" size={14} className="inline" /> 服裝</> : t === 'backdrop' ? <><SiteIcon name="sparkle" size={14} className="inline" /> 背景</> : <><SiteIcon name="trophy" size={14} className="inline" /> 成就</>;
               let ownedCount: number, total: number;
               if (t === 'outfit') {
                 ownedCount = Object.keys(data.outfits.catalog).filter((c) => ownedCodes.has(c)).length;
@@ -234,7 +235,7 @@ export default function MascotHomePage() {
           {tab === 'outfit' && (
             <PickerGrid
               items={[
-                { code: '__none__', meta: { name: '不穿戴', emoji: '🚫' }, owned: true, previewValue: null },
+                { code: '__none__', meta: { name: '不穿戴', emoji: 'no-entry' }, owned: true, previewValue: null },
                 ...Object.entries(data.outfits.catalog).map(([code, meta]) => ({
                   code,
                   meta,
@@ -249,7 +250,7 @@ export default function MascotHomePage() {
           {tab === 'backdrop' && (
             <PickerGrid
               items={[
-                { code: '__none__', meta: { name: '素雅', emoji: '🚫' }, owned: true, previewValue: null },
+                { code: '__none__', meta: { name: '素雅', emoji: 'no-entry' }, owned: true, previewValue: null },
                 ...Object.entries(data.outfits.backdrops).map(([code, meta]) => ({
                   code,
                   meta,
@@ -274,7 +275,7 @@ export default function MascotHomePage() {
                       earned ? 'bg-white border border-[#e7d9cb] shadow-sm' : 'bg-slate-100 opacity-55'
                     }`}
                   >
-                    <div className={`text-3xl mb-1 ${earned ? '' : 'grayscale'}`}>{def.emoji}</div>
+                    <div className={`text-3xl mb-1 ${earned ? '' : 'grayscale'}`}><SiteIcon name={def.emoji} size={32} /></div>
                     <div className={`text-[10px] font-black leading-tight ${earned ? 'text-slate-800' : 'text-slate-400'}`}>
                       {def.name}
                     </div>
@@ -338,7 +339,7 @@ function PickerGrid({
           >
             {!item.owned && (
               <span className="absolute top-1 right-1 w-5 h-5 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center text-[10px] font-black">
-                🔒
+                <SiteIcon name="lock" size={14} />
               </span>
             )}
             {isCurrent && (
@@ -347,7 +348,7 @@ function PickerGrid({
               </span>
             )}
             <span className={`text-2xl sm:text-3xl ${!item.owned ? 'grayscale opacity-60' : ''}`}>
-              {item.owned ? item.meta.emoji : '🔒'}
+              <SiteIcon name={item.owned ? item.meta.emoji : 'lock'} size={24} />
             </span>
             <span className={`text-[10px] font-black leading-tight ${isCurrent ? 'text-white' : item.owned ? 'text-slate-800' : 'text-slate-400'}`}>
               {item.meta.name}

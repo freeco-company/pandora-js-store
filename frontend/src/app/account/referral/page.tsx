@@ -12,6 +12,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
 import { useToast } from '@/components/Toast';
 import LogoLoader from '@/components/LogoLoader';
+import SiteIcon from '@/components/SiteIcon';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
 
@@ -75,13 +76,13 @@ export default function ReferralPage() {
 
       {/* Stats */}
       <section className="grid grid-cols-2 gap-3">
-        <StatCard label="已邀請人數" value={`${data.referrals_count} 位`} emoji="🤝" />
-        <StatCard label="首單完成" value={`${data.referrals_success} 位`} emoji="✅" />
+        <StatCard label="已邀請人數" value={`${data.referrals_count} 位`} emoji="handshake" />
+        <StatCard label="首單完成" value={`${data.referrals_success} 位`} emoji="check-circle" />
       </section>
 
       {/* How it works */}
       <section className="bg-white rounded-3xl border border-[#e7d9cb] p-5 sm:p-6">
-        <h2 className="text-base font-black text-slate-800 mb-4">🎁 運作方式</h2>
+        <h2 className="text-base font-black text-slate-800 mb-4"><SiteIcon name="gift" size={16} className="inline" /> 運作方式</h2>
         <ol className="space-y-3">
           {[
             { step: '1', title: '分享邀請碼', desc: '複製上方邀請碼或完整連結，貼給朋友' },
@@ -107,7 +108,7 @@ export default function ReferralPage() {
           onClick={() => copy(link)}
           className="w-full px-5 py-3 rounded-2xl bg-[#fdf7ef] border border-[#e7d9cb] text-[#9F6B3E] font-black text-sm text-left flex items-center justify-between active:bg-[#f7eee3]"
         >
-          <span className="truncate">🔗 {link}</span>
+          <span className="truncate"><SiteIcon name="link" size={14} className="inline" /> {link}</span>
           <span className="text-xs shrink-0 ml-2">複製</span>
         </button>
         <div className="grid grid-cols-2 gap-2">
@@ -116,7 +117,7 @@ export default function ReferralPage() {
             target="_blank" rel="noopener"
             className="flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-[#06C755] text-white font-black text-sm"
           >
-            💬 LINE 分享
+            <SiteIcon name="chat" size={16} /> LINE 分享
           </a>
           <button
             onClick={() => copy(shareText)}
@@ -137,7 +138,7 @@ export default function ReferralPage() {
 function StatCard({ emoji, label, value }: { emoji: string; label: string; value: string }) {
   return (
     <div className="bg-white rounded-2xl border border-[#e7d9cb] p-4 text-center">
-      <div className="text-2xl">{emoji}</div>
+      <div className="flex justify-center"><SiteIcon name={emoji} size={24} /></div>
       <div className="text-[10px] font-black text-slate-400 tracking-wider mt-1">{label}</div>
       <div className="text-base font-black text-slate-800 mt-0.5">{value}</div>
     </div>

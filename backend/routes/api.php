@@ -16,9 +16,11 @@ use App\Http\Controllers\Api\PopupController;
 use App\Http\Controllers\Api\ProductController;
 use Illuminate\Support\Facades\Route;
 
-// Auth (Google OAuth)
+// Auth (Google + LINE OAuth)
 Route::get('/auth/google', [AuthController::class, 'redirectToGoogle']);
 Route::get('/auth/google/callback', [AuthController::class, 'handleGoogleCallback']);
+Route::get('/auth/line', [AuthController::class, 'redirectToLine']);
+Route::get('/auth/line/callback', [AuthController::class, 'handleLineCallback']);
 Route::middleware('auth:sanctum')->get('/auth/me', [AuthController::class, 'me']);
 
 // Products

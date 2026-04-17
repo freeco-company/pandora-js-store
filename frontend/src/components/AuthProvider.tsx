@@ -11,6 +11,7 @@ interface AuthState {
   loading: boolean;
   isLoggedIn: boolean;
   login: () => void;
+  loginWithLine: () => void;
   logout: () => void;
   setAuth: (token: string, customer: Customer) => void;
 }
@@ -21,6 +22,7 @@ const AuthContext = createContext<AuthState>({
   loading: true,
   isLoggedIn: false,
   login: () => {},
+  loginWithLine: () => {},
   logout: () => {},
   setAuth: () => {},
 });
@@ -98,6 +100,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
   }, []);
 
+  const loginWithLine = useCallback(() => {
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('pandora-login-redirect', window.location.href);
+    }
+
+    fetch(`${API_URL}/auth/line`, {
+      headers: { Accept: 'application/json' },
+    })
+      .then((res) => res.json())
+      .then((data: { url: string }) => {
+        window.location.href = data.url;
+      })
+      .catch(() => {
+        console.error('Failed to get LINE OAuth URL');
+      });
+  }, []);
+
   const logout = useCallback(() => {
     localStorage.removeItem(TOKEN_KEY);
     setToken(null);
@@ -118,6 +137,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loading,
         isLoggedIn: !!customer,
         login,
+        loginWithLine,
         logout,
         setAuth,
       }}

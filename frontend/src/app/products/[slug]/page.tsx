@@ -13,6 +13,7 @@ import StockNotifyButton from '@/components/StockNotifyButton';
 import ProductGallery from '@/components/ProductGallery';
 import ShareButtons from '@/components/ShareButtons';
 import CrossSellAddOn from '@/components/CrossSellAddOn';
+import SiteIcon from '@/components/SiteIcon';
 import CampaignPricing from '@/components/CampaignPricing';
 import { sanitizeHtml } from '@/lib/sanitize';
 import type { Product } from '@/lib/api';
@@ -41,6 +42,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: product.seo_meta?.title || product.name,
       description: product.seo_meta?.description || product.short_description,
       openGraph: {
+        type: 'website',
         title: product.name,
         description: product.short_description,
         images: product.seo_meta?.og_image
@@ -228,10 +230,10 @@ export default async function ProductDetailPage({ params }: Props) {
                 <div className="relative pt-2">
                   <div className="rounded-2xl bg-white border border-[#e7d9cb] p-3 text-center h-full">
                     <div className="flex items-center justify-center gap-1 text-[10px] font-black text-gray-400 tracking-wider mb-1">
-                      <span>🌱</span>階梯 1
+                      <SiteIcon name="sprout" size={14} className="inline" />階梯 1
                     </div>
                     <div className="text-[10px] text-gray-500 mb-0.5">單件</div>
-                    <div className="text-lg sm:text-xl font-black text-gray-900">
+                    <div className="text-xl sm:text-2xl font-black text-[#c0392b]">
                       {formatPrice(product.price)}
                     </div>
                   </div>
@@ -245,10 +247,10 @@ export default async function ProductDetailPage({ params }: Props) {
                     </span>
                     <div className="rounded-2xl bg-gradient-to-br from-[#fdf7ef] to-[#f7eee3] border-2 border-[#9F6B3E]/40 p-3 text-center shadow-sm shadow-[#9F6B3E]/15 h-full">
                       <div className="flex items-center justify-center gap-1 text-[10px] font-black text-[#9F6B3E] tracking-wider mb-1">
-                        <span>🎀</span>階梯 2
+                        <SiteIcon name="ribbon" size={14} className="inline" />階梯 2
                       </div>
                       <div className="text-[10px] text-[#9F6B3E]/80 mb-0.5">任選 2 件</div>
-                      <div className="text-lg sm:text-xl font-black text-[#9F6B3E]">
+                      <div className="text-xl sm:text-2xl font-black text-[#c0392b]">
                         {formatPrice(product.combo_price)}
                       </div>
                     </div>
@@ -267,7 +269,7 @@ export default async function ProductDetailPage({ params }: Props) {
                     <div className="rounded-2xl bg-gradient-to-br from-[#9F6B3E] via-[#8d5f36] to-[#6b4424] text-white p-3 text-center relative overflow-hidden shadow-md shadow-[#9F6B3E]/30 h-full">
                       <span className="absolute -top-6 -right-6 w-16 h-16 rounded-full bg-white/10" />
                       <div className="relative flex items-center justify-center gap-1 text-[10px] font-black text-[#fcd561] tracking-wider mb-1">
-                        <span>👑</span>階梯 3
+                        <SiteIcon name="crown" size={14} className="inline" />階梯 3
                       </div>
                       <div className="relative text-[10px] text-white/70 mb-0.5">滿 $4,000</div>
                       <div className="relative text-lg sm:text-xl font-black">
@@ -287,7 +289,7 @@ export default async function ProductDetailPage({ params }: Props) {
               {/* Contextual upgrade hint */}
               {product.combo_price && product.vip_price && (
                 <div className="mt-3 flex items-center gap-2 text-[11px] text-[#7a5836] bg-[#fdf7ef] border border-[#e7d9cb] rounded-xl px-3 py-2">
-                  <span>💡</span>
+                  <SiteIcon name="sparkle" size={14} className="inline" />
                   <span className="flex-1">
                     整車搭配越多越省 — 滿 $4,000 自動升級 VIP 價
                     <strong className="text-[#9F6B3E] ml-1">

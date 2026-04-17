@@ -9,6 +9,7 @@
 import { useState } from 'react';
 import { useAuth } from './AuthProvider';
 import { useToast } from './Toast';
+import SiteIcon from '@/components/SiteIcon';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
 
@@ -55,7 +56,7 @@ export default function StockNotifyButton({ slug }: { slug: string }) {
         disabled={state === 'submitting'}
         className="w-full py-3 px-6 font-semibold rounded-full bg-white border-2 border-[#9F6B3E] text-[#9F6B3E] hover:bg-[#fdf7ef] transition-colors disabled:opacity-50"
       >
-        {state === 'submitting' ? '處理中…' : '🔔 到貨通知我'}
+        {state === 'submitting' ? '處理中…' : <><SiteIcon name="bell" size={16} className="inline" /> 到貨通知我</>}
       </button>
     );
   }
@@ -92,7 +93,7 @@ export default function StockNotifyButton({ slug }: { slug: string }) {
       onClick={() => setState('form')}
       className="w-full py-3 px-6 font-semibold rounded-full bg-white border-2 border-[#9F6B3E] text-[#9F6B3E] hover:bg-[#fdf7ef] transition-colors"
     >
-      🔔 到貨通知我
+      <SiteIcon name="bell" size={16} className="inline" /> 到貨通知我
     </button>
   );
 }

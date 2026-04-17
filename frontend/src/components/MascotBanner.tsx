@@ -12,6 +12,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import Mascot from './Mascot';
 import ActivationQuest, { type ActivationProgress } from './ActivationQuest';
+import SiteIcon from '@/components/SiteIcon';
 import { useAuth } from './AuthProvider';
 import { getCustomerDashboard } from '@/lib/api';
 import { stageFromStreak } from '@/lib/achievements';
@@ -87,7 +88,7 @@ export default function MascotBanner() {
               />
               {isLoggedIn && outfit && (
                 <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-white/90 backdrop-blur rounded-full text-[9px] font-black text-[#9F6B3E] shadow-sm whitespace-nowrap">
-                  ✨ 穿戴中
+                  <SiteIcon name="sparkle" size={12} className="inline" /> 穿戴中
                 </span>
               )}
             </div>
@@ -96,8 +97,8 @@ export default function MascotBanner() {
           <div className="flex-1 min-w-0">
             <div className="text-[10px] font-black tracking-[0.2em] text-[#7a5836] mb-1">
               {isLoggedIn
-                ? streak > 0 ? `🌿 連續 ${streak} 天` : '🌱 今日首訪'
-                : '🌱 仙女任務'}
+                ? streak > 0 ? <><SiteIcon name="leaf" size={12} className="inline" /> 連續 {streak} 天</> : <><SiteIcon name="sprout" size={12} className="inline" /> 今日首訪</>
+                : <><SiteIcon name="sprout" size={12} className="inline" /> 仙女任務</>}
             </div>
             <h2 className="text-xl sm:text-2xl font-black text-slate-800 mb-2">
               {isLoggedIn ? '哈囉仙女，今天想逛點什麼呢？' : '嗨～我是芽芽，要和我一起玩嗎？'}
@@ -107,7 +108,7 @@ export default function MascotBanner() {
             {isLoggedIn && nextMilestone > 0 && (
               <div className="mb-4">
                 <div className="flex items-center justify-between text-[11px] font-black mb-1">
-                  <span className="text-[#9F6B3E]">下一個里程碑 🔥 {nextMilestone} 天</span>
+                  <span className="text-[#9F6B3E]">下一個里程碑 <SiteIcon name="fire" size={12} className="inline" /> {nextMilestone} 天</span>
                   <span className="text-slate-500">{streak} / {nextMilestone}</span>
                 </div>
                 <div className="h-2 rounded-full bg-white/60 overflow-hidden">

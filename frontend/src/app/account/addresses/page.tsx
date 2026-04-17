@@ -14,6 +14,7 @@ import {
   type CustomerAddress,
 } from '@/lib/api';
 import { TW_CITIES, districtsFor, zipFor } from '@/lib/tw-regions';
+import SiteIcon from '@/components/SiteIcon';
 
 type Draft = Omit<CustomerAddress, 'id'>;
 const emptyDraft: Draft = {
@@ -137,7 +138,7 @@ export default function AddressesPage() {
 
       {addresses.length === 0 ? (
         <div className="bg-white rounded-3xl border border-[#e7d9cb] p-10 text-center">
-          <div className="text-5xl mb-3">📍</div>
+          <div className="text-5xl mb-3"><SiteIcon name="target" size={48} className="text-[#9F6B3E]/30" /></div>
           <p className="text-sm font-black text-slate-700 mb-1">還沒有儲存地址</p>
           <p className="text-[11px] text-slate-500">新增常用地址，下次結帳一鍵選取</p>
         </div>

@@ -1,24 +1,25 @@
 /**
- * Shared category visual metadata — emoji + tint color.
+ * Shared category visual metadata — icon + tint color.
  * Used by product category pills (list page) and category cards (homepage)
  * so both surfaces stay visually consistent.
+ *
+ * Each category gets a distinct accent colour so the page isn't monochrome.
  */
 
 export interface CategoryVisual {
-  emoji: string;
-  accent: string;    // tailwind-friendly hex for pill active fill
-  ringTint: string;  // ring color for inactive pill
+  icon: string;      // SiteIcon name identifier
+  accent: string;    // pill active fill / text colour
+  ringTint: string;  // card background tint
 }
 
-const DEFAULT: CategoryVisual = { emoji: '🌼', accent: '#9F6B3E', ringTint: '#e7d9cb' };
+const DEFAULT: CategoryVisual = { icon: 'flower', accent: '#9F6B3E', ringTint: '#e7d9cb' };
 
 const MAP: Array<{ match: RegExp; visual: CategoryVisual }> = [
-  { match: /體重/, visual: { emoji: '💪', accent: '#d89a4e', ringTint: '#f1d9a0' } },
-  { match: /健康活力/, visual: { emoji: '🌿', accent: '#6b9e3c', ringTint: '#cae89e' } },
-  { match: /健康維持/, visual: { emoji: '🍃', accent: '#388a7a', ringTint: '#b7dad1' } },
-  { match: /美容美體/, visual: { emoji: '🌸', accent: '#d04d7d', ringTint: '#f9c5d4' } },
-  { match: /美容保養|保養/, visual: { emoji: '✨', accent: '#E0748C', ringTint: '#f9b3c9' } },
-  { match: /健康保健|保健/, visual: { emoji: '🍃', accent: '#4A9D5F', ringTint: '#c4e5c8' } },
+  { match: /健康活力/, visual: { icon: 'leaf', accent: '#4A9D5F', ringTint: '#d4edda' } },
+  { match: /健康維持/, visual: { icon: 'leaf-falling', accent: '#2E8B7A', ringTint: '#c5e4de' } },
+  { match: /美容美體/, visual: { icon: 'cherry-blossom', accent: '#D04D7D', ringTint: '#fad4e2' } },
+  { match: /旅遊/, visual: { icon: 'airplane', accent: '#2980B9', ringTint: '#c9e4f5' } },
+  { match: /露營/, visual: { icon: 'tent', accent: '#D4762C', ringTint: '#f5dfc5' } },
 ];
 
 export function categoryVisual(name: string | null | undefined): CategoryVisual {

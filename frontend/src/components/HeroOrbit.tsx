@@ -123,7 +123,7 @@ export default function HeroOrbit({ size = 420, className = '' }: Props) {
       {/* 芽芽 mascot at the center — tap to visit */}
       <button
         type="button"
-        onClick={() => tap('mascot', isLoggedIn ? '進入芽芽之家 🌱' : '登入解鎖芽芽 🌱', isLoggedIn ? '/account/mascot' : '/account')}
+        onClick={() => tap('mascot', isLoggedIn ? '進入芽芽之家' : '登入解鎖芽芽', isLoggedIn ? '/account/mascot' : '/account')}
         className={`absolute flex items-center justify-center hero-mascot-float cursor-pointer transition-transform duration-300 ${tapped === 'mascot' ? 'scale-125' : ''}`}
         style={{ inset: '22%' }}
         aria-label="進入芽芽之家"
@@ -139,7 +139,7 @@ export default function HeroOrbit({ size = 420, className = '' }: Props) {
       {/* 健康內在 (right-top) */}
       <button
         type="button"
-        onClick={() => tap('health', '保健食品 · 由內而外 🌿', '/products?category=health')}
+        onClick={() => tap('health', '保健食品 · 由內而外', '/products?category=health')}
         className={`absolute bg-white shadow-2xl flex flex-col items-center justify-center hero-orbit-a rounded-2xl cursor-pointer transition-transform duration-300 ${tapped === 'health' ? 'scale-110' : 'active:scale-95'}`}
         style={{
           width: bigBadge, height: bigBadge,

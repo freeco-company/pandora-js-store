@@ -292,27 +292,93 @@ function Face({ mood, stage }: { mood: MascotMood; stage: MascotStage }) {
 function OutfitOverlay({ code, stage }: { code: string; stage: MascotStage }) {
   const y = stage === 'seedling' ? 40 : stage === 'sprout' ? 18 : 14;
 
+  const ey = stage === 'seedling' ? 58 : stage === 'sprout' ? 37 : 34;
+  const sy = stage === 'bloom' ? 50 : stage === 'sprout' ? 55 : 65;
+
   switch (code) {
     case 'acorn_hat':
-      return <text x="50" y={y + 8} textAnchor="middle" fontSize="14">🌰</text>;
+      return (
+        <g transform={`translate(50, ${y + 4})`}>
+          <ellipse rx="6" ry="3" fill="#8B5E3C" />
+          <circle cy="-3" r="4.5" fill="#A0522D" />
+          <rect x="-1.5" y="-7" width="3" height="3" rx="1" fill="#5D4037" />
+        </g>
+      );
     case 'ribbon':
-      return <text x="50" y={y + 8} textAnchor="middle" fontSize="14">🎀</text>;
+      return (
+        <g transform={`translate(50, ${y + 4})`}>
+          <path d="M-5 0L0-4L5 0L0 2Z" fill="#E0748C" />
+          <path d="M-6 1L0 4L6 1" stroke="#E0748C" strokeWidth="1.5" fill="none" />
+          <circle r="1.5" fill="#d4627a" />
+        </g>
+      );
     case 'beret':
-      return <text x="50" y={y + 8} textAnchor="middle" fontSize="14">🎩</text>;
+      return (
+        <g transform={`translate(50, ${y + 3})`}>
+          <ellipse rx="8" ry="3" fill="#5D4037" />
+          <ellipse cy="-2" rx="6.5" ry="4" fill="#6D4C41" />
+          <circle cy="-5" r="1" fill="#4E342E" />
+        </g>
+      );
     case 'flower_crown':
-      return <text x="50" y={y + 8} textAnchor="middle" fontSize="16">🌸</text>;
+      return (
+        <g transform={`translate(50, ${y + 2})`}>
+          {[-6, -2, 2, 6].map((x) => (
+            <circle key={x} cx={x} r="2.5" fill="#F7A8B8" opacity="0.8" />
+          ))}
+          {[-4, 0, 4].map((x) => (
+            <circle key={x} cx={x} cy="-1" r="1" fill="#FCE374" opacity="0.7" />
+          ))}
+        </g>
+      );
     case 'star_halo':
-      return <text x="50" y={y + 6} textAnchor="middle" fontSize="16">✨</text>;
+      return (
+        <g transform={`translate(50, ${y})`}>
+          <path d="M0-7L1.2-1.2L7 0L1.2 1.2L0 7L-1.2 1.2L-7 0L-1.2-1.2Z" fill="#FCE374" opacity="0.7" />
+          <circle cx="-5" cy="-4" r="0.8" fill="#FCE374" opacity="0.5" />
+          <circle cx="5" cy="-3" r="0.6" fill="#FCE374" opacity="0.5" />
+        </g>
+      );
     case 'glasses':
-      return <text x="50" y={(stage === 'seedling' ? 58 : stage === 'sprout' ? 37 : 34)} textAnchor="middle" fontSize="10">👓</text>;
+      return (
+        <g transform={`translate(50, ${ey - 2})`}>
+          <circle cx="-4" r="3" stroke="#5D4037" strokeWidth="0.8" fill="none" />
+          <circle cx="4" r="3" stroke="#5D4037" strokeWidth="0.8" fill="none" />
+          <path d="M-1 0h2" stroke="#5D4037" strokeWidth="0.6" />
+          <path d="M-7 -1h0M7 -1h0" stroke="#5D4037" strokeWidth="0.6" />
+        </g>
+      );
     case 'sunglasses':
-      return <text x="50" y={(stage === 'seedling' ? 58 : stage === 'sprout' ? 37 : 34)} textAnchor="middle" fontSize="10">🕶️</text>;
+      return (
+        <g transform={`translate(50, ${ey - 2})`}>
+          <path d="M-7-1C-7-1-6-2-4-2S-1-1-1-1" stroke="#333" strokeWidth="1" fill="#333" opacity="0.7" />
+          <path d="M1-1C1-1 2-2 4-2S7-1 7-1" stroke="#333" strokeWidth="1" fill="#333" opacity="0.7" />
+          <path d="M-1 -1h2" stroke="#333" strokeWidth="0.8" />
+        </g>
+      );
     case 'heart_eyes':
-      return <text x="50" y={(stage === 'seedling' ? 58 : stage === 'sprout' ? 37 : 34)} textAnchor="middle" fontSize="10">😍</text>;
+      return (
+        <g transform={`translate(50, ${ey - 1})`}>
+          <path d="M-6 0c0-2 1.5-3 3-1.5 1.5-1.5 3 -.5 3 1.5 0 2.5-3 4-3 4s-3-1.5-3-4z" fill="#E0748C" />
+          <path d="M3 0c0-2 1.5-3 3-1.5 1.5-1.5 3 -.5 3 1.5 0 2.5-3 4-3 4s-3-1.5-3-4z" fill="#E0748C" />
+        </g>
+      );
     case 'scarf':
-      return <text x="50" y={stage === 'bloom' ? 50 : stage === 'sprout' ? 55 : 65} textAnchor="middle" fontSize="12">🧣</text>;
+      return (
+        <g transform={`translate(50, ${sy})`}>
+          <path d="M-8 0C-8-2 8-2 8 0" stroke="#C62828" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+          <path d="M6 0v5" stroke="#C62828" strokeWidth="2" strokeLinecap="round" />
+          <path d="M4 0v4" stroke="#C62828" strokeWidth="1.5" strokeLinecap="round" opacity="0.7" />
+        </g>
+      );
     case 'pearl':
-      return <text x="50" y={stage === 'bloom' ? 50 : stage === 'sprout' ? 55 : 65} textAnchor="middle" fontSize="10">🫧</text>;
+      return (
+        <g transform={`translate(50, ${sy})`}>
+          {[-5, -2, 1, 4].map((x) => (
+            <circle key={x} cx={x} r="1.8" fill="#e8e0d8" stroke="#d4c8bc" strokeWidth="0.4" />
+          ))}
+        </g>
+      );
     default:
       return null;
   }

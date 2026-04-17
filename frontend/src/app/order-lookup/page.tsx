@@ -3,6 +3,7 @@ import OrderLookupForm from './OrderLookupForm';
 import FloatingShapes from '@/components/FloatingShapes';
 import ScrollReveal from '@/components/ScrollReveal';
 import TextReveal from '@/components/TextReveal';
+import SiteIcon from '@/components/SiteIcon';
 
 export const metadata: Metadata = {
   title: '訂單查詢',
@@ -60,12 +61,12 @@ export default function OrderLookupPage() {
         <ScrollReveal variant="fade-up" delay={200}>
           <div className="mt-6 grid grid-cols-3 gap-3 text-center">
             {[
-              { i: '📦', t: '即時追蹤', d: '出貨進度' },
-              { i: '🔒', t: '安全加密', d: 'HTTPS' },
-              { i: '💬', t: '1 對 1 客服', d: '真人回覆' },
+              { i: 'package', t: '即時追蹤', d: '出貨進度' },
+              { i: 'lock', t: '安全加密', d: 'HTTPS' },
+              { i: 'chat', t: '1 對 1 客服', d: '真人回覆' },
             ].map((item, i) => (
               <div key={i} className="p-3 rounded-2xl bg-gradient-to-br from-[#fdf7ef] to-[#f7eee3] border border-[#e7d9cb]">
-                <div className="text-2xl mb-1">{item.i}</div>
+                <div className="mb-1 text-[#9F6B3E]"><SiteIcon name={item.i} size={28} /></div>
                 <div className="text-xs font-black text-gray-800">{item.t}</div>
                 <div className="text-[10px] text-gray-500 mt-0.5">{item.d}</div>
               </div>
