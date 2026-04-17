@@ -1,12 +1,39 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Mascot from './Mascot';
+import { useAuth } from './AuthProvider';
+import { getCustomerDashboard, type CustomerDashboard } from '@/lib/api';
+import { stageFromStreak, type MascotStage, type MascotMood } from '@/lib/achievements';
 
 /**
  * Hero orbit visual — central glowing orb with 芽芽 mascot at center,
  * floating badges + orbit rings.
- * Responsive: `size` controls the orb; badges scale proportionally.
+ *
+ * When logged in: reads user's outfit, backdrop, streak stage.
+ * Backdrop changes the ORB color itself — the whole sphere is 芽芽's world.
  */
+
+// Orb gradient per backdrop — maps backdrop code → radial-gradient for the sphere
+const ORB_GRADIENTS: Record<string, string> = {
+  default: 'radial-gradient(circle at 30% 30%, #ffffff, #f7c79a 45%, #c9935a 80%, #9F6B3E 100%)',
+  meadow:  'radial-gradient(circle at 30% 30%, #ffffff, #a5d6a7 45%, #66bb6a 80%, #388e3c 100%)',
+  garden:  'radial-gradient(circle at 30% 30%, #ffffff, #f8bbd0 45%, #ec407a 80%, #c2185b 100%)',
+  sakura:  'radial-gradient(circle at 30% 30%, #fff0f5, #f48fb1 45%, #e91e63 80%, #ad1457 100%)',
+  starry:  'radial-gradient(circle at 30% 30%, #e8eaf6, #7986cb 45%, #3949ab 80%, #1a237e 100%)',
+  rainbow: 'radial-gradient(circle at 30% 30%, #ffffff, #fad0c4 35%, #a1c4fd 65%, #667eea 100%)',
+  beach:   'radial-gradient(circle at 30% 30%, #ffffff, #80deea 45%, #26c6da 80%, #0097a7 100%)',
+};
+
+const ORB_SHADOWS: Record<string, string> = {
+  default: '0 30px 80px -20px rgba(159,107,62,0.5), inset 0 0 80px rgba(255,255,255,0.4)',
+  meadow:  '0 30px 80px -20px rgba(56,142,60,0.4), inset 0 0 80px rgba(255,255,255,0.4)',
+  garden:  '0 30px 80px -20px rgba(194,24,91,0.4), inset 0 0 80px rgba(255,255,255,0.4)',
+  sakura:  '0 30px 80px -20px rgba(173,20,87,0.4), inset 0 0 80px rgba(255,255,255,0.3)',
+  starry:  '0 30px 80px -20px rgba(26,35,126,0.5), inset 0 0 80px rgba(200,200,255,0.3)',
+  rainbow: '0 30px 80px -20px rgba(102,126,234,0.4), inset 0 0 80px rgba(255,255,255,0.4)',
+  beach:   '0 30px 80px -20px rgba(0,151,167,0.4), inset 0 0 80px rgba(255,255,255,0.4)',
+};
 
 interface Props {
   size?: number;
@@ -14,6 +41,30 @@ interface Props {
 }
 
 export default function HeroOrbit({ size = 420, className = '' }: Props) {
+  const { token, isLoggedIn } = useAuth();
+  const [mascotState, setMascotState] = useState<{
+    stage: MascotStage; mood: MascotMood;
+    outfit: string | null; backdrop: string | null;
+  }>({ stage: 'sprout', mood: 'happy', outfit: null, backdrop: null });
+
+  useEffect(() => {
+    if (!token || !isLoggedIn) return;
+    let cancelled = false;
+    getCustomerDashboard(token).then((d) => {
+      if (cancelled) return;
+      setMascotState({
+        stage: stageFromStreak(d.customer.streak_days),
+        mood: d.customer.streak_days >= 3 ? 'excited' : 'happy',
+        outfit: d.customer.current_outfit,
+        backdrop: d.customer.current_backdrop,
+      });
+    }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [token, isLoggedIn]);
+
+  const backdropKey = mascotState.backdrop || 'default';
+  const orbGradient = ORB_GRADIENTS[backdropKey] || ORB_GRADIENTS.default;
+  const orbShadow = ORB_SHADOWS[backdropKey] || ORB_SHADOWS.default;
   const s = size / 420;
 
   const bigBadge = Math.round(100 * s);
@@ -37,14 +88,13 @@ export default function HeroOrbit({ size = 420, className = '' }: Props) {
         <circle cx="50" cy="50" r="52" fill="none" stroke="#9F6B3E" strokeWidth="0.1" opacity="0.15" strokeDasharray="2 6" />
       </svg>
 
-      {/* Central orb */}
+      {/* Central orb — backdrop changes the entire sphere color */}
       <div
-        className="absolute rounded-full hero-orb"
+        className="absolute rounded-full hero-orb transition-all duration-1000"
         style={{
           inset: '8%',
-          background: 'radial-gradient(circle at 30% 30%, #ffffff, #f7c79a 45%, #c9935a 80%, #9F6B3E 100%)',
-          boxShadow:
-            '0 30px 80px -20px rgba(159, 107, 62, 0.5), inset 0 0 80px rgba(255,255,255,0.4)',
+          background: orbGradient,
+          boxShadow: orbShadow,
         }}
       />
 
@@ -57,14 +107,17 @@ export default function HeroOrbit({ size = 420, className = '' }: Props) {
         }}
       />
 
-      {/* 芽芽 mascot at the center of the sphere */}
+      {/* 芽芽 mascot at the center — reads user's outfit/stage */}
       <div
         className="absolute flex items-center justify-center hero-mascot-float"
-        style={{
-          inset: '22%',
-        }}
+        style={{ inset: '22%' }}
       >
-        <Mascot stage="sprout" mood="happy" size={Math.round(size * 0.38)} />
+        <Mascot
+          stage={mascotState.stage}
+          mood={mascotState.mood}
+          outfit={mascotState.outfit}
+          size={Math.round(size * 0.38)}
+        />
       </div>
 
       {/* 健康內在 (right-top) */}
