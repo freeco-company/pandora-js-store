@@ -12,7 +12,7 @@ class Product extends Model
     protected $fillable = [
         'name', 'slug', 'description', 'short_description',
         'price', 'combo_price', 'vip_price', 'sale_price',
-        'sku', 'hf_cert_no', 'hf_cert_claim',
+        'sku', 'hf_cert_no', 'hf_cert_claim', 'badges',
         'stock_quantity', 'stock_status', 'weight',
         'image', 'gallery', 'is_active', 'sort_order', 'wp_id',
     ];
@@ -22,6 +22,7 @@ class Product extends Model
         'combo_price' => 'decimal:2',
         'vip_price' => 'decimal:2',
         'sale_price' => 'decimal:2',
+        'badges' => 'array',
         'gallery' => 'array',
         'is_active' => 'boolean',
         'weight' => 'decimal:2',

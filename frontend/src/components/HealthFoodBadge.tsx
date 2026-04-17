@@ -1,37 +1,53 @@
 /**
- * 衛福部健康食品認證 badge ("小綠人").
+ * Product badge system — unified chips for ProductCard + full cards for detail.
  *
- * Render conditionally when the product has both:
- *   - hf_cert_no   (例：衛部健食字第 A00455 號)
- *   - hf_cert_claim (例：輔助調節血脂)
- *
- * Small variant for product cards, full variant for product detail page.
+ * Badge catalog with consistent colors so cards have equal height.
  */
 
+export const BADGE_CATALOG: Record<string, { label: string; color: string; bg: string; border: string }> = {
+  health_food:     { label: '健康食品',    color: 'text-[#2e7d32]', bg: 'bg-[#e8f5e9]', border: 'border-[#c8e6c9]' },
+  snq:             { label: 'SNQ 品質標章', color: 'text-[#1565c0]', bg: 'bg-[#e3f2fd]', border: 'border-[#bbdefb]' },
+  monde_selection: { label: 'Monde Selection', color: 'text-[#e65100]', bg: 'bg-[#fff3e0]', border: 'border-[#ffe0b2]' },
+  clean_label:     { label: '潔淨標章 A.A.', color: 'text-[#2e7d32]', bg: 'bg-[#f1f8e9]', border: 'border-[#dcedc8]' },
+  patent:          { label: '專利配方',    color: 'text-[#6a1b9a]', bg: 'bg-[#f3e5f5]', border: 'border-[#e1bee7]' },
+  official:        { label: '官方授權',    color: 'text-[#9F6B3E]', bg: 'bg-[#fdf7ef]', border: 'border-[#e7d9cb]' },
+};
+
+/** Render 1-2 badge chips for a product card. Always renders at least "官方授權". */
+export function ProductBadges({ badges, hfCertNo }: { badges?: string[] | null; hfCertNo?: string | null }) {
+  const codes: string[] = [];
+  if (hfCertNo) codes.push('health_food');
+  if (badges) codes.push(...badges.filter((b) => b !== 'health_food'));
+  if (codes.length === 0) codes.push('official');
+
+  // Show max 2 chips to keep card height consistent
+  return (
+    <div className="flex flex-wrap gap-1 min-h-[22px]">
+      {codes.slice(0, 2).map((code) => {
+        const def = BADGE_CATALOG[code];
+        if (!def) return null;
+        return (
+          <span
+            key={code}
+            className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] sm:text-[10px] font-black border ${def.color} ${def.bg} ${def.border}`}
+          >
+            {def.label}
+          </span>
+        );
+      })}
+    </div>
+  );
+}
+
+/** Full health-food cert card for product detail page */
 export function HealthFoodBadge({
   certNo,
   claim,
-  variant = 'full',
 }: {
   certNo?: string | null;
   claim?: string | null;
-  variant?: 'full' | 'chip';
 }) {
   if (!certNo || !claim) return null;
-
-  if (variant === 'chip') {
-    return (
-      <span
-        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#e8f5e9] text-[#2e7d32] text-[10px] font-black border border-[#c8e6c9]"
-        title={`${certNo}｜${claim}`}
-      >
-        <svg viewBox="0 0 24 24" className="w-3 h-3" fill="currentColor" aria-hidden="true">
-          <path d="M12 2a4.5 4.5 0 00-4.5 4.5c0 1.1.4 2.1 1.07 2.9A6 6 0 006 15v6h12v-6a6 6 0 00-2.57-5.6A4.46 4.46 0 0016.5 6.5 4.5 4.5 0 0012 2zm0 2a2.5 2.5 0 012.5 2.5A2.5 2.5 0 0112 9a2.5 2.5 0 01-2.5-2.5A2.5 2.5 0 0112 4z" />
-        </svg>
-        健康食品
-      </span>
-    );
-  }
 
   return (
     <div className="flex items-start gap-3 p-3.5 rounded-xl bg-gradient-to-br from-[#f1f8e9] to-[#e8f5e9] border border-[#c8e6c9]">

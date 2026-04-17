@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { type Product, imageUrl } from '@/lib/api';
 import { formatPrice } from '@/lib/format';
-import { HealthFoodBadge } from './HealthFoodBadge';
+import { ProductBadges } from './HealthFoodBadge';
 import { useCart } from './CartProvider';
 import { flyToCart } from '@/lib/animations';
 import { useToast } from './Toast';
@@ -108,11 +108,9 @@ export default function ProductCard({ product }: { product: Product }) {
       </Link>
 
       <div className="p-2.5 sm:p-4">
-        {(product.hf_cert_no && product.hf_cert_claim) && (
-          <div className="mb-1.5">
-            <HealthFoodBadge certNo={product.hf_cert_no} claim={product.hf_cert_claim} variant="chip" />
-          </div>
-        )}
+        <div className="mb-1">
+          <ProductBadges badges={product.badges} hfCertNo={product.hf_cert_no} />
+        </div>
         <Link href={`/products/${product.slug}`}>
           <h3 className="font-semibold text-gray-900 mb-1 sm:mb-2 text-xs sm:text-base line-clamp-2 hover:text-[#9F6B3E] transition-colors">
             {product.name}
