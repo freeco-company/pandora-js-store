@@ -50,7 +50,8 @@ class Product extends Model
     }
 
     /**
-     * Is this product part of any currently-running campaign?
+     * Currently-running campaign this product belongs to.
+     * Only returns during active period (start_at <= now < end_at).
      */
     public function getActiveCampaignAttribute(): ?Campaign
     {

@@ -73,13 +73,15 @@ export interface Product {
   /** Badge codes: snq, monde_selection, clean_label, patent, official */
   badges?: string[] | null;
   created_at?: string;
-  /** Present when product belongs to a running campaign */
+  /** Present when product belongs to an active campaign (running or upcoming) */
   active_campaign?: {
     id: number;
     name: string;
     slug: string;
     description: string;
+    start_at: string;
     end_at: string;
+    is_running: boolean;
     campaign_price: number;
   } | null;
 }

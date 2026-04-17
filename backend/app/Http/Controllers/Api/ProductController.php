@@ -82,7 +82,7 @@ class ProductController extends Controller
                 ->firstOrFail();
             $data = $this->normalizeProduct($product)->toArray();
 
-            // Append active campaign info if product is part of a running campaign
+            // Append campaign info if product belongs to an active (running or upcoming) campaign
             $campaign = $product->active_campaign;
             if ($campaign) {
                 $data['active_campaign'] = [
@@ -90,7 +90,9 @@ class ProductController extends Controller
                     'name' => $campaign->name,
                     'slug' => $campaign->slug,
                     'description' => $campaign->description,
+                    'start_at' => $campaign->start_at->toISOString(),
                     'end_at' => $campaign->end_at->toISOString(),
+                    'is_running' => $campaign->isRunning(),
                     'campaign_price' => (float) ($campaign->pivot->campaign_price ?? $product->sale_price ?? $product->price),
                 ];
             }

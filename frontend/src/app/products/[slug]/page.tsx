@@ -204,7 +204,7 @@ export default async function ProductDetailPage({ params }: Props) {
             {product.name}
           </h1>
 
-          {product.short_description && (
+          {product.short_description && !product.active_campaign && (
             <ShortDescription text={product.short_description} />
           )}
 
@@ -216,7 +216,7 @@ export default async function ProductDetailPage({ params }: Props) {
 
           {/* Pricing: campaign deal OR 3-tier */}
           {product.active_campaign ? (
-            <CampaignPricing campaign={product.active_campaign} originalPrice={product.price} />
+            <CampaignPricing campaign={product.active_campaign} originalPrice={product.price} shortDescription={product.short_description} />
           ) : (
             <div className="mb-6">
               <div className="flex items-center justify-between mb-3">
