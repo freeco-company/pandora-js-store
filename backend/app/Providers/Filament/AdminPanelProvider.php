@@ -26,28 +26,75 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
-            ->brandName('婕樂纖仙女館')
+
+            // ── Branding ──
+            ->brandName('仙女館 Admin')
+            ->favicon('/favicon.svg')
+
+            // ── Login ──
             ->login()
+            ->loginRouteSlug('login')
+
+            // ── Colors: brand gold-brown system ──
             ->colors([
-                'primary' => Color::Rose,
+                'primary' => Color::hex('#9F6B3E'),
+                'danger' => Color::Red,
+                'info' => Color::Sky,
+                'success' => Color::Emerald,
+                'warning' => Color::Amber,
                 'gray' => Color::Stone,
             ])
+
+            // ── Dark mode off — light brand theme ──
+            ->darkMode(false)
+
+            // ── Navigation groups (Chinese) ──
             ->navigationGroups([
-                '商品管理',
                 '訂單管理',
+                '商品管理',
+                '行銷管理',
                 '內容管理',
                 '系統管理',
             ])
+
+            // ── Typography ──
             ->font('Noto Sans TC')
+
+            // ── Sidebar collapsible on desktop ──
+            ->sidebarCollapsibleOnDesktop()
+
+            // ── Max content width ──
+            ->maxContentWidth('full')
+
+            // ── Spa mode for faster nav (no full page reload) ──
+            ->spa()
+
+            // ── Global search ──
+            ->globalSearch()
+            ->globalSearchKeyBindings(['command+k', 'ctrl+k'])
+
+            // ── Custom CSS for micro-interactions ──
+            ->renderHook(
+                \Filament\View\PanelsRenderHook::HEAD_END,
+                fn () => new \Illuminate\Support\HtmlString(
+                    '<link rel="stylesheet" href="/css/filament-custom.css?v=' . filemtime(public_path('css/filament-custom.css') ?: 0) . '">'
+                ),
+            )
+
+            // ── Resources & Pages ──
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->pages([
                 Dashboard::class,
             ])
+
+            // ── Widgets ──
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
                 AccountWidget::class,
             ])
+
+            // ── Middleware ──
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
