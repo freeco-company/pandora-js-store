@@ -241,6 +241,9 @@ export default function CartPage() {
 
       {/* Summary — breakdown always, CTA button only on desktop (mobile uses sticky) */}
       <div className="bg-gray-50 rounded-[10px] p-6">
+        {/* 營養師陪伴 / 陪跑班 progress — only when slimming items in cart */}
+        <SlimmingProgress items={items} itemPrices={itemPrices} />
+
         <div className="space-y-3">
           <div className="flex justify-between text-sm">
             <span className="text-gray-600">商品原價小計</span>
@@ -270,38 +273,6 @@ export default function CartPage() {
             </p>
           )}
         </div>
-
-        {/* 營養師陪伴班 reminder — only 纖體系列 (slimming) products count */}
-        {(() => {
-          const slimmingTotal = items
-            .filter((it) => it.product.categories?.some((c) => c.slug === 'slimming'))
-            .reduce((sum, it) => {
-              const pi = itemPrices.find((p) => p.productId === it.product.id);
-              return sum + (pi ? pi.subtotal : it.product.price * it.quantity);
-            }, 0);
-
-          if (slimmingTotal >= 6600) return (
-            <div className="mt-4 flex items-start gap-2.5 p-3 bg-gradient-to-r from-[#e8f5e9] to-[#f1f8e9] border border-[#c8e6c9] rounded-xl text-[12px] text-[#2e7d32] leading-relaxed">
-              <span className="text-lg shrink-0">🥗</span>
-              <div>
-                <p className="font-black text-sm">恭喜！纖體系列已達營養師陪伴班門檻</p>
-                <p className="mt-1">完成訂單後，私訊截圖即可加入營養師專屬飲食指導與持續追蹤。</p>
-              </div>
-            </div>
-          );
-
-          if (slimmingTotal > 0 && slimmingTotal < 6600) return (
-            <div className="mt-4 flex items-start gap-2.5 p-3 bg-[#fdf7ef] border border-[#e7d9cb] rounded-xl text-[12px] text-[#7a5836] leading-relaxed">
-              <span className="text-lg shrink-0">💡</span>
-              <div>
-                <p className="font-black text-sm">纖體系列再加 {formatPrice(6600 - slimmingTotal)} 即可加入營養師陪伴班</p>
-                <p className="mt-1">纖體商品滿 $6,600 享營養師專屬飲食指導，完成訂單私訊截圖即可啟動。</p>
-              </div>
-            </div>
-          );
-
-          return null;
-        })()}
 
         {/* Desktop CTA — mobile has sticky bottom bar */}
         <Link
@@ -442,6 +413,125 @@ export default function CartPage() {
 
       {/* Mobile sticky CTA — bottom-fixed, shows total/savings/checkout */}
       <CartStickyCTA />
+    </div>
+  );
+}
+
+/**
+ * 2-tier progress bar for 營養師服務:
+ *   Tier 1: $3,840 → 陪伴班 (飲食指導)
+ *   Tier 2: $6,600 → 陪跑班 (持續追蹤)
+ * Only visible when cart has slimming products.
+ */
+function SlimmingProgress({
+  items,
+  itemPrices,
+}: {
+  items: { product: { id: number; price: number; categories?: { slug: string }[] }; quantity: number }[];
+  itemPrices: { productId: number; subtotal: number }[];
+}) {
+  const TIER1 = 3840;
+  const TIER2 = 6600;
+
+  const slimmingTotal = items
+    .filter((it) => it.product.categories?.some((c) => c.slug === 'slimming'))
+    .reduce((sum, it) => {
+      const pi = itemPrices.find((p) => p.productId === it.product.id);
+      return sum + (pi ? pi.subtotal : it.product.price * it.quantity);
+    }, 0);
+
+  if (slimmingTotal <= 0) return null;
+
+  const pct = Math.min(100, (slimmingTotal / TIER2) * 100);
+  const tier1Pct = (TIER1 / TIER2) * 100;
+  const reachedTier1 = slimmingTotal >= TIER1;
+  const reachedTier2 = slimmingTotal >= TIER2;
+
+  return (
+    <div className="mb-5 pb-5 border-b border-gray-200">
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-[11px] font-black text-[#7a5836] tracking-wider">纖體系列專屬服務</span>
+        <span className="text-[11px] font-bold text-gray-400">
+          纖體小計 ${slimmingTotal.toLocaleString()}
+        </span>
+      </div>
+
+      {/* Progress bar */}
+      <div className="relative h-2.5 bg-gray-200 rounded-full overflow-visible">
+        {/* Fill */}
+        <div
+          className="absolute inset-y-0 left-0 rounded-full transition-all duration-500"
+          style={{
+            width: `${pct}%`,
+            background: reachedTier2
+              ? 'linear-gradient(90deg, #4A9D5F, #2e7d32)'
+              : reachedTier1
+                ? 'linear-gradient(90deg, #9F6B3E, #E8A93B)'
+                : 'linear-gradient(90deg, #e7d9cb, #9F6B3E)',
+          }}
+        />
+        {/* Tier 1 marker */}
+        <div
+          className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full border-2 border-white shadow-sm z-10"
+          style={{
+            left: `${tier1Pct}%`,
+            transform: `translateX(-50%) translateY(-50%)`,
+            background: reachedTier1 ? '#9F6B3E' : '#d4d4d8',
+          }}
+        />
+        {/* Tier 2 marker */}
+        <div
+          className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full border-2 border-white shadow-sm z-10"
+          style={{
+            left: '100%',
+            transform: 'translateX(-50%) translateY(-50%)',
+            background: reachedTier2 ? '#2e7d32' : '#d4d4d8',
+          }}
+        />
+      </div>
+
+      {/* Labels under bar */}
+      <div className="relative mt-1.5 text-[10px] font-bold" style={{ height: 32 }}>
+        <div className="absolute" style={{ left: `${tier1Pct}%`, transform: 'translateX(-50%)' }}>
+          <div className={reachedTier1 ? 'text-[#9F6B3E]' : 'text-gray-400'}>
+            {reachedTier1 ? '✓' : `$${TIER1.toLocaleString()}`}
+          </div>
+          <div className={reachedTier1 ? 'text-[#9F6B3E]' : 'text-gray-400'}>陪伴班</div>
+        </div>
+        <div className="absolute right-0 text-right">
+          <div className={reachedTier2 ? 'text-[#2e7d32]' : 'text-gray-400'}>
+            {reachedTier2 ? '✓' : `$${TIER2.toLocaleString()}`}
+          </div>
+          <div className={reachedTier2 ? 'text-[#2e7d32]' : 'text-gray-400'}>陪跑班</div>
+        </div>
+      </div>
+
+      {/* Status text */}
+      {reachedTier2 ? (
+        <div className="flex items-center gap-2 mt-1 p-2.5 bg-[#e8f5e9] rounded-lg">
+          <span className="text-base">🎉</span>
+          <div className="text-[11px] text-[#2e7d32]">
+            <span className="font-black">已達陪跑班門檻！</span>
+            <span className="ml-1">完成訂單後私訊截圖即可啟動。</span>
+          </div>
+        </div>
+      ) : reachedTier1 ? (
+        <div className="flex items-center gap-2 mt-1 p-2.5 bg-[#fdf7ef] rounded-lg">
+          <span className="text-base">✨</span>
+          <div className="text-[11px] text-[#7a5836]">
+            <span className="font-black">已達陪伴班！</span>
+            <span className="ml-1">再加 ${(TIER2 - slimmingTotal).toLocaleString()} 升級陪跑班。</span>
+          </div>
+        </div>
+      ) : (
+        <div className="flex items-center gap-2 mt-1 p-2.5 bg-gray-100 rounded-lg">
+          <span className="text-base">💡</span>
+          <div className="text-[11px] text-gray-600">
+            <span className="font-black">再加 ${(TIER1 - slimmingTotal).toLocaleString()}</span>
+            <span className="ml-1">纖體商品即可加入營養師陪伴班。</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
