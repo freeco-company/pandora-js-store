@@ -4,6 +4,7 @@ import FloatingShapes from '@/components/FloatingShapes';
 import ScrollReveal from '@/components/ScrollReveal';
 import TextReveal from '@/components/TextReveal';
 import Mascot from '@/components/Mascot';
+import ScrollMascotGrowth from '@/components/ScrollMascotGrowth';
 import { breadcrumbSchema, jsonLdScript } from '@/lib/jsonld';
 
 export const revalidate = 86400;
@@ -183,33 +184,48 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* ═══ JOURNEY ═══ */}
-      <section className="py-16 sm:py-24" style={{ background: 'linear-gradient(180deg, #fff 0%, #fdf7ef 50%, #fff 100%)' }}>
+      {/* ═══ JOURNEY — scroll-driven mascot growth ═══ */}
+      <section className="py-16 sm:py-24 relative" style={{ background: 'linear-gradient(180deg, #fff 0%, #fdf7ef 50%, #fff 100%)' }}>
         <div className="max-w-5xl mx-auto px-5 sm:px-8">
           <ScrollReveal variant="fade-up">
-            <div className="text-center mb-14">
+            <div className="text-center mb-8">
               <div className="text-[10px] font-black tracking-[0.3em] text-[#9F6B3E] mb-2">YOUR JOURNEY</div>
               <h2 className="text-2xl sm:text-3xl font-black text-[#3d2e22]">你的蛻變旅程</h2>
+              <p className="text-sm text-gray-500 mt-2">向下捲動，看芽芽跟你一起成長</p>
             </div>
           </ScrollReveal>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[
-              { step: '01', icon: Icon.Leaf, title: '遇見', desc: '第一次認識婕樂纖，對健康有了新的想像', color: 'from-[#e8f5e9] to-[#c8e6c9]', iconColor: 'text-[#4caf50]' },
-              { step: '02', icon: Icon.Sparkles, title: '探索', desc: '了解三階梯定價，找到最適合自己的組合搭配', color: 'from-[#fdf7ef] to-[#f7eee3]', iconColor: 'text-[#9F6B3E]' },
-              { step: '03', icon: Icon.Heart, title: '蛻變', desc: '營養師陪伴，堅持讓改變發生，看見自己的不同', color: 'from-[#fce4ec] to-[#f8bbd0]', iconColor: 'text-[#e91e63]' },
-              { step: '04', icon: Icon.Star, title: '綻放', desc: '成為自信的潘朵拉，把好東西分享給身邊的人', color: 'from-[#fff8e1] to-[#ffecb3]', iconColor: 'text-[#ff8f00]' },
-            ].map((s, i) => (
-              <ScrollReveal key={s.step} variant="fade-up" delay={i * 120}>
-                <div className={`bg-gradient-to-br ${s.color} rounded-3xl p-6 h-full border border-white/50 hover:shadow-lg hover:-translate-y-1 transition-all`}>
-                  <div className="text-[10px] font-black tracking-[0.2em] text-gray-400 mb-3">STEP {s.step}</div>
-                  <div className={`w-12 h-12 rounded-xl bg-white/70 flex items-center justify-center ${s.iconColor} mb-3`}>
-                    {s.icon('w-6 h-6')}
+
+          {/* Desktop: mascot left, steps right. Mobile: mascot center, steps below */}
+          <div className="flex flex-col lg:flex-row items-start gap-8 lg:gap-12">
+            {/* Scroll-driven mascot — sticky on desktop */}
+            <div className="w-full lg:w-auto lg:sticky lg:top-24 flex justify-center lg:block shrink-0">
+              <ScrollMascotGrowth size={220} className="drop-shadow-xl" />
+            </div>
+
+            {/* 4 journey steps */}
+            <div className="flex-1 space-y-6">
+              {[
+                { step: '01', icon: Icon.Leaf, title: '遇見', desc: '第一次認識婕樂纖，對健康有了新的想像。一顆小小的種子，悄悄種在心裡。', color: 'from-[#e8f5e9] to-[#c8e6c9]', iconColor: 'text-[#4caf50]' },
+                { step: '02', icon: Icon.Sparkles, title: '探索', desc: '了解三階梯定價，搭配最適合自己的組合。根扎得更深，葉子開始伸展。', color: 'from-[#fdf7ef] to-[#f7eee3]', iconColor: 'text-[#9F6B3E]' },
+                { step: '03', icon: Icon.Heart, title: '蛻變', desc: '營養師陪伴，堅持讓改變發生。一天一天，你開始看見自己的不同。', color: 'from-[#fce4ec] to-[#f8bbd0]', iconColor: 'text-[#e91e63]' },
+                { step: '04', icon: Icon.Star, title: '綻放', desc: '成為自信的潘朵拉。花開了，你把這份美好分享給身邊的人。', color: 'from-[#fff8e1] to-[#ffecb3]', iconColor: 'text-[#ff8f00]' },
+              ].map((s, i) => (
+                <ScrollReveal key={s.step} variant="fade-up" delay={i * 80}>
+                  <div className={`bg-gradient-to-br ${s.color} rounded-3xl p-6 sm:p-8 border border-white/50 hover:shadow-lg transition-all`}>
+                    <div className="flex items-start gap-4">
+                      <div className={`w-12 h-12 rounded-xl bg-white/70 flex items-center justify-center ${s.iconColor} shrink-0`}>
+                        {s.icon('w-6 h-6')}
+                      </div>
+                      <div>
+                        <div className="text-[10px] font-black tracking-[0.2em] text-gray-400 mb-1">STEP {s.step}</div>
+                        <h3 className="text-lg font-black text-[#3d2e22]">{s.title}</h3>
+                        <p className="text-sm text-gray-600 mt-2 leading-relaxed">{s.desc}</p>
+                      </div>
+                    </div>
                   </div>
-                  <h3 className="text-lg font-black text-[#3d2e22]">{s.title}</h3>
-                  <p className="text-sm text-gray-600 mt-2 leading-relaxed">{s.desc}</p>
-                </div>
-              </ScrollReveal>
-            ))}
+                </ScrollReveal>
+              ))}
+            </div>
           </div>
         </div>
       </section>
