@@ -14,6 +14,7 @@ import Analytics from '@/components/Analytics';
 import CustomCursor from '@/components/CustomCursor';
 import MobileDrawer from '@/components/MobileDrawer';
 import MobileBottomNavWrapper from '@/components/MobileBottomNavWrapper';
+import LenisProvider from '@/components/LenisProvider';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://shop.jerosse.tw';
 
@@ -87,6 +88,7 @@ export default function RootLayout({
         >
           跳到主要內容
         </a>
+        <LenisProvider>
         <CartProvider>
           <ToastProvider>
             <AuthProvider>
@@ -113,6 +115,7 @@ export default function RootLayout({
             </AuthProvider>
           </ToastProvider>
         </CartProvider>
+        </LenisProvider>
       </body>
     </html>
   );
