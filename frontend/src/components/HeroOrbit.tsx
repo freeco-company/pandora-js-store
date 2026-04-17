@@ -166,7 +166,7 @@ export default function HeroOrbit({ size = 420, className = '' }: Props) {
       {/* 玉山獎 (left-bottom) */}
       <button
         type="button"
-        onClick={() => tap('award', '2025 玉山獎 · 25 座大獎 🏆', '/team')}
+        onClick={() => tap('award', '2025 玉山獎 · 25 座大獎 🏆', '/about')}
         className={`absolute bg-gradient-to-br from-[#9F6B3E] to-[#85572F] shadow-2xl flex flex-col items-center justify-center hero-orbit-c text-white rounded-2xl cursor-pointer transition-transform duration-300 ${tapped === 'award' ? 'scale-110' : 'active:scale-95'}`}
         style={{
           width: midBadge, height: midBadge,

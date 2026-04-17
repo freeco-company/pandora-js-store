@@ -33,7 +33,7 @@ export async function GET() {
     `- [最新文章](${siteUrl}/articles)`,
     `- [關於我們](${siteUrl}/about)`,
     `- [加入 FP](${siteUrl}/join)`,
-    `- [FP 團隊](${siteUrl}/team)`,
+    `- [FP 團隊](${siteUrl}/about)`,
     `- [常見問題](${siteUrl}/faq)`,
     `- [退換貨政策](${siteUrl}/return-policy)`,
     `- [隱私權政策](${siteUrl}/privacy)`,
