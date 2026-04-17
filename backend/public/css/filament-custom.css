@@ -18,10 +18,12 @@
 .fi-topbar { border-bottom-color: #e7d9cb !important; }
 .fi-topbar-loading-indicator { background: linear-gradient(90deg,transparent,#9F6B3E,transparent) !important; }
 
-/* Cards */
-.fi-section, .fi-ta-record, .fi-wi-stats-overview-stat { border-radius: 16px !important; border-color: #e7d9cb !important; transition: transform 0.3s cubic-bezier(0.2,0.9,0.3,1), box-shadow 0.3s cubic-bezier(0.2,0.9,0.3,1) !important; }
-.fi-ta-record:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(159,107,62,0.1) !important; }
+/* Cards & sections (but NOT grid records — those use fi-ta-content-grid) */
+.fi-section, .fi-wi-stats-overview-stat { border-radius: 16px !important; border-color: #e7d9cb !important; transition: transform 0.3s cubic-bezier(0.2,0.9,0.3,1), box-shadow 0.3s cubic-bezier(0.2,0.9,0.3,1) !important; }
 .fi-wi-stats-overview-stat:hover { transform: translateY(-3px); box-shadow: 0 12px 40px rgba(159,107,62,0.15) !important; }
+/* Table rows only — scoped via table wrapper so grid cards are untouched */
+.fi-ta-table .fi-ta-record { border-color: #e7d9cb !important; transition: transform 0.3s cubic-bezier(0.2,0.9,0.3,1), box-shadow 0.3s cubic-bezier(0.2,0.9,0.3,1) !important; }
+.fi-ta-table .fi-ta-record:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(159,107,62,0.1) !important; }
 
 /* Buttons */
 .fi-btn { border-radius: 12px !important; font-weight: 700 !important; transition: all 0.2s ease !important; }
@@ -31,14 +33,14 @@
 .fi-input-wrp { border-radius: 12px !important; border-color: #e7d9cb !important; transition: border-color 0.2s, box-shadow 0.2s !important; }
 .fi-input-wrp:focus-within { border-color: #9F6B3E !important; box-shadow: 0 0 0 2px rgba(159,107,62,0.15) !important; }
 
-/* Row fade-in */
-.fi-ta-record { animation: row-in 0.4s cubic-bezier(0.2,0.9,0.3,1) backwards; }
-.fi-ta-record:nth-child(1) { animation-delay: 0ms; }
-.fi-ta-record:nth-child(2) { animation-delay: 30ms; }
-.fi-ta-record:nth-child(3) { animation-delay: 60ms; }
-.fi-ta-record:nth-child(4) { animation-delay: 90ms; }
-.fi-ta-record:nth-child(5) { animation-delay: 120ms; }
-.fi-ta-record:nth-child(n+6) { animation-delay: 150ms; }
+/* Row fade-in — scoped to table only, not grid cards */
+.fi-ta-table .fi-ta-record { animation: row-in 0.4s cubic-bezier(0.2,0.9,0.3,1) backwards; }
+.fi-ta-table .fi-ta-record:nth-child(1) { animation-delay: 0ms; }
+.fi-ta-table .fi-ta-record:nth-child(2) { animation-delay: 30ms; }
+.fi-ta-table .fi-ta-record:nth-child(3) { animation-delay: 60ms; }
+.fi-ta-table .fi-ta-record:nth-child(4) { animation-delay: 90ms; }
+.fi-ta-table .fi-ta-record:nth-child(5) { animation-delay: 120ms; }
+.fi-ta-table .fi-ta-record:nth-child(n+6) { animation-delay: 150ms; }
 @keyframes row-in { from { opacity:0; transform: translateY(10px); } to { opacity:1; transform: translateY(0); } }
 
 /* Stats stagger */
