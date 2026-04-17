@@ -13,28 +13,27 @@ export const BADGE_CATALOG: Record<string, { label: string; color: string; bg: s
   official:        { label: '官方授權',    color: 'text-[#9F6B3E]', bg: 'bg-[#fdf7ef]', border: 'border-[#e7d9cb]' },
 };
 
-/** Render 1-2 badge chips for a product card. Always renders at least "官方授權". */
+/** Priority order — show the most impressive badge only, keeps card height uniform. */
+const BADGE_PRIORITY = ['health_food', 'snq', 'monde_selection', 'clean_label', 'patent', 'official'];
+
+/** Render 1 badge chip for a product card. Always renders something. */
 export function ProductBadges({ badges, hfCertNo }: { badges?: string[] | null; hfCertNo?: string | null }) {
   const codes: string[] = [];
   if (hfCertNo) codes.push('health_food');
   if (badges) codes.push(...badges.filter((b) => b !== 'health_food'));
   if (codes.length === 0) codes.push('official');
 
-  // Show max 2 chips to keep card height consistent
+  // Pick the single highest-priority badge
+  const best = BADGE_PRIORITY.find((p) => codes.includes(p)) || codes[0];
+  const def = BADGE_CATALOG[best] || BADGE_CATALOG.official;
+
   return (
-    <div className="flex flex-wrap gap-1 min-h-[22px]">
-      {codes.slice(0, 2).map((code) => {
-        const def = BADGE_CATALOG[code];
-        if (!def) return null;
-        return (
-          <span
-            key={code}
-            className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] sm:text-[10px] font-black border ${def.color} ${def.bg} ${def.border}`}
-          >
-            {def.label}
-          </span>
-        );
-      })}
+    <div className="h-[20px] flex items-center">
+      <span
+        className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] sm:text-[10px] font-black leading-none border whitespace-nowrap ${def.color} ${def.bg} ${def.border}`}
+      >
+        {def.label}
+      </span>
     </div>
   );
 }
