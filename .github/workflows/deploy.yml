@@ -14,7 +14,7 @@ jobs:
     uses: ./.github/workflows/ci.yml
 
   deploy:
-    name: Rsync + rebuild + pm2 reload
+    name: Pre-build + rsync + zero-downtime reload
     needs: test                 # only deploy if CI green
     runs-on: ubuntu-latest
     outputs:
@@ -22,6 +22,30 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # ── Frontend pre-build in CI (7GB RAM, no OOM risk) ──────────
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend deps
+        run: cd frontend && npm ci --no-audit --no-fund
+
+      - name: Build Next.js (CI, not server)
+        env:
+          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+          NEXT_PUBLIC_STORAGE_URL: ${{ secrets.NEXT_PUBLIC_STORAGE_URL }}
+          NEXT_PUBLIC_SITE_URL: ${{ secrets.NEXT_PUBLIC_SITE_URL }}
+          NEXT_PUBLIC_GA_ID: ${{ secrets.NEXT_PUBLIC_GA_ID }}
+          NEXT_PUBLIC_GOOGLE_ADS_ID: ${{ secrets.NEXT_PUBLIC_GOOGLE_ADS_ID }}
+          NEXT_PUBLIC_APP_VERSION: ${{ github.sha }}
+        run: |
+          cd frontend
+          NODE_OPTIONS='--max-old-space-size=4096' npm run build 2>&1 | tail -10
+
+      # ── SSH setup ────────────────────────────────────────────────
       - name: Setup SSH
         uses: webfactory/ssh-agent@v0.9.0
         with:
@@ -30,6 +54,7 @@ jobs:
       - name: Add server to known_hosts
         run: ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
 
+      # ── Rsync backend source ─────────────────────────────────────
       - name: Rsync backend
         run: |
           rsync -az \
@@ -42,10 +67,11 @@ jobs:
             --exclude='.env*' \
             backend/ root@${{ secrets.SERVER_HOST }}:/var/www/pandora/backend/
 
-      - name: Rsync frontend
+      # ── Rsync frontend source + pre-built .next ──────────────────
+      - name: Rsync frontend (source + .next build output)
         run: |
           rsync -az \
-            --exclude='node_modules/' --exclude='.next/' --exclude='.git/' \
+            --exclude='node_modules/' --exclude='.git/' \
             --exclude='.env*' \
             frontend/ root@${{ secrets.SERVER_HOST }}:/var/www/pandora/frontend/
 
@@ -53,6 +79,7 @@ jobs:
         run: |
           rsync -az scripts/ root@${{ secrets.SERVER_HOST }}:/var/www/pandora/scripts/ || true
 
+      # ── Backend install + migrate + cache ────────────────────────
       - name: Backend install + migrate + cache
         run: |
           ssh -o ServerAliveInterval=30 -o ServerAliveCountMax=120 root@${{ secrets.SERVER_HOST }} bash -s <<'EOF'
@@ -60,9 +87,6 @@ jobs:
             cd /var/www/pandora/backend
             composer install --no-dev --optimize-autoloader --no-interaction 2>&1 | tail -3
             rm -f bootstrap/cache/*.php
-            # Publish Filament + Livewire + storage assets BEFORE caching
-            # routes/config, else /fonts/filament/... and livewire.min.js
-            # 404 on /admin because public/ never got the files written.
             php artisan filament:assets 2>&1 | tail -2
             php artisan storage:link || true
             php artisan view:clear
@@ -71,27 +95,21 @@ jobs:
             php artisan migrate --force
           EOF
 
-      - name: Frontend install + build + pm2 reload
-        # Server has 1.9GB RAM + 512MB swap. npm run build peaks near the
-        # memory cap so:
-        #  - stop pm2's next-server before building (frees ~220MB of heap)
-        #  - NODE_OPTIONS=--max-old-space-size=1024 leaves headroom for PHP/MariaDB
-        #  - SSH keepalive prevents broken-pipe when build takes >60s of no stdout
-        #    (the failure mode we hit on cf32752 deploy).
+      # ── Frontend: just npm install + pm2 reload (no build!) ──────
+      - name: Frontend install + graceful reload
         run: |
           ssh -o ServerAliveInterval=30 -o ServerAliveCountMax=120 root@${{ secrets.SERVER_HOST }} bash -s <<'EOF'
             set -e
             cd /var/www/pandora/frontend
-            npm install --prefer-offline --no-audit --no-fund 2>&1 | tail -3
-            pm2 stop pandora-frontend || true
-            rm -rf .next
-            NODE_OPTIONS='--max-old-space-size=1024' npm run build 2>&1 | tail -8
-            pm2 restart pandora-frontend
+            # .next/ was already rsynced from CI pre-build — no npm run build needed!
+            npm install --prefer-offline --no-audit --no-fund --production 2>&1 | tail -3
+            # Graceful reload: new workers start, old ones drain — zero downtime
+            pm2 reload pandora-frontend || pm2 restart pandora-frontend
             : > /root/.pm2/logs/pandora-frontend-error-0.log
           EOF
 
       - name: Wait for frontend warm up
-        run: sleep 8
+        run: sleep 5
 
       - name: Smoke test (live)
         id: smoke
