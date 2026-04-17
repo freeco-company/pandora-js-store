@@ -418,10 +418,9 @@ export default function CartPage() {
 }
 
 /**
- * 2-tier progress bar for 營養師服務:
- *   Tier 1: $3,840 → 陪伴班 (飲食指導)
- *   Tier 2: $6,600 → 陪跑班 (持續追蹤)
- * Only visible when cart has slimming products.
+ * 2-tier progress for 營養師服務:
+ *   Tier 1: $3,840 → 陪伴班
+ *   Tier 2: $6,600 → 陪跑班
  */
 function SlimmingProgress({
   items,
@@ -430,6 +429,7 @@ function SlimmingProgress({
   items: { product: { id: number; price: number; categories?: { slug: string }[] }; quantity: number }[];
   itemPrices: { productId: number; subtotal: number }[];
 }) {
+  const [showDiff, setShowDiff] = useState(false);
   const TIER1 = 3840;
   const TIER2 = 6600;
 
@@ -442,93 +442,80 @@ function SlimmingProgress({
 
   if (slimmingTotal <= 0) return null;
 
-  const pct = Math.min(100, (slimmingTotal / TIER2) * 100);
-  const tier1Pct = (TIER1 / TIER2) * 100;
   const reachedTier1 = slimmingTotal >= TIER1;
   const reachedTier2 = slimmingTotal >= TIER2;
 
+  // Status message
+  const statusMsg = reachedTier2
+    ? { icon: '🎉', bg: 'bg-[#e8f5e9]', color: 'text-[#2e7d32]', bold: '已達陪跑班門檻！', rest: '完成訂單後私訊截圖即可啟動。' }
+    : reachedTier1
+      ? { icon: '✨', bg: 'bg-[#fdf7ef]', color: 'text-[#7a5836]', bold: '已達陪伴班！', rest: `再加 $${(TIER2 - slimmingTotal).toLocaleString()} 可升級陪跑班。` }
+      : { icon: '💡', bg: 'bg-gray-50', color: 'text-gray-600', bold: `再加 $${(TIER1 - slimmingTotal).toLocaleString()}`, rest: '纖體商品即可加入營養師陪伴班。' };
+
   return (
-    <div className="mb-5 pb-5 border-b border-gray-200">
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-[11px] font-black text-[#7a5836] tracking-wider">纖體系列專屬服務</span>
-        <span className="text-[11px] font-bold text-gray-400">
-          纖體小計 ${slimmingTotal.toLocaleString()}
-        </span>
-      </div>
-
-      {/* Progress bar */}
-      <div className="relative h-2.5 bg-gray-200 rounded-full overflow-visible">
-        {/* Fill */}
-        <div
-          className="absolute inset-y-0 left-0 rounded-full transition-all duration-500"
-          style={{
-            width: `${pct}%`,
-            background: reachedTier2
-              ? 'linear-gradient(90deg, #4A9D5F, #2e7d32)'
-              : reachedTier1
-                ? 'linear-gradient(90deg, #9F6B3E, #E8A93B)'
-                : 'linear-gradient(90deg, #e7d9cb, #9F6B3E)',
-          }}
-        />
-        {/* Tier 1 marker */}
-        <div
-          className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full border-2 border-white shadow-sm z-10"
-          style={{
-            left: `${tier1Pct}%`,
-            transform: `translateX(-50%) translateY(-50%)`,
-            background: reachedTier1 ? '#9F6B3E' : '#d4d4d8',
-          }}
-        />
-        {/* Tier 2 marker */}
-        <div
-          className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full border-2 border-white shadow-sm z-10"
-          style={{
-            left: '100%',
-            transform: 'translateX(-50%) translateY(-50%)',
-            background: reachedTier2 ? '#2e7d32' : '#d4d4d8',
-          }}
-        />
-      </div>
-
-      {/* Labels under bar */}
-      <div className="relative mt-1.5 text-[10px] font-bold" style={{ height: 32 }}>
-        <div className="absolute" style={{ left: `${tier1Pct}%`, transform: 'translateX(-50%)' }}>
-          <div className={reachedTier1 ? 'text-[#9F6B3E]' : 'text-gray-400'}>
-            {reachedTier1 ? '✓' : `$${TIER1.toLocaleString()}`}
-          </div>
-          <div className={reachedTier1 ? 'text-[#9F6B3E]' : 'text-gray-400'}>陪伴班</div>
-        </div>
-        <div className="absolute right-0 text-right">
-          <div className={reachedTier2 ? 'text-[#2e7d32]' : 'text-gray-400'}>
-            {reachedTier2 ? '✓' : `$${TIER2.toLocaleString()}`}
-          </div>
-          <div className={reachedTier2 ? 'text-[#2e7d32]' : 'text-gray-400'}>陪跑班</div>
+    <div className="mb-5 pb-4 border-b border-gray-200">
+      {/* Status card */}
+      <div className={`flex items-center gap-2.5 p-3 rounded-xl ${statusMsg.bg}`}>
+        <span className="text-xl shrink-0">{statusMsg.icon}</span>
+        <div className={`flex-1 min-w-0 text-[12px] ${statusMsg.color}`}>
+          <span className="font-black">{statusMsg.bold}</span>{' '}
+          <span>{statusMsg.rest}</span>
         </div>
       </div>
 
-      {/* Status text */}
-      {reachedTier2 ? (
-        <div className="flex items-center gap-2 mt-1 p-2.5 bg-[#e8f5e9] rounded-lg">
-          <span className="text-base">🎉</span>
-          <div className="text-[11px] text-[#2e7d32]">
-            <span className="font-black">已達陪跑班門檻！</span>
-            <span className="ml-1">完成訂單後私訊截圖即可啟動。</span>
+      {/* 2-tier step indicator */}
+      <div className="flex items-center gap-0 mt-3">
+        {/* Tier 1 */}
+        <div className="flex-1 flex items-center gap-2">
+          <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black shrink-0 ${reachedTier1 ? 'bg-[#9F6B3E] text-white' : 'bg-gray-200 text-gray-400'}`}>
+            {reachedTier1 ? '✓' : '1'}
+          </div>
+          <div className="min-w-0">
+            <div className={`text-[11px] font-black ${reachedTier1 ? 'text-[#9F6B3E]' : 'text-gray-400'}`}>陪伴班</div>
+            <div className="text-[9px] text-gray-400">滿 $3,840</div>
           </div>
         </div>
-      ) : reachedTier1 ? (
-        <div className="flex items-center gap-2 mt-1 p-2.5 bg-[#fdf7ef] rounded-lg">
-          <span className="text-base">✨</span>
-          <div className="text-[11px] text-[#7a5836]">
-            <span className="font-black">已達陪伴班！</span>
-            <span className="ml-1">再加 ${(TIER2 - slimmingTotal).toLocaleString()} 升級陪跑班。</span>
+        {/* Connector */}
+        <div className={`w-8 h-0.5 shrink-0 ${reachedTier1 ? 'bg-[#9F6B3E]' : 'bg-gray-200'}`} />
+        {/* Tier 2 */}
+        <div className="flex-1 flex items-center gap-2">
+          <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black shrink-0 ${reachedTier2 ? 'bg-[#2e7d32] text-white' : 'bg-gray-200 text-gray-400'}`}>
+            {reachedTier2 ? '✓' : '2'}
+          </div>
+          <div className="min-w-0">
+            <div className={`text-[11px] font-black ${reachedTier2 ? 'text-[#2e7d32]' : 'text-gray-400'}`}>陪跑班</div>
+            <div className="text-[9px] text-gray-400">滿 $6,600</div>
           </div>
         </div>
-      ) : (
-        <div className="flex items-center gap-2 mt-1 p-2.5 bg-gray-100 rounded-lg">
-          <span className="text-base">💡</span>
-          <div className="text-[11px] text-gray-600">
-            <span className="font-black">再加 ${(TIER1 - slimmingTotal).toLocaleString()}</span>
-            <span className="ml-1">纖體商品即可加入營養師陪伴班。</span>
+      </div>
+
+      {/* Diff toggle */}
+      <button
+        type="button"
+        onClick={() => setShowDiff(!showDiff)}
+        className="mt-2 text-[11px] font-bold text-[#9F6B3E] underline underline-offset-2 active:opacity-70"
+      >
+        {showDiff ? '收合差異說明' : '陪伴班 vs 陪跑班 差異？'}
+      </button>
+
+      {showDiff && (
+        <div className="mt-2 grid grid-cols-2 gap-2 text-[10px]">
+          <div className="p-2.5 bg-[#fdf7ef] rounded-lg border border-[#e7d9cb]">
+            <div className="font-black text-[#9F6B3E] text-[11px] mb-1.5">陪伴班 · $3,840</div>
+            <ul className="space-y-1 text-gray-700">
+              <li>✓ 營養師飲食建議</li>
+              <li>✓ 產品搭配指導</li>
+              <li>✓ 基礎飲食紀錄</li>
+            </ul>
+          </div>
+          <div className="p-2.5 bg-[#e8f5e9] rounded-lg border border-[#c8e6c9]">
+            <div className="font-black text-[#2e7d32] text-[11px] mb-1.5">陪跑班 · $6,600</div>
+            <ul className="space-y-1 text-gray-700">
+              <li>✓ 含陪伴班所有內容</li>
+              <li>✓ 持續追蹤與調整</li>
+              <li>✓ 專屬群組支援</li>
+              <li>✓ 階段成果檢視</li>
+            </ul>
           </div>
         </div>
       )}
