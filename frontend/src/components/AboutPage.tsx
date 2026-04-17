@@ -243,52 +243,120 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* ═══ TEAM — 3 cards, concise ═══ */}
-      <section className="py-28 sm:py-36 bg-white">
-        <div className="max-w-5xl mx-auto px-6 sm:px-8">
-          <div className="gs-reveal text-center mb-16">
-            <h2 className="text-2xl sm:text-3xl font-black text-[#3d2e22]">陪你蛻變的人</h2>
+      {/* ═══ TEAM — full-width alternating layout ═══ */}
+      <section className="relative py-32 sm:py-44 bg-white overflow-hidden">
+        <div className="max-w-6xl mx-auto px-6 sm:px-8">
+          <div className="gs-reveal text-center mb-20">
+            <div className="text-[10px] font-black tracking-[0.4em] text-[#9F6B3E]/40 mb-3">WHO WE ARE</div>
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-[#3d2e22]">陪你蛻變的人</h2>
           </div>
-          <div className="gs-stagger grid md:grid-cols-3 gap-6">
-            {[
-              { Icon: Icons.Seedling, iconColor: 'text-[#9F6B3E]', bg: 'from-[#fdf7ef] to-[#f7eee3]', border: 'border-[#e7d9cb]', name: '朵朵', role: 'Co-Founder', bio: '從仙女變成 Pandora 的精神推動者。' },
-              { Icon: Icons.Leaf, iconColor: 'text-[#2e7d32]', bg: 'from-[#e8f5e9] to-[#f1f8e9]', border: 'border-[#c8e6c9]', name: '營養師團', role: 'Nutrition', bio: '滿額加入陪伴班或陪跑班。' },
-              { Icon: Icons.Gift, iconColor: 'text-[#1565c0]', bg: 'from-[#e3f2fd] to-[#bbdefb]', border: 'border-[#90caf9]', name: '客服仙女', role: 'Care', bio: '1 對 1 LINE 諮詢，1 小時內回覆。' },
-            ].map((m) => (
-              <div key={m.name} className="gs-si">
-                <div className={`bg-gradient-to-br ${m.bg} rounded-[2rem] p-8 ${m.border} border text-center h-full`}>
-                  <div className={`w-16 h-16 mx-auto rounded-full bg-white/80 flex items-center justify-center ${m.iconColor} shadow-lg mb-4`}>
-                    <m.Icon className="w-8 h-8" />
+
+          {/* Each team member: alternating left/right, large visual + text */}
+          <div className="space-y-24 sm:space-y-32">
+            {/* 朵朵 — visual left */}
+            <div className="flex flex-col md:flex-row items-center gap-10 md:gap-16">
+              <div className="gs-left flex-1 flex justify-center">
+                <div className="relative">
+                  <div className="w-48 h-48 sm:w-64 sm:h-64 rounded-[3rem] bg-gradient-to-br from-[#fdf7ef] to-[#e7d9cb] flex items-center justify-center" data-speed="0.6">
+                    <Icons.Seedling className="w-24 h-24 sm:w-32 sm:h-32 text-[#9F6B3E]/30" />
                   </div>
-                  <div className="text-[9px] font-black tracking-[0.2em] text-gray-400 mb-1">{m.role.toUpperCase()}</div>
-                  <h3 className="text-xl font-black text-[#3d2e22]">{m.name}</h3>
-                  <p className="text-sm text-gray-500 mt-3">{m.bio}</p>
+                  <div className="absolute -bottom-4 -right-4 w-16 h-16 rounded-2xl bg-[#9F6B3E] flex items-center justify-center gs-scale">
+                    <Icons.Seedling className="w-8 h-8 text-white" />
+                  </div>
                 </div>
               </div>
-            ))}
+              <div className="flex-1">
+                <div className="gs-lines overflow-hidden">
+                  <div className="gs-line text-[10px] font-black tracking-[0.3em] text-[#9F6B3E]/50 mb-3">CO-FOUNDER</div>
+                </div>
+                <div className="gs-lines overflow-hidden">
+                  <div className="gs-line"><h3 className="text-3xl sm:text-4xl font-black text-[#3d2e22]">朵朵</h3></div>
+                </div>
+                <p className="gs-reveal text-sm sm:text-base text-gray-500 mt-4 leading-relaxed max-w-md">
+                  用「從仙女變成 Pandora」的精神，把好東西帶給更多女性。健康食品業 8 年，台灣電商創業家。
+                </p>
+              </div>
+            </div>
+
+            {/* 營養師 — visual right */}
+            <div className="flex flex-col md:flex-row-reverse items-center gap-10 md:gap-16">
+              <div className="gs-right flex-1 flex justify-center">
+                <div className="relative">
+                  <div className="w-48 h-48 sm:w-64 sm:h-64 rounded-[3rem] bg-gradient-to-br from-[#e8f5e9] to-[#c8e6c9] flex items-center justify-center" data-speed="0.6">
+                    <Icons.Leaf className="w-24 h-24 sm:w-32 sm:h-32 text-[#2e7d32]/25" />
+                  </div>
+                  <div className="absolute -bottom-4 -left-4 w-16 h-16 rounded-2xl bg-[#2e7d32] flex items-center justify-center gs-scale">
+                    <Icons.Leaf className="w-8 h-8 text-white" />
+                  </div>
+                </div>
+              </div>
+              <div className="flex-1">
+                <div className="gs-lines overflow-hidden">
+                  <div className="gs-line text-[10px] font-black tracking-[0.3em] text-[#2e7d32]/50 mb-3">NUTRITION TEAM</div>
+                </div>
+                <div className="gs-lines overflow-hidden">
+                  <div className="gs-line"><h3 className="text-3xl sm:text-4xl font-black text-[#3d2e22]">營養師顧問團</h3></div>
+                </div>
+                <p className="gs-reveal text-sm sm:text-base text-gray-500 mt-4 leading-relaxed max-w-md">
+                  專技高考合格營養師。纖體系列滿額即可加入陪伴班或陪跑班，專屬飲食指導與持續追蹤。
+                </p>
+              </div>
+            </div>
+
+            {/* 客服 — visual left */}
+            <div className="flex flex-col md:flex-row items-center gap-10 md:gap-16">
+              <div className="gs-left flex-1 flex justify-center">
+                <div className="relative">
+                  <div className="w-48 h-48 sm:w-64 sm:h-64 rounded-[3rem] bg-gradient-to-br from-[#e3f2fd] to-[#bbdefb] flex items-center justify-center" data-speed="0.6">
+                    <Icons.Gift className="w-24 h-24 sm:w-32 sm:h-32 text-[#1565c0]/25" />
+                  </div>
+                  <div className="absolute -bottom-4 -right-4 w-16 h-16 rounded-2xl bg-[#1565c0] flex items-center justify-center gs-scale">
+                    <Icons.Gift className="w-8 h-8 text-white" />
+                  </div>
+                </div>
+              </div>
+              <div className="flex-1">
+                <div className="gs-lines overflow-hidden">
+                  <div className="gs-line text-[10px] font-black tracking-[0.3em] text-[#1565c0]/50 mb-3">CUSTOMER CARE</div>
+                </div>
+                <div className="gs-lines overflow-hidden">
+                  <div className="gs-line"><h3 className="text-3xl sm:text-4xl font-black text-[#3d2e22]">客服仙女</h3></div>
+                </div>
+                <p className="gs-reveal text-sm sm:text-base text-gray-500 mt-4 leading-relaxed max-w-md">
+                  1 對 1 LINE 諮詢，週一至週五上線。從下單到售後全包辦，平均 1 小時內回覆。
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* ═══ VALUES — 3 compact cards ═══ */}
-      <section className="py-28 sm:py-36" style={{ background: 'linear-gradient(180deg, #fff 0%, #fdf7ef 100%)' }}>
-        <div className="max-w-4xl mx-auto px-6 sm:px-8">
-          <div className="gs-reveal text-center mb-16">
-            <h2 className="text-2xl sm:text-3xl font-black text-[#3d2e22]">我們相信</h2>
+      {/* ═══ VALUES — horizontal scroll-like full-width cards ═══ */}
+      <section className="relative py-32 sm:py-44 overflow-hidden" style={{ background: 'linear-gradient(180deg, #fdf7ef 0%, #f7eee3 100%)' }}>
+        {/* Decorative large leaf */}
+        <div className="absolute right-[-10%] top-[20%] gs-grow opacity-10" data-speed="0.4">
+          <LeafCluster className="w-[30vw] max-w-[300px]" />
+        </div>
+        <div className="max-w-6xl mx-auto px-6 sm:px-8">
+          <div className="gs-reveal text-center mb-20">
+            <div className="text-[10px] font-black tracking-[0.4em] text-[#9F6B3E]/40 mb-3">OUR VALUES</div>
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-[#3d2e22]">我們相信</h2>
           </div>
-          <div className="gs-stagger grid sm:grid-cols-3 gap-6">
+          <div className="space-y-6">
             {[
-              { Icon: Icons.Shield, color: 'text-[#9F6B3E]', title: '正品堅持', desc: '官方授權，原廠出貨。' },
-              { Icon: Icons.Heart, color: 'text-[#e91e63]', title: '真心陪伴', desc: '不催促、不話術。' },
-              { Icon: Icons.Star, color: 'text-[#ff8f00]', title: '長期價值', desc: '三階梯 + 營養師，持續改變。' },
+              { Icon: Icons.Shield, color: 'text-[#9F6B3E]', bg: 'from-[#fdf7ef] to-white', title: '正品堅持', desc: 'JEROSSE 官方授權經銷。每一件都是原廠出貨，你買到的跟品牌官網完全一樣。', dir: 'gs-left' },
+              { Icon: Icons.Heart, color: 'text-[#e91e63]', bg: 'from-[#fce4ec] to-white', title: '真心陪伴', desc: '不催促、不話術。你想了解，我就說；你想等等，我就等。陪伴不是壓力。', dir: 'gs-right' },
+              { Icon: Icons.Star, color: 'text-[#ff8f00]', bg: 'from-[#fff8e1] to-white', title: '長期價值', desc: '三階梯定價讓你買越多越划算。營養師陪伴讓改變可以持續，不是曇花一現。', dir: 'gs-left' },
             ].map((v) => (
-              <div key={v.title} className="gs-si">
-                <div className="bg-white rounded-[2rem] p-8 border border-[#e7d9cb] h-full hover:shadow-2xl hover:-translate-y-2 transition-all duration-700">
-                  <div className={`w-12 h-12 rounded-xl bg-gray-50 flex items-center justify-center ${v.color} mb-4`}>
-                    <v.Icon className="w-6 h-6" />
+              <div key={v.title} className={v.dir}>
+                <div className={`bg-gradient-to-r ${v.bg} rounded-[2rem] p-8 sm:p-12 border border-white/60 flex flex-col sm:flex-row items-center gap-6 sm:gap-10`}>
+                  <div className={`w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-white flex items-center justify-center ${v.color} shadow-lg shrink-0`}>
+                    <v.Icon className="w-10 h-10 sm:w-12 sm:h-12" />
                   </div>
-                  <h3 className="text-lg font-black text-[#3d2e22]">{v.title}</h3>
-                  <p className="text-sm text-gray-500 mt-2">{v.desc}</p>
+                  <div>
+                    <h3 className="text-2xl sm:text-3xl font-black text-[#3d2e22]">{v.title}</h3>
+                    <p className="text-sm sm:text-base text-gray-500 mt-3 leading-relaxed">{v.desc}</p>
+                  </div>
                 </div>
               </div>
             ))}

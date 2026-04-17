@@ -120,7 +120,7 @@ class OrderResource extends Resource
                         ->label('物流建立時間')
                         ->disabled(),
                     \Filament\Schemas\Components\Actions::make([
-                        \Filament\Schemas\Components\Actions\Action::make('clear_logistics')
+                        \Filament\Actions\Action::make('clear_logistics')
                             ->label('清除物流單（重新建立用）')
                             ->icon('heroicon-o-trash')
                             ->color('danger')
