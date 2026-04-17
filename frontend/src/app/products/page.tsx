@@ -1,8 +1,10 @@
 import type { Metadata } from 'next';
-import { getProducts, getProductCategories } from '@/lib/api';
+import { getProducts, getProductCategories, imageUrl } from '@/lib/api';
 import ProductBrowser from '@/components/ProductBrowser';
 import ScrollReveal from '@/components/ScrollReveal';
 import { breadcrumbSchema, jsonLdScript } from '@/lib/jsonld';
+
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://shop.jerosse.tw';
 import TextReveal from '@/components/TextReveal';
 import FloatingShapes from '@/components/FloatingShapes';
 import LogoLoader from '@/components/LogoLoader';
@@ -50,7 +52,19 @@ export default async function ProductsPage({
     <div className="relative">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: jsonLdScript(breadcrumbs) }}
+        dangerouslySetInnerHTML={{ __html: jsonLdScript(breadcrumbs, {
+          '@context': 'https://schema.org',
+          '@type': 'ItemList',
+          name: activeCatName || '全館商品',
+          numberOfItems: products.length,
+          itemListElement: products.slice(0, 30).map((p, i) => ({
+            '@type': 'ListItem',
+            position: i + 1,
+            url: `${siteUrl}/products/${p.slug}`,
+            name: p.name,
+            image: p.image ? imageUrl(p.image) : undefined,
+          })),
+        }) }}
       />
       {/* Hero */}
       <section

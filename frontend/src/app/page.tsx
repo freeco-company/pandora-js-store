@@ -11,7 +11,7 @@ import Parallax from '@/components/Parallax';
 import FloatingShapes from '@/components/FloatingShapes';
 import LogoLoader from '@/components/LogoLoader';
 import HeroOrbit from '@/components/HeroOrbit';
-import { organizationSchema, websiteSchema, jsonLdScript } from '@/lib/jsonld';
+import { organizationSchema, websiteSchema, howToSchema, jsonLdScript } from '@/lib/jsonld';
 import { categoryVisual } from '@/lib/category-visual';
 import SiteIcon from '@/components/SiteIcon';
 
@@ -40,7 +40,7 @@ export default async function HomePage() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: jsonLdScript(organizationSchema(), websiteSchema()),
+          __html: jsonLdScript(organizationSchema(), websiteSchema(), howToSchema()),
         }}
       />
 

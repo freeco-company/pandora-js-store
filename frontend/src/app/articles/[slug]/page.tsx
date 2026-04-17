@@ -7,6 +7,7 @@ import ShareButtons from '@/components/ShareButtons';
 import ProductCardGrid from '@/components/ProductCardGrid';
 import { sanitizeHtml } from '@/lib/sanitize';
 import { breadcrumbSchema, jsonLdScript } from '@/lib/jsonld';
+import { estimateReadingTime } from '@/lib/reading-time';
 
 export const revalidate = 3600;
 
@@ -163,6 +164,10 @@ export default async function ArticleDetailPage({ params }: Props) {
               day: 'numeric',
             })}
           </time>
+          <span className="text-sm text-gray-400">·</span>
+          <span className="text-sm text-gray-400">
+            閱讀 {estimateReadingTime(article.content)} 分鐘
+          </span>
         </div>
         <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 leading-tight">
           {article.title}

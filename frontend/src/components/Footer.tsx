@@ -123,6 +123,18 @@ function FooterInner() {
             </ul>
           </div>
 
+          {/* Shop by Category */}
+          <div>
+            <h4 className="text-sm font-semibold text-white mb-3">商品分類</h4>
+            <ul className="space-y-2 text-sm text-gray-400">
+              <li><Link href="/products?category=healthy-vitality-series" className="hover:text-white transition-colors">健康活力系列</Link></li>
+              <li><Link href="/products?category=functional-health-series" className="hover:text-white transition-colors">健康維持系列</Link></li>
+              <li><Link href="/products?category=body-beauty-series" className="hover:text-white transition-colors">美容美體系列</Link></li>
+              <li><Link href="/products?category=slimming" className="hover:text-white transition-colors">體重管理</Link></li>
+              <li><Link href="/products" className="hover:text-white transition-colors">全部商品 →</Link></li>
+            </ul>
+          </div>
+
           {/* Social */}
           <div>
             <h4 className="text-sm font-semibold text-white mb-3">追蹤我們</h4>

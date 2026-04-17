@@ -54,6 +54,12 @@ export const metadata: Metadata = {
     icon: [{ url: '/favicon.svg', type: 'image/svg+xml' }],
     apple: '/favicon.svg',
   },
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: '婕樂纖仙女館',
+  },
 };
 
 // Derive the storage origin for preconnect (images served from Laravel /storage/)

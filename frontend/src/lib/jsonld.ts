@@ -112,6 +112,39 @@ export function faqSchema(faqs: Array<{ question: string; answer: string }>) {
 }
 
 /**
+ * HowTo — "How to save with 3-tier pricing" for homepage.
+ * Shows step-by-step in search results.
+ */
+export function howToSchema() {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'HowTo',
+    name: '如何在婕樂纖仙女館享受最優惠價格',
+    description: '透過三階梯定價機制，買越多省越多。任選 2 件享搭配價，滿 NT$4,000 自動升級 VIP 優惠價。',
+    step: [
+      {
+        '@type': 'HowToStep',
+        name: '選擇第一件商品',
+        text: '瀏覽全館商品，選擇一件加入購物車，以原價計算。',
+        url: `${siteUrl}/products`,
+      },
+      {
+        '@type': 'HowToStep',
+        name: '任選第二件，解鎖搭配價',
+        text: '再選一件不同或相同商品，全車自動切換為 1+1 搭配價，每件立即省下差額。',
+        url: `${siteUrl}/products`,
+      },
+      {
+        '@type': 'HowToStep',
+        name: '滿 $4,000 升級 VIP 價',
+        text: '搭配價小計達 NT$4,000，全車再自動升級為 VIP 優惠價，享受最低價格。',
+        url: `${siteUrl}/cart`,
+      },
+    ],
+  };
+}
+
+/**
  * Serialize one or more schemas into a single <script> payload.
  * React renders this via dangerouslySetInnerHTML.
  */

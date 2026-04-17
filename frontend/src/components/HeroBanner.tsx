@@ -71,9 +71,9 @@ export default function HeroBanner({
   if (slides.length === 0) return null;
 
   return (
-    <section className="relative w-full bg-gray-100 overflow-hidden">
-      {/* Desktop: fixed aspect ratio; Mobile: taller aspect ratio */}
-      <div className="relative w-full h-[120vw] max-h-[600px] sm:h-[50vw] sm:max-h-[480px] sm:min-h-[280px]">
+    <section className="relative w-full bg-[#f7eee3] overflow-hidden">
+      {/* Mobile: square banner (1:1); Desktop: wide banner (~3.2:1) */}
+      <div className="relative w-full aspect-square sm:aspect-auto sm:h-[31vw] sm:max-h-[400px] sm:min-h-[250px]">
         {slides.map((slide, i) => (
           <Link
             key={slide.id}
@@ -93,7 +93,7 @@ export default function HeroBanner({
                 alt={slide.title}
                 fill
                 sizes="100vw"
-                className="object-cover"
+                className="object-contain"
                 priority={i === 0}
                 fetchPriority={i === 0 ? 'high' : 'auto'}
               />
@@ -113,18 +113,6 @@ export default function HeroBanner({
                 priority={i === 0}
                 fetchPriority={i === 0 ? 'high' : 'auto'}
               />
-            </div>
-            {/* Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
-            <div className="absolute bottom-6 left-6 sm:bottom-10 sm:left-10 z-10">
-              <h2 className="text-white text-lg sm:text-2xl lg:text-3xl font-bold drop-shadow-lg">
-                {slide.title}
-              </h2>
-              {slide.subtitle && (
-                <p className="text-white/80 text-sm sm:text-base mt-1 max-w-md line-clamp-1 drop-shadow">
-                  {slide.subtitle}
-                </p>
-              )}
             </div>
           </Link>
         ))}
