@@ -27,63 +27,76 @@ class CampaignResource extends Resource
     {
         return $form
             ->schema([
-                \Filament\Schemas\Components\Section::make('活動資訊')->schema([
-                    Forms\Components\TextInput::make('name')
-                        ->required()
-                        ->label('活動名稱')
-                        ->placeholder('例：2026 夏季感恩祭'),
-                    Forms\Components\TextInput::make('slug')
-                        ->required()
-                        ->unique(ignoreRecord: true)
-                        ->label('網址代稱')
-                        ->placeholder('summer-2026')
-                        ->helperText('活動頁 URL：/campaigns/{slug}'),
-                    Forms\Components\Textarea::make('description')
-                        ->label('活動說明')
-                        ->rows(3),
-                    Forms\Components\Toggle::make('is_active')
-                        ->default(true)
-                        ->label('啟用'),
-                    Forms\Components\TextInput::make('sort_order')
-                        ->numeric()
-                        ->default(0)
-                        ->label('排序'),
-                ])->columns(2),
+                // Left column: main info
+                \Filament\Schemas\Components\Group::make()->schema([
+                    \Filament\Schemas\Components\Section::make('活動資訊')->schema([
+                        Forms\Components\TextInput::make('name')
+                            ->required()
+                            ->label('活動名稱')
+                            ->placeholder('例：2026 夏季感恩祭')
+                            ->columnSpanFull(),
+                        Forms\Components\TextInput::make('slug')
+                            ->required()
+                            ->unique(ignoreRecord: true)
+                            ->label('網址代稱')
+                            ->placeholder('summer-2026')
+                            ->helperText('活動頁網址：/campaigns/{slug}'),
+                        Forms\Components\Textarea::make('description')
+                            ->label('活動說明')
+                            ->rows(3)
+                            ->columnSpanFull(),
+                    ])->columns(1),
 
-                \Filament\Schemas\Components\Section::make('活動期間')->schema([
-                    Forms\Components\DateTimePicker::make('start_at')
-                        ->required()
-                        ->label('開始時間'),
-                    Forms\Components\DateTimePicker::make('end_at')
-                        ->required()
-                        ->after('start_at')
-                        ->label('結束時間'),
-                ])->columns(2),
+                    \Filament\Schemas\Components\Section::make('活動期間')->schema([
+                        Forms\Components\DateTimePicker::make('start_at')
+                            ->required()
+                            ->label('開始時間'),
+                        Forms\Components\DateTimePicker::make('end_at')
+                            ->required()
+                            ->after('start_at')
+                            ->label('結束時間'),
+                    ])->columns(2),
 
-                \Filament\Schemas\Components\Section::make('圖片')->schema([
-                    Forms\Components\FileUpload::make('image')
-                        ->image()
-                        ->directory('campaigns')
-                        ->disk('public')
-                        ->label('活動主圖'),
-                    Forms\Components\FileUpload::make('banner_image')
-                        ->image()
-                        ->directory('campaigns')
-                        ->disk('public')
-                        ->label('首頁倒數橫幅')
-                        ->helperText('活動進行中會出現在首頁的倒數計時區塊'),
-                ])->columns(2),
+                    \Filament\Schemas\Components\Section::make('活動商品')->schema([
+                        Forms\Components\Select::make('products')
+                            ->relationship('products', 'name')
+                            ->multiple()
+                            ->preload()
+                            ->searchable()
+                            ->label('選擇商品（可多選）')
+                            ->helperText('加入的商品在活動期間會出現在活動頁，結束後自動隱藏。購物車含活動商品 → 整車 VIP 價。')
+                            ->columnSpanFull(),
+                    ]),
+                ])->columnSpan(2),
 
-                \Filament\Schemas\Components\Section::make('活動商品組（1–3 組）')->schema([
-                    Forms\Components\Select::make('products')
-                        ->relationship('products', 'name')
-                        ->multiple()
-                        ->preload()
-                        ->searchable()
-                        ->label('選擇活動商品')
-                        ->helperText('加入的商品會在活動期間顯示在活動頁，活動結束後自動隱藏。'),
-                ]),
-            ]);
+                // Right column: settings + images
+                \Filament\Schemas\Components\Group::make()->schema([
+                    \Filament\Schemas\Components\Section::make('設定')->schema([
+                        Forms\Components\Toggle::make('is_active')
+                            ->default(true)
+                            ->label('啟用'),
+                        Forms\Components\TextInput::make('sort_order')
+                            ->numeric()
+                            ->default(0)
+                            ->label('排序'),
+                    ]),
+
+                    \Filament\Schemas\Components\Section::make('圖片')->schema([
+                        Forms\Components\FileUpload::make('image')
+                            ->image()
+                            ->directory('campaigns')
+                            ->disk('public')
+                            ->label('活動主圖')
+                            ->helperText('活動頁 hero 圖'),
+                        Forms\Components\FileUpload::make('banner_image')
+                            ->image()
+                            ->directory('campaigns')
+                            ->disk('public')
+                            ->label('首頁倒數橫幅')
+                            ->helperText('活動進行中出現在首頁'),
+                    ]),
+                ])->columnSpan(1),
+            ])->columns(3);
     }
 
     public static function table(Table $table): Table
@@ -145,9 +158,6 @@ class CampaignResource extends Resource
                 Tables\Filters\Filter::make('active')
                     ->label('進行中')
                     ->query(fn ($q) => $q->active()),
-                Tables\Filters\Filter::make('upcoming')
-                    ->label('即將開始')
-                    ->query(fn ($q) => $q->upcoming()),
             ])
             ->recordUrl(fn ($record) => Pages\EditCampaign::getUrl(['record' => $record]));
     }
