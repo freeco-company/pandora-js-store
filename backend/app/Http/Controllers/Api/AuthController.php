@@ -39,6 +39,10 @@ class AuthController extends Controller
                 'name' => $googleUser->getName(),
                 'email' => $googleUser->getEmail(),
                 'membership_level' => 'regular',
+                // password is NOT NULL in the DB. Google OAuth users don't
+                // have a password but the column must have a value. Set a
+                // random hash so the row passes strict-mode insertion.
+                'password' => bcrypt(\Illuminate\Support\Str::random(32)),
             ]
         );
 
