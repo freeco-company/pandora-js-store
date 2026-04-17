@@ -106,7 +106,12 @@ jobs:
             set -e
             cd /var/www/pandora/frontend
             # .next/ was already rsynced from CI pre-build — no npm run build needed!
-            npm install --prefer-offline --no-audit --no-fund --production 2>&1 | tail -3
+            # IMPORTANT: do NOT use --production here. next.config.ts imports
+            # @next/bundle-analyzer (devDep) which gets compiled into
+            # next.config.compiled.js. Without it, pm2 crash-loops with
+            # MODULE_NOT_FOUND. The ~300 extra dev packages add ~30MB disk
+            # and 3s install time — worth it vs downtime.
+            npm install --prefer-offline --no-audit --no-fund 2>&1 | tail -3
             # Graceful reload: new workers start, old ones drain — zero downtime
             pm2 reload pandora-frontend || pm2 restart pandora-frontend
             : > /root/.pm2/logs/pandora-frontend-error-0.log
