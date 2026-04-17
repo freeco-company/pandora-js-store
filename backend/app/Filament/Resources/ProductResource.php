@@ -75,17 +75,19 @@ class ProductResource extends Resource
                             ->label('啟用'),
                         Forms\Components\TextInput::make('sku')
                             ->label('SKU'),
+                        Forms\Components\Select::make('stock_status')
+                            ->options([
+                                'instock' => '有貨（不限庫存）',
+                                'outofstock' => '缺貨 / 暫停銷售',
+                            ])
+                            ->default('instock')
+                            ->label('庫存狀態')
+                            ->helperText('選「有貨」即為不限庫存；選「缺貨」商品頁會顯示售完。'),
                         Forms\Components\TextInput::make('stock_quantity')
                             ->numeric()
                             ->default(0)
-                            ->label('庫存'),
-                        Forms\Components\Select::make('stock_status')
-                            ->options([
-                                'instock' => '有貨',
-                                'outofstock' => '缺貨',
-                            ])
-                            ->default('instock')
-                            ->label('庫存狀態'),
+                            ->label('庫存數量（參考用）')
+                            ->helperText('目前不限制庫存數量，此欄僅供內部參考。'),
                         Forms\Components\TextInput::make('sort_order')
                             ->numeric()
                             ->default(0)

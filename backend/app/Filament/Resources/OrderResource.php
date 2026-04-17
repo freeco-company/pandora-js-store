@@ -191,11 +191,14 @@ class OrderResource extends Resource
                             ->label('狀態'),
                     ]),
 
-                    Tables\Columns\TextColumn::make('customer.name')
+                    Tables\Columns\TextColumn::make('shipping_name')
                         ->searchable()
                         ->icon('heroicon-m-user')
-                        ->description(fn ($record) => $record->customer?->email)
-                        ->label('客戶'),
+                        ->description(fn ($record) => implode(' · ', array_filter([
+                            $record->shipping_phone,
+                            $record->shipping_store_name ?: mb_substr((string) $record->shipping_address, 0, 20),
+                        ])))
+                        ->label('收件人'),
 
                     Tables\Columns\Layout\Split::make([
                         Tables\Columns\TextColumn::make('shipping_method')
