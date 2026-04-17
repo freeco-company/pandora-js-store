@@ -10,17 +10,21 @@ concurrency:
   cancel-in-progress: false    # never cancel a deploy mid-flight
 
 jobs:
-  test:
-    uses: ./.github/workflows/ci.yml
-
   deploy:
-    name: Pre-build + rsync + zero-downtime reload
-    needs: test                 # only deploy if CI green
+    name: Build + rsync + zero-downtime reload
+    # No more `needs: test` — the standalone CI workflow already runs
+    # on push and gates quality. Re-running it here was doubling the
+    # pipeline (frontend built 3 times!). The smoke test at the end
+    # catches anything that slips through.
     runs-on: ubuntu-latest
     outputs:
       status: ${{ steps.smoke.outputs.status }}
     steps:
       - uses: actions/checkout@v4
+
+      # Backend tests run in the standalone CI workflow (parallel on
+      # push). No need to duplicate here — the smoke test at the end
+      # catches runtime regressions.
 
       # ── Frontend pre-build in CI (7GB RAM, no OOM risk) ──────────
       - name: Setup Node
@@ -125,7 +129,7 @@ jobs:
 
   notify:
     name: Discord notification
-    needs: [test, deploy]
+    needs: [deploy]
     if: always()                # always run, even if prior jobs failed
     runs-on: ubuntu-latest
     steps:
@@ -136,10 +140,10 @@ jobs:
             echo "color=4915280" >> $GITHUB_OUTPUT          # green 0x4A9D5F
             echo "emoji=✅" >> $GITHUB_OUTPUT
             echo "title=Deploy OK" >> $GITHUB_OUTPUT
-          elif [[ "${{ needs.test.result }}" == "failure" ]]; then
+          elif [[ "${{ needs.deploy.result }}" == "failure" ]]; then
             echo "color=14709644" >> $GITHUB_OUTPUT         # red 0xE0748C
             echo "emoji=❌" >> $GITHUB_OUTPUT
-            echo "title=Tests failed — deploy blocked" >> $GITHUB_OUTPUT
+            echo "title=Deploy failed" >> $GITHUB_OUTPUT
           else
             echo "color=15243067" >> $GITHUB_OUTPUT         # orange 0xE8A93B
             echo "emoji=⚠️" >> $GITHUB_OUTPUT
