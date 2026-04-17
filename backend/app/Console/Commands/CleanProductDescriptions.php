@@ -79,11 +79,13 @@ class CleanProductDescriptions extends Command
         // 3. Remove Elementor-specific classes from remaining tags
         $html = preg_replace('/\s*class="[^"]*elementor[^"]*"/i', '', $html);
 
-        // 4. Remove inline styles that are WP cruft
-        $html = preg_replace('/\s*style="[^"]*font-family[^"]*"/i', '', $html);
+        // 4. Remove ALL inline styles (double-quoted, single-quoted, WP double-wrapped)
+        $html = preg_replace('/\s*style\s*=\s*"[^"]*"/i', '', $html);
+        $html = preg_replace("/\s*style\s*=\s*'[^']*'/i", '', $html);
 
-        // 5. Remove empty tags
+        // 5. Remove empty tags + unwrap empty spans
         $html = preg_replace('/<(div|span|p|section)\s*>\s*<\/\1>/i', '', $html);
+        $html = preg_replace('/<span\s*>([^<]*)<\/span>/', '$1', $html);
 
         // 6. Remove data-* attributes
         $html = preg_replace('/\s*data-[a-z_-]+="[^"]*"/i', '', $html);
@@ -99,7 +101,10 @@ class CleanProductDescriptions extends Command
             }
         }
 
-        // 8. Fix image src paths
+        // 8. Fix old WP product links /product/ → /products/
+        $html = preg_replace('/href="([^"]*?)\/product\//', 'href="/products/', $html);
+
+        // 9. Fix image src paths
         $html = preg_replace('/src="(?!http|\/storage)([^"]+)"/i', 'src="/storage/$1"', $html);
 
         // 9. Remove images with broken/WP paths (wp-content, etc)
