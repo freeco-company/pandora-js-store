@@ -148,7 +148,7 @@ export default function ArticleBrowser({
       {articles.length > 0 ? (
         <div
           key={`${type}-${page}`}
-          className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6 transition-opacity ${
+          className={`grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5 transition-opacity ${
             phase === 'out' ? 'opacity-0' : 'opacity-100'
           }`}
         >
@@ -169,28 +169,28 @@ export default function ArticleBrowser({
                     src={imageUrl(article.featured_image)!}
                     alt={article.title}
                     fill
-                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                    sizes="(max-width: 640px) 50vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
                     className="object-cover transition-transform duration-[800ms] ease-[cubic-bezier(0.2,0.9,0.3,1)] group-hover:scale-[1.08]"
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-[#9F6B3E]/40 text-5xl">📖</div>
+                  <div className="w-full h-full flex items-center justify-center text-[#9F6B3E]/20">
+                    <svg className="w-12 h-12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.2}><path d="M4 19.5A2.5 2.5 0 016.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" /></svg>
+                  </div>
                 )}
                 <span className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-white/90 backdrop-blur text-[10px] font-black text-[#9F6B3E] shadow-sm">
                   {TYPE_LABEL[article.source_type] || '文章'}
                 </span>
               </div>
-              <div className="p-4 sm:p-5">
-                <time className="text-[11px] text-gray-400 font-bold tracking-wide">
-                  {new Date(article.published_at).toLocaleDateString('zh-TW', { year: 'numeric', month: 'long', day: 'numeric' })}
+              <div className="p-3 sm:p-4">
+                <time className="text-[10px] text-gray-400 font-bold tracking-wide">
+                  {new Date(article.published_at).toLocaleDateString('zh-TW', { year: 'numeric', month: 'short', day: 'numeric' })}
                 </time>
-                <h3 className="font-black text-gray-900 mt-1.5 mb-2 line-clamp-2 group-hover:text-[#9F6B3E] transition-colors leading-snug">
+                <h3 className="font-black text-gray-900 text-sm sm:text-base mt-1 mb-1.5 line-clamp-2 group-hover:text-[#9F6B3E] transition-colors leading-snug">
                   {article.title}
                 </h3>
-                {article.excerpt && (
-                  <p className="text-sm text-gray-500 line-clamp-2 leading-relaxed">{article.excerpt}</p>
-                )}
-                <div className="mt-3 text-[12px] font-black text-[#9F6B3E] inline-flex items-center gap-1">
-                  閱讀全文
+                <p className="text-xs text-gray-400 line-clamp-2 leading-relaxed hidden sm:block">{article.excerpt || ''}</p>
+                <div className="mt-2 text-[11px] font-black text-[#9F6B3E] inline-flex items-center gap-1">
+                  閱讀
                   <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
                 </div>
               </div>
