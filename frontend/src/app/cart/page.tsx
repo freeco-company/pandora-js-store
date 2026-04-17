@@ -463,28 +463,50 @@ function SlimmingProgress({
         </div>
       </div>
 
-      {/* 2-tier step indicator */}
-      <div className="flex items-center gap-0 mt-3">
-        {/* Tier 1 */}
-        <div className="flex-1 flex items-center gap-2">
-          <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black shrink-0 ${reachedTier1 ? 'bg-[#9F6B3E] text-white' : 'bg-gray-200 text-gray-400'}`}>
-            {reachedTier1 ? '✓' : '1'}
-          </div>
-          <div className="min-w-0">
-            <div className={`text-[11px] font-black ${reachedTier1 ? 'text-[#9F6B3E]' : 'text-gray-400'}`}>陪伴班</div>
-            <div className="text-[9px] text-gray-400">滿 $3,840</div>
-          </div>
+      {/* Progress bar + 2-tier step indicator */}
+      <div className="mt-3 space-y-2">
+        {/* Bar */}
+        <div className="flex items-center justify-between text-[9px] font-bold text-gray-400 mb-0.5">
+          <span>纖體 ${slimmingTotal.toLocaleString()}</span>
+          <span>${TIER2.toLocaleString()}</span>
         </div>
-        {/* Connector */}
-        <div className={`w-8 h-0.5 shrink-0 ${reachedTier1 ? 'bg-[#9F6B3E]' : 'bg-gray-200'}`} />
-        {/* Tier 2 */}
-        <div className="flex-1 flex items-center gap-2">
-          <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black shrink-0 ${reachedTier2 ? 'bg-[#2e7d32] text-white' : 'bg-gray-200 text-gray-400'}`}>
-            {reachedTier2 ? '✓' : '2'}
+        <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+          <div
+            className="h-full rounded-full transition-all duration-500"
+            style={{
+              width: `${Math.min(100, (slimmingTotal / TIER2) * 100)}%`,
+              background: reachedTier2
+                ? 'linear-gradient(90deg, #4A9D5F, #2e7d32)'
+                : reachedTier1
+                  ? 'linear-gradient(90deg, #9F6B3E, #E8A93B)'
+                  : 'linear-gradient(90deg, #e7d9cb, #9F6B3E)',
+            }}
+          />
+        </div>
+
+        {/* Step dots under bar */}
+        <div className="flex items-center">
+          {/* Tier 1 */}
+          <div className="flex-1 flex items-center gap-1.5">
+            <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black shrink-0 ${reachedTier1 ? 'bg-[#9F6B3E] text-white' : 'bg-gray-200 text-gray-400'}`}>
+              {reachedTier1 ? '✓' : '1'}
+            </div>
+            <div>
+              <div className={`text-[11px] font-black leading-tight ${reachedTier1 ? 'text-[#9F6B3E]' : 'text-gray-400'}`}>陪伴班</div>
+              <div className="text-[9px] text-gray-400 leading-tight">$3,840</div>
+            </div>
           </div>
-          <div className="min-w-0">
-            <div className={`text-[11px] font-black ${reachedTier2 ? 'text-[#2e7d32]' : 'text-gray-400'}`}>陪跑班</div>
-            <div className="text-[9px] text-gray-400">滿 $6,600</div>
+          {/* Connector */}
+          <div className={`w-6 h-px shrink-0 ${reachedTier1 ? 'bg-[#9F6B3E]' : 'bg-gray-200'}`} />
+          {/* Tier 2 */}
+          <div className="flex-1 flex items-center gap-1.5">
+            <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black shrink-0 ${reachedTier2 ? 'bg-[#2e7d32] text-white' : 'bg-gray-200 text-gray-400'}`}>
+              {reachedTier2 ? '✓' : '2'}
+            </div>
+            <div>
+              <div className={`text-[11px] font-black leading-tight ${reachedTier2 ? 'text-[#2e7d32]' : 'text-gray-400'}`}>陪跑班</div>
+              <div className="text-[9px] text-gray-400 leading-tight">$6,600</div>
+            </div>
           </div>
         </div>
       </div>
