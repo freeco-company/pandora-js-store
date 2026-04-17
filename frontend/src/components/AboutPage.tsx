@@ -1,16 +1,5 @@
 'use client';
 
-/**
- * /about — GSAP ScrollTrigger powered page.
- *
- * Matching FENC.com pattern:
- * - Elements have scroll-linked parallax (different speeds per layer)
- * - Animations are SCRUBBED to scroll position, not triggered once
- * - Sections overlap and blend into each other
- * - Text slides in from translateY(100px) as you scroll, continuously
- * - Images/visuals move at slower speed = depth
- */
-
 import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import gsap from 'gsap';
@@ -21,195 +10,266 @@ import Icons from './SvgIcons';
 gsap.registerPlugin(ScrollTrigger);
 
 export default function AboutPage() {
-  const containerRef = useRef<HTMLDivElement>(null);
+  const main = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const ctx = gsap.context(() => {
-      // ── Parallax: elements with data-speed move at different scroll rates ──
+
+      // ── 1. Floating visual that travels across the ENTIRE page ──
+      // Like FENC's red ball — our "golden orb" drifts from hero to CTA
+      const orb = document.querySelector('.fp-float-orb');
+      if (orb) {
+        gsap.to(orb, {
+          y: () => ScrollTrigger.maxScroll(window) * 0.6,
+          x: 80,
+          rotation: 360,
+          ease: 'none',
+          scrollTrigger: { trigger: main.current, start: 'top top', end: 'bottom bottom', scrub: 2 },
+        });
+      }
+      const leaf1 = document.querySelector('.fp-float-leaf-1');
+      if (leaf1) {
+        gsap.to(leaf1, {
+          y: () => ScrollTrigger.maxScroll(window) * 0.35,
+          x: -60,
+          rotation: -180,
+          ease: 'none',
+          scrollTrigger: { trigger: main.current, start: 'top top', end: 'bottom bottom', scrub: 3 },
+        });
+      }
+      const leaf2 = document.querySelector('.fp-float-leaf-2');
+      if (leaf2) {
+        gsap.to(leaf2, {
+          y: () => ScrollTrigger.maxScroll(window) * 0.45,
+          x: 40,
+          rotation: 120,
+          ease: 'none',
+          scrollTrigger: { trigger: main.current, start: 'top top', end: 'bottom bottom', scrub: 2.5 },
+        });
+      }
+
+      // ── 2. Parallax layers (data-speed) ──
       gsap.utils.toArray<HTMLElement>('[data-speed]').forEach((el) => {
         const speed = parseFloat(el.dataset.speed || '1');
         gsap.to(el, {
-          y: () => (1 - speed) * ScrollTrigger.maxScroll(window) * 0.1,
+          y: () => (1 - speed) * 600,
           ease: 'none',
           scrollTrigger: {
             trigger: el.closest('section') || el,
-            start: 'top bottom',
-            end: 'bottom top',
-            scrub: 1.5,
-            invalidateOnRefresh: true,
+            start: 'top bottom', end: 'bottom top', scrub: 1.5,
           },
         });
       });
 
-      // ── Fade-up reveals scrubbed to scroll ──
-      gsap.utils.toArray<HTMLElement>('.gs-reveal').forEach((el) => {
-        gsap.fromTo(el,
-          { y: 80, opacity: 0, filter: 'blur(6px)' },
+      // ── 3. Line-by-line text reveals ──
+      gsap.utils.toArray<HTMLElement>('.gs-lines').forEach((el) => {
+        const lines = el.querySelectorAll('.gs-line');
+        gsap.fromTo(lines,
+          { y: 120, opacity: 0, rotateX: 40 },
           {
-            y: 0, opacity: 1, filter: 'blur(0px)',
+            y: 0, opacity: 1, rotateX: 0,
+            stagger: 0.08,
             ease: 'power3.out',
-            scrollTrigger: {
-              trigger: el,
-              start: 'top 85%',
-              end: 'top 40%',
-              scrub: 1,
-            },
+            scrollTrigger: { trigger: el, start: 'top 80%', end: 'top 30%', scrub: 1.2 },
           },
         );
       });
 
-      // ── Scale reveals ──
+      // ── 4. Fade-up reveals with LARGE translate (150px) ──
+      gsap.utils.toArray<HTMLElement>('.gs-reveal').forEach((el) => {
+        gsap.fromTo(el,
+          { y: 150, opacity: 0, filter: 'blur(6px)' },
+          {
+            y: 0, opacity: 1, filter: 'blur(0px)',
+            ease: 'power3.out',
+            scrollTrigger: { trigger: el, start: 'top 90%', end: 'top 35%', scrub: 1.2 },
+          },
+        );
+      });
+
+      // ── 5. Scale reveals ──
       gsap.utils.toArray<HTMLElement>('.gs-scale').forEach((el) => {
         gsap.fromTo(el,
-          { scale: 0.8, opacity: 0, filter: 'blur(8px)' },
+          { scale: 0.6, opacity: 0, filter: 'blur(10px)' },
           {
             scale: 1, opacity: 1, filter: 'blur(0px)',
             ease: 'power2.out',
-            scrollTrigger: {
-              trigger: el,
-              start: 'top 80%',
-              end: 'top 35%',
-              scrub: 1.5,
-            },
+            scrollTrigger: { trigger: el, start: 'top 85%', end: 'top 30%', scrub: 1.5 },
           },
         );
       });
 
-      // ── Slide from left ──
+      // ── 6. Horizontal slides ──
       gsap.utils.toArray<HTMLElement>('.gs-from-left').forEach((el) => {
-        gsap.fromTo(el,
-          { x: -60, opacity: 0 },
-          {
-            x: 0, opacity: 1,
-            ease: 'power3.out',
-            scrollTrigger: { trigger: el, start: 'top 80%', end: 'top 40%', scrub: 1 },
-          },
-        );
+        gsap.fromTo(el, { x: -120, opacity: 0 }, {
+          x: 0, opacity: 1, ease: 'power3.out',
+          scrollTrigger: { trigger: el, start: 'top 85%', end: 'top 35%', scrub: 1.2 },
+        });
       });
-
-      // ── Slide from right ──
       gsap.utils.toArray<HTMLElement>('.gs-from-right').forEach((el) => {
-        gsap.fromTo(el,
-          { x: 60, opacity: 0 },
-          {
-            x: 0, opacity: 1,
-            ease: 'power3.out',
-            scrollTrigger: { trigger: el, start: 'top 80%', end: 'top 40%', scrub: 1 },
-          },
-        );
+        gsap.fromTo(el, { x: 120, opacity: 0 }, {
+          x: 0, opacity: 1, ease: 'power3.out',
+          scrollTrigger: { trigger: el, start: 'top 85%', end: 'top 35%', scrub: 1.2 },
+        });
       });
 
-      // ── Stagger children ──
+      // ── 7. Stagger children ──
       gsap.utils.toArray<HTMLElement>('.gs-stagger').forEach((container) => {
         const children = container.querySelectorAll('.gs-stagger-item');
         gsap.fromTo(children,
-          { y: 60, opacity: 0, filter: 'blur(4px)' },
+          { y: 100, opacity: 0, filter: 'blur(4px)' },
           {
             y: 0, opacity: 1, filter: 'blur(0px)',
-            stagger: 0.15,
+            stagger: 0.12,
             ease: 'power3.out',
-            scrollTrigger: {
-              trigger: container,
-              start: 'top 75%',
-              end: 'top 25%',
-              scrub: 1.5,
-            },
+            scrollTrigger: { trigger: container, start: 'top 80%', end: 'top 20%', scrub: 1.5 },
           },
         );
       });
 
-    }, containerRef);
+      // ── 8. Counter animation ──
+      gsap.utils.toArray<HTMLElement>('.gs-counter').forEach((el) => {
+        const target = parseInt(el.dataset.target || '0', 10);
+        const obj = { val: 0 };
+        gsap.to(obj, {
+          val: target,
+          duration: 1,
+          ease: 'power2.out',
+          scrollTrigger: { trigger: el, start: 'top 80%', toggleActions: 'play none none none' },
+          onUpdate: () => { el.textContent = Math.round(obj.val).toLocaleString(); },
+        });
+      });
+
+    }, main);
 
     return () => ctx.revert();
   }, []);
 
   return (
-    <div ref={containerRef} className="overflow-hidden">
+    <div ref={main} className="relative overflow-hidden">
+
+      {/* ══ FLOATING VISUALS — persist across ALL sections ══ */}
+      <div className="fixed top-0 left-0 w-full h-full pointer-events-none z-[1]" aria-hidden>
+        {/* Golden orb — like FENC's red ball */}
+        <div className="fp-float-orb absolute top-[15vh] right-[8%] w-[180px] h-[180px] sm:w-[280px] sm:h-[280px] rounded-full opacity-[0.07]" style={{
+          background: 'radial-gradient(circle at 30% 30%, #f7c79a, #9F6B3E)',
+        }} />
+        {/* Floating leaf 1 */}
+        <svg className="fp-float-leaf-1 absolute top-[30vh] left-[5%] w-12 h-12 sm:w-16 sm:h-16 text-[#8ccf8c] opacity-[0.12]" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M17 8c-4 0-8 4-8 8a8 8 0 008-8z" />
+        </svg>
+        {/* Floating leaf 2 */}
+        <svg className="fp-float-leaf-2 absolute top-[60vh] right-[12%] w-10 h-10 sm:w-14 sm:h-14 text-[#f7c79a] opacity-[0.1]" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M17 8c-4 0-8 4-8 8a8 8 0 008-8z" />
+        </svg>
+      </div>
 
       {/* ════════ HERO ════════ */}
-      <section className="relative min-h-screen flex items-center justify-center" style={{
+      <section className="relative min-h-screen flex items-center justify-center z-[2]" style={{
         background: 'linear-gradient(180deg, #1a1410 0%, #2a1f16 60%, #3d2e22 100%)',
       }}>
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none" aria-hidden>
-          <div className="font-black text-[28vw] leading-none tracking-tighter opacity-[0.03]" data-speed="0.3" style={{ color: '#e7d9cb' }}>FP</div>
+          <div className="font-black text-[30vw] leading-none tracking-tighter opacity-[0.03]" data-speed="0.3" style={{ color: '#e7d9cb' }}>FP</div>
         </div>
-        <div className="relative text-center px-6 py-20 max-w-3xl mx-auto">
+        <div className="relative text-center px-6 py-20 max-w-3xl mx-auto z-[3]">
           <div className="gs-reveal">
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 backdrop-blur-sm rounded-full border border-white/10 mb-8">
               <span className="w-1.5 h-1.5 rounded-full bg-[#f7c79a] animate-pulse" />
               <span className="text-[10px] font-black text-[#e7d9cb]/80 tracking-[0.3em]">FAIRY PANDORA</span>
             </div>
           </div>
-          <h1 className="gs-reveal text-4xl sm:text-6xl lg:text-7xl font-black text-[#f7eee3] leading-[1.05] tracking-tight">
-            從仙女<br /><span className="text-[#f7c79a]">到潘朵拉</span>
-          </h1>
-          <p className="gs-reveal text-base sm:text-lg text-[#e7d9cb]/40 mt-6 max-w-lg mx-auto leading-relaxed">
-            每位女性心裡都住著一位仙女。FP 的使命，是陪你打開那個專屬的盒子。
+          <div className="gs-lines overflow-hidden">
+            <div className="gs-line"><h1 className="text-5xl sm:text-6xl lg:text-8xl font-black text-[#f7eee3] leading-[1.05] tracking-tight">從仙女</h1></div>
+            <div className="gs-line"><h1 className="text-5xl sm:text-6xl lg:text-8xl font-black text-[#f7c79a] leading-[1.05] tracking-tight">到潘朵拉</h1></div>
+          </div>
+          <p className="gs-reveal text-base sm:text-lg text-[#e7d9cb]/40 mt-8 max-w-lg mx-auto leading-relaxed">
+            每位女性心裡都住著一位仙女。<br />FP 的使命，是陪你打開那個專屬的盒子。
           </p>
-          <div className="gs-scale mt-12">
-            <Mascot stage="seedling" mood="neutral" size={80} />
+          <div className="gs-scale mt-14">
+            <Mascot stage="seedling" mood="neutral" size={90} />
           </div>
         </div>
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 text-[#e7d9cb]/25 animate-bounce text-center">
-          <span className="text-[9px] font-bold tracking-[0.3em] block">SCROLL</span>
-          <svg className="w-4 h-4 mx-auto mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 text-[#e7d9cb]/20 animate-bounce text-center z-[3]">
+          <span className="text-[9px] font-bold tracking-[0.3em] block mb-1">SCROLL</span>
+          <svg className="w-4 h-4 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
           </svg>
         </div>
       </section>
 
-      {/* ════════ FAIRY ════════ */}
-      <section className="relative py-32 sm:py-44 overflow-visible" style={{
-        background: 'linear-gradient(180deg, #1e3a1e 0%, #2a4a2a 100%)',
-      }}>
+      {/* ════════ NUMBERS ════════ */}
+      <section className="relative py-20 sm:py-28 z-[2]" style={{ background: 'linear-gradient(180deg, #3d2e22 0%, #1e3a1e 100%)' }}>
         <div className="max-w-5xl mx-auto px-6 sm:px-8">
-          <div className="flex flex-col md:flex-row items-center gap-12 md:gap-20">
+          <div className="gs-stagger grid grid-cols-2 sm:grid-cols-4 gap-6 text-center">
+            {[
+              { target: 249, suffix: '+', label: '國際品質大獎' },
+              { target: 25, suffix: '座', label: '2025 玉山獎' },
+              { target: 8, suffix: '年', label: '品牌經營' },
+              { target: 100, suffix: '%', label: '官方正品授權' },
+            ].map((n) => (
+              <div key={n.label} className="gs-stagger-item">
+                <div className="flex items-baseline justify-center gap-1">
+                  <span className="gs-counter text-4xl sm:text-5xl font-black text-[#f7c79a]" data-target={n.target}>0</span>
+                  <span className="text-lg sm:text-xl font-black text-[#f7c79a]/60">{n.suffix}</span>
+                </div>
+                <div className="text-[11px] font-bold text-[#e7d9cb]/40 mt-2 tracking-wider">{n.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ════════ FAIRY ════════ */}
+      <section className="relative py-32 sm:py-48 z-[2]" style={{ background: 'linear-gradient(180deg, #1e3a1e 0%, #2a4a2a 100%)' }}>
+        <div className="max-w-5xl mx-auto px-6 sm:px-8">
+          <div className="flex flex-col md:flex-row items-center gap-14 md:gap-24">
             <div className="flex-1">
-              <div className="gs-from-left text-[10px] font-black tracking-[0.4em] text-[#8ccf8c]/50 mb-4">FAIRY · 仙女</div>
-              <h2 className="gs-from-left text-3xl sm:text-4xl lg:text-5xl font-black text-[#f7eee3] leading-[1.1]">
-                每個女生<br />都是仙女
-              </h2>
-              <p className="gs-reveal text-sm sm:text-base text-[#e7d9cb]/40 mt-6 leading-relaxed max-w-md">
+              <div className="gs-from-left text-[10px] font-black tracking-[0.4em] text-[#8ccf8c]/40 mb-5">FAIRY · 仙女</div>
+              <div className="gs-lines overflow-hidden">
+                <div className="gs-line"><h2 className="text-3xl sm:text-4xl lg:text-6xl font-black text-[#f7eee3] leading-[1.08]">每個女生</h2></div>
+                <div className="gs-line"><h2 className="text-3xl sm:text-4xl lg:text-6xl font-black text-[#f7eee3] leading-[1.08]">都是仙女</h2></div>
+              </div>
+              <p className="gs-reveal text-sm sm:text-base text-[#e7d9cb]/35 mt-8 leading-relaxed max-w-md">
                 只是有時候忘了。忘了自己可以更好、可以更自信、可以不用將就。婕樂纖是那個提醒你的契機 — 不是變成別人，而是找回自己。
               </p>
             </div>
-            <div className="gs-scale shrink-0" data-speed="0.6">
-              <Mascot stage="sprout" mood="happy" size={200} />
+            <div className="gs-scale shrink-0" data-speed="0.5">
+              <Mascot stage="sprout" mood="happy" size={220} />
             </div>
           </div>
         </div>
       </section>
 
       {/* ════════ PANDORA ════════ */}
-      <section className="relative py-32 sm:py-44 overflow-visible" style={{
-        background: 'linear-gradient(180deg, #fdf7ef 0%, #f7eee3 100%)',
-      }}>
+      <section className="relative py-32 sm:py-48 z-[2]" style={{ background: 'linear-gradient(180deg, #fdf7ef 0%, #f7eee3 100%)' }}>
         <div className="max-w-5xl mx-auto px-6 sm:px-8">
-          <div className="flex flex-col md:flex-row-reverse items-center gap-12 md:gap-20">
+          <div className="flex flex-col md:flex-row-reverse items-center gap-14 md:gap-24">
             <div className="flex-1">
-              <div className="gs-from-right text-[10px] font-black tracking-[0.4em] text-[#9F6B3E]/50 mb-4">PANDORA · 潘朵拉</div>
-              <h2 className="gs-from-right text-3xl sm:text-4xl lg:text-5xl font-black text-[#3d2e22] leading-[1.1]">
-                盒子裡裝的<br />不是災難<br /><span className="text-[#9F6B3E]">是希望</span>
-              </h2>
-              <p className="gs-reveal text-sm sm:text-base text-[#3d2e22]/40 mt-6 leading-relaxed max-w-md">
+              <div className="gs-from-right text-[10px] font-black tracking-[0.4em] text-[#9F6B3E]/40 mb-5">PANDORA · 潘朵拉</div>
+              <div className="gs-lines overflow-hidden">
+                <div className="gs-line"><h2 className="text-3xl sm:text-4xl lg:text-6xl font-black text-[#3d2e22] leading-[1.08]">盒子裡裝的</h2></div>
+                <div className="gs-line"><h2 className="text-3xl sm:text-4xl lg:text-6xl font-black text-[#3d2e22] leading-[1.08]">不是災難</h2></div>
+                <div className="gs-line"><h2 className="text-3xl sm:text-4xl lg:text-6xl font-black text-[#9F6B3E] leading-[1.08]">是希望</h2></div>
+              </div>
+              <p className="gs-reveal text-sm sm:text-base text-[#3d2e22]/35 mt-8 leading-relaxed max-w-md">
                 打開它需要勇氣 — 而我們在這裡，陪你一起打開。裡面裝的是屬於你的健康、美麗、和自信。
               </p>
             </div>
-            <div className="gs-scale shrink-0" data-speed="0.6">
-              <Mascot stage="bloom" mood="excited" size={200} />
+            <div className="gs-scale shrink-0" data-speed="0.5">
+              <Mascot stage="bloom" mood="excited" size={220} />
             </div>
           </div>
         </div>
       </section>
 
       {/* ════════ JOURNEY ════════ */}
-      <section className="py-32 sm:py-44 bg-[#fdf7ef]">
+      <section className="py-32 sm:py-48 bg-[#fdf7ef] relative z-[2]">
         <div className="max-w-5xl mx-auto px-6 sm:px-8">
-          <div className="gs-reveal text-center mb-20">
-            <div className="text-[10px] font-black tracking-[0.3em] text-[#9F6B3E]/50 mb-3">YOUR JOURNEY</div>
+          <div className="gs-reveal text-center mb-24">
+            <div className="text-[10px] font-black tracking-[0.3em] text-[#9F6B3E]/40 mb-3">YOUR JOURNEY</div>
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-[#3d2e22]">你的蛻變旅程</h2>
           </div>
-          <div className="gs-stagger space-y-6">
+          <div className="gs-stagger space-y-8">
             {[
               { step: '01', Icon: Icons.Leaf, title: '遇見', desc: '第一次認識婕樂纖，對健康有了新的想像。一顆小小的種子，悄悄種在心裡。', color: 'from-[#e8f5e9] to-[#c8e6c9]', iconColor: 'text-[#4caf50]' },
               { step: '02', Icon: Icons.Sparkles, title: '探索', desc: '了解三階梯定價，找到最適合自己的組合搭配。根扎得更深，葉子開始伸展。', color: 'from-white to-[#fdf7ef]', iconColor: 'text-[#9F6B3E]' },
@@ -219,7 +279,7 @@ export default function AboutPage() {
               <div key={s.step} className="gs-stagger-item">
                 <div className={`flex flex-col sm:flex-row items-center gap-8 bg-gradient-to-br ${s.color} rounded-[2rem] p-8 sm:p-12 border border-white/60`}>
                   <div className="flex items-center gap-5 shrink-0">
-                    <span className="text-[56px] sm:text-[72px] font-black leading-none text-black/[0.03]">{s.step}</span>
+                    <span className="text-[60px] sm:text-[80px] font-black leading-none text-black/[0.03]">{s.step}</span>
                     <div className={`w-16 h-16 rounded-2xl bg-white/80 flex items-center justify-center ${s.iconColor} shadow-sm`}>
                       <s.Icon className="w-8 h-8" />
                     </div>
@@ -236,16 +296,16 @@ export default function AboutPage() {
       </section>
 
       {/* ════════ TEAM ════════ */}
-      <section className="py-32 sm:py-44 bg-white">
+      <section className="py-32 sm:py-48 bg-white relative z-[2]">
         <div className="max-w-5xl mx-auto px-6 sm:px-8">
-          <div className="gs-reveal text-center mb-20">
-            <div className="text-[10px] font-black tracking-[0.3em] text-[#9F6B3E]/50 mb-3">WHO WE ARE</div>
+          <div className="gs-reveal text-center mb-24">
+            <div className="text-[10px] font-black tracking-[0.3em] text-[#9F6B3E]/40 mb-3">WHO WE ARE</div>
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-[#3d2e22]">陪你蛻變的人</h2>
           </div>
           <div className="gs-stagger grid md:grid-cols-3 gap-8">
             {[
               { Icon: Icons.Seedling, iconColor: 'text-[#9F6B3E]', bg: 'from-[#fdf7ef] to-[#f7eee3]', border: 'border-[#e7d9cb]', badge: 'CO-FOUNDER', badgeColor: 'text-[#9F6B3E]', name: '朵朵', creds: ['健康食品業 8 年', '台灣電商創業家'], bio: '用「從仙女變成 Pandora」的精神，把好東西帶給更多女性。' },
-              { Icon: Icons.Leaf, iconColor: 'text-[#2e7d32]', bg: 'from-[#e8f5e9] to-[#f1f8e9]', border: 'border-[#c8e6c9]', badge: 'NUTRITION', badgeColor: 'text-[#2e7d32]', name: '營養師顧問團', creds: ['專技高考合格營養師', '食品科學碩士'], bio: '纖體系列滿額即可加入陪伴班或陪跑班，專屬飲食指導。' },
+              { Icon: Icons.Leaf, iconColor: 'text-[#2e7d32]', bg: 'from-[#e8f5e9] to-[#f1f8e9]', border: 'border-[#c8e6c9]', badge: 'NUTRITION', badgeColor: 'text-[#2e7d32]', name: '營養師顧問團', creds: ['專技高考合格營養師', '食品科學碩士'], bio: '纖體系列滿額即可加入陪伴班或陪跑班。' },
               { Icon: Icons.Gift, iconColor: 'text-[#1565c0]', bg: 'from-[#e3f2fd] to-[#bbdefb]', border: 'border-[#90caf9]', badge: 'CARE', badgeColor: 'text-[#1565c0]', name: '客服仙女', creds: ['1 對 1 LINE 諮詢', '週一至週五上線'], bio: '從下單到售後全包辦。平均 1 小時內回覆。' },
             ].map((m) => (
               <div key={m.name} className="gs-stagger-item">
@@ -267,10 +327,10 @@ export default function AboutPage() {
       </section>
 
       {/* ════════ VALUES ════════ */}
-      <section className="py-32 sm:py-44" style={{ background: 'linear-gradient(180deg, #fff 0%, #fdf7ef 100%)' }}>
+      <section className="py-32 sm:py-48 relative z-[2]" style={{ background: 'linear-gradient(180deg, #fff 0%, #fdf7ef 100%)' }}>
         <div className="max-w-4xl mx-auto px-6 sm:px-8">
-          <div className="gs-reveal text-center mb-20">
-            <div className="text-[10px] font-black tracking-[0.3em] text-[#9F6B3E]/50 mb-3">OUR VALUES</div>
+          <div className="gs-reveal text-center mb-24">
+            <div className="text-[10px] font-black tracking-[0.3em] text-[#9F6B3E]/40 mb-3">OUR VALUES</div>
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-[#3d2e22]">我們相信</h2>
           </div>
           <div className="gs-stagger grid sm:grid-cols-3 gap-8">
@@ -294,22 +354,23 @@ export default function AboutPage() {
       </section>
 
       {/* ════════ CTA ════════ */}
-      <section className="relative py-36 sm:py-48 overflow-hidden" style={{
+      <section className="relative py-36 sm:py-52 overflow-hidden z-[2]" style={{
         background: 'linear-gradient(135deg, #9F6B3E 0%, #6b4424 50%, #3d2e22 100%)',
       }}>
-        <div className="absolute top-0 left-[10%] w-[40vw] h-[40vw] rounded-full bg-[#f7c79a]/10 blur-[100px] pointer-events-none" data-speed="0.4" />
-        <div className="absolute bottom-0 right-[10%] w-[30vw] h-[30vw] rounded-full bg-[#E0748C]/10 blur-[80px] pointer-events-none" data-speed="0.3" />
-        <div className="relative max-w-3xl mx-auto px-6 sm:px-8 text-center">
-          <div className="gs-scale mb-8">
-            <Mascot stage="bloom" mood="excited" size={140} />
+        <div className="absolute top-0 left-[10%] w-[40vw] h-[40vw] rounded-full bg-[#f7c79a]/10 blur-[120px] pointer-events-none" data-speed="0.35" />
+        <div className="absolute bottom-0 right-[10%] w-[30vw] h-[30vw] rounded-full bg-[#E0748C]/8 blur-[100px] pointer-events-none" data-speed="0.25" />
+        <div className="relative max-w-3xl mx-auto px-6 sm:px-8 text-center z-[3]">
+          <div className="gs-scale mb-10">
+            <Mascot stage="bloom" mood="excited" size={160} />
           </div>
-          <h2 className="gs-reveal text-3xl sm:text-5xl lg:text-6xl font-black text-white leading-[1.05] tracking-tight" style={{ mixBlendMode: 'difference' }}>
-            準備好打開你的<br />潘朵拉盒子了嗎？
-          </h2>
-          <p className="gs-reveal text-sm sm:text-base text-white/50 mt-6 max-w-md mx-auto leading-relaxed">
-            每個蛻變都從一小步開始。無論你是第一次認識婕樂纖，或是想找到更適合自己的組合 — 我們都在這裡。
+          <div className="gs-lines overflow-hidden">
+            <div className="gs-line"><h2 className="text-3xl sm:text-5xl lg:text-7xl font-black text-white leading-[1.05] tracking-tight">準備好打開你的</h2></div>
+            <div className="gs-line"><h2 className="text-3xl sm:text-5xl lg:text-7xl font-black text-white leading-[1.05] tracking-tight" style={{ mixBlendMode: 'difference' }}>潘朵拉盒子了嗎？</h2></div>
+          </div>
+          <p className="gs-reveal text-sm sm:text-base text-white/40 mt-8 max-w-md mx-auto leading-relaxed">
+            每個蛻變都從一小步開始。我們都在這裡。
           </p>
-          <div className="gs-reveal mt-12 flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="gs-reveal mt-14 flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/products" className="px-10 py-4 bg-white text-[#9F6B3E] font-black rounded-full hover:bg-white/90 transition-all duration-500 shadow-2xl min-h-[56px] flex items-center justify-center text-base">
               開始選購
             </Link>
