@@ -12,6 +12,7 @@ export const revalidate = 3600;
 export const metadata: Metadata = {
   title: '全館商品',
   description: 'JEROSSE 婕樂纖全系列商品，任選兩件享搭配價，滿額再享VIP優惠。',
+  alternates: { canonical: '/products' },
 };
 
 type SortValue = '' | 'price_asc' | 'price_desc' | 'newest';

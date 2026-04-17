@@ -12,6 +12,7 @@ export const revalidate = 3600;
 export const metadata: Metadata = {
   title: '最新文章',
   description: '婕樂纖誌 — 營養師專欄、媒體報導、品牌故事與真實口碑。',
+  alternates: { canonical: '/articles' },
 };
 
 export default async function ArticlesPage({

@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 export const metadata: Metadata = {
   title: '退換貨政策',
   description: '婕樂纖仙女館退換貨政策，了解退換貨條件、流程及退款方式。',
+  alternates: { canonical: '/return-policy' },
 };
 
 export default function ReturnPolicyPage() {

@@ -6,6 +6,7 @@ import TextReveal from '@/components/TextReveal';
 
 export const metadata: Metadata = {
   title: '訂單查詢',
+  alternates: { canonical: '/order-lookup' },
 };
 
 export default function OrderLookupPage() {
