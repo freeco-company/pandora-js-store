@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Campaign;
 use App\Models\Product;
 use Illuminate\Support\Collection;
 
@@ -14,6 +15,9 @@ class CartPricingService
      * 1. Regular price (total quantity = 1)
      * 2. Combo price (total quantity >= 2, same or different products)
      * 3. VIP price (combo total >= 4000)
+     *
+     * Campaign override: if ANY item in the cart belongs to an active
+     * campaign, the entire cart jumps to VIP tier regardless of total.
      */
     public function calculate(array $cartItems): array
     {
@@ -29,6 +33,13 @@ class CartPricingService
                 'quantity' => (int) $item['quantity'],
             ];
         })->filter()->values();
+
+        // Campaign VIP override: any cart item in an active campaign → VIP
+        $hasCampaignItem = $this->hasActiveCampaignItem($productIds);
+        if ($hasCampaignItem && $items->sum('quantity') >= 2) {
+            $vipTotal = $this->calculateTotal($items, 'vip');
+            return $this->buildResult('vip', $items, $vipTotal, true);
+        }
 
         $totalQuantity = $items->sum('quantity');
 
@@ -47,6 +58,14 @@ class CartPricingService
         return $this->buildResult('regular', $items, $regularTotal);
     }
 
+    /** Check if any of the given product IDs belong to a currently-running campaign. */
+    private function hasActiveCampaignItem(Collection $productIds): bool
+    {
+        return Campaign::active()
+            ->whereHas('products', fn ($q) => $q->whereIn('products.id', $productIds))
+            ->exists();
+    }
+
     private function calculateTotal(Collection $items, string $tier): float
     {
         return $items->sum(function ($item) use ($tier) {
@@ -63,11 +82,12 @@ class CartPricingService
         };
     }
 
-    private function buildResult(string $tier, Collection $items, float $total): array
+    private function buildResult(string $tier, Collection $items, float $total, bool $campaignVip = false): array
     {
         return [
             'tier' => $tier,
             'total' => $total,
+            'campaign_vip' => $campaignVip,
             'items' => $items->map(function ($item) use ($tier) {
                 $unitPrice = $this->getPrice($item['product'], $tier);
                 return [

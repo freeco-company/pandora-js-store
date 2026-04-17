@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\ArticleController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BannerController;
+use App\Http\Controllers\Api\CampaignController;
 use App\Http\Controllers\Api\CartController;
 use App\Http\Controllers\Api\CouponController;
 use App\Http\Controllers\Api\CustomerController;
@@ -78,3 +79,7 @@ Route::post('/logistics/ecpay/status', [LogisticsController::class, 'ecpayStatus
 
 // Back-in-stock notify
 Route::post('/products/{slug}/notify-stock', [StockNotificationController::class, 'subscribe']);
+
+// Campaigns (活動管理)
+Route::get('/campaigns', [CampaignController::class, 'index']);
+Route::get('/campaigns/{slug}', [CampaignController::class, 'show']);

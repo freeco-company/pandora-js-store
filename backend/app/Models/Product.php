@@ -42,4 +42,18 @@ class Product extends Model
     {
         return $this->hasMany(OrderItem::class);
     }
+
+    public function campaigns()
+    {
+        return $this->belongsToMany(Campaign::class, 'campaign_product')
+            ->withPivot('campaign_price', 'sort_order');
+    }
+
+    /**
+     * Is this product part of any currently-running campaign?
+     */
+    public function getActiveCampaignAttribute(): ?Campaign
+    {
+        return $this->campaigns()->active()->first();
+    }
 }
