@@ -32,8 +32,8 @@ class CampaignController extends Controller
                         'name' => $p->name,
                         'slug' => $p->slug,
                         'image' => $p->image,
-                        'price' => $p->price,
-                        'campaign_price' => $p->pivot->campaign_price,
+                        'price' => (float) $p->price,
+                        'campaign_price' => (float) ($p->pivot->campaign_price ?? $p->sale_price ?? $p->price),
                     ]),
                 ];
             });

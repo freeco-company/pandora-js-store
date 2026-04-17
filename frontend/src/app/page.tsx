@@ -44,6 +44,9 @@ export default async function HomePage() {
       {/* HERO BANNER CAROUSEL (official scraped from jerosse.com.tw) */}
       <HeroBanner banners={banners} products={products} />
 
+      {/* Campaign countdown — right after banner, before brand hero */}
+      <CampaignCountdown />
+
       {popups.length > 0 && <HomePopupModal popups={popups} />}
 
       {/* ------------------------------------------------------------------ */}
@@ -181,8 +184,6 @@ export default async function HomePage() {
       </section>
 
       {/* Campaign countdown — only visible when an active campaign exists */}
-      <CampaignCountdown />
-
       {/* 3. Marquee keywords */}
       <MarqueeKeywords />
 

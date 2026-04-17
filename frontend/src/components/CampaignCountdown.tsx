@@ -140,8 +140,15 @@ function CountdownSection({ campaign }: { campaign: Campaign }) {
                 </div>
                 <div className="p-2.5">
                   <div className="text-xs font-bold text-gray-800 line-clamp-1">{p.name}</div>
-                  <div className="mt-1 text-sm font-black text-[#9F6B3E]">
-                    ${(p.campaign_price ?? p.price).toLocaleString()}
+                  <div className="mt-1 flex items-baseline gap-1.5">
+                    <span className="text-sm font-black text-[#9F6B3E]">
+                      ${(p.campaign_price ?? p.price).toLocaleString()}
+                    </span>
+                    {p.price > (p.campaign_price ?? p.price) && (
+                      <span className="text-[10px] text-gray-400 line-through">
+                        ${p.price.toLocaleString()}
+                      </span>
+                    )}
                   </div>
                 </div>
               </Link>
