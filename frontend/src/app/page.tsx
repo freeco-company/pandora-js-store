@@ -17,8 +17,8 @@ import { organizationSchema, websiteSchema, jsonLdScript } from '@/lib/jsonld';
 const MarqueeKeywords = dynamic(() => import('@/components/MarqueeKeywords'));
 const HealthBeautyNarrative = dynamic(() => import('@/components/HealthBeautyNarrative'));
 const HomePopupModal = dynamic(() => import('@/components/HomePopupModal'));
-// MascotBanner makes a client-side fetch — defer so it doesn't block initial paint
-const MascotBanner = dynamic(() => import('@/components/MascotBanner'));
+// MascotBanner removed from homepage (芽芽 is now inside the hero orb).
+// Component still used on other pages.
 
 export const revalidate = 3600;
 
@@ -181,8 +181,8 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* 2. Gamification mascot banner */}
-      <MascotBanner />
+      {/* Mascot banner removed — 芽芽 now lives inside the hero orb above.
+         Keeping MascotBanner component for /account and other pages. */}
 
       {/* 3. Marquee keywords */}
       <MarqueeKeywords />
