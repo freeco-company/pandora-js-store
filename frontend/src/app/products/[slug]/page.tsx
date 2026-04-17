@@ -12,7 +12,8 @@ import RelatedArticles from '@/components/RelatedArticles';
 import StockNotifyButton from '@/components/StockNotifyButton';
 import ProductGallery from '@/components/ProductGallery';
 import ShareButtons from '@/components/ShareButtons';
-import ProductCardGrid from '@/components/ProductCardGrid';
+import CrossSellAddOn from '@/components/CrossSellAddOn';
+import CampaignPricing from '@/components/CampaignPricing';
 import { sanitizeHtml } from '@/lib/sanitize';
 import type { Product } from '@/lib/api';
 import { breadcrumbSchema, jsonLdScript } from '@/lib/jsonld';
@@ -213,86 +214,90 @@ export default async function ProductDetailPage({ params }: Props) {
             </div>
           )}
 
-          {/* Pricing Tiers — stacked cards with progressive savings */}
-          <div className="mb-6">
-            <div className="flex items-center justify-between mb-3">
-              <div className="text-[10px] font-black tracking-[0.2em] text-[#7a5836]">PRICING · 三階梯</div>
-              <a href="/#pricing" className="text-[10px] text-gray-400 underline">規則說明</a>
-            </div>
-            <div className="grid grid-cols-3 gap-2 items-stretch">
-              {/* Tier 1 — pt-2 spacer matches tier 2's badge offset so cards align */}
-              <div className="relative pt-2">
-                <div className="rounded-2xl bg-white border border-[#e7d9cb] p-3 text-center h-full">
-                  <div className="flex items-center justify-center gap-1 text-[10px] font-black text-gray-400 tracking-wider mb-1">
-                    <span>🌱</span>階梯 1
-                  </div>
-                  <div className="text-[10px] text-gray-500 mb-0.5">單件</div>
-                  <div className="text-lg sm:text-xl font-black text-gray-900">
-                    {formatPrice(product.price)}
+          {/* Pricing: campaign deal OR 3-tier */}
+          {product.active_campaign ? (
+            <CampaignPricing campaign={product.active_campaign} originalPrice={product.price} />
+          ) : (
+            <div className="mb-6">
+              <div className="flex items-center justify-between mb-3">
+                <div className="text-[10px] font-black tracking-[0.2em] text-[#7a5836]">PRICING · 三階梯</div>
+                <a href="/#pricing" className="text-[10px] text-gray-400 underline">規則說明</a>
+              </div>
+              <div className="grid grid-cols-3 gap-2 items-stretch">
+                {/* Tier 1 */}
+                <div className="relative pt-2">
+                  <div className="rounded-2xl bg-white border border-[#e7d9cb] p-3 text-center h-full">
+                    <div className="flex items-center justify-center gap-1 text-[10px] font-black text-gray-400 tracking-wider mb-1">
+                      <span>🌱</span>階梯 1
+                    </div>
+                    <div className="text-[10px] text-gray-500 mb-0.5">單件</div>
+                    <div className="text-lg sm:text-xl font-black text-gray-900">
+                      {formatPrice(product.price)}
+                    </div>
                   </div>
                 </div>
+
+                {/* Tier 2 — combo */}
+                {product.combo_price ? (
+                  <div className="relative pt-2">
+                    <span className="absolute top-0 left-1/2 -translate-x-1/2 z-10 px-2 py-0.5 rounded-full bg-[#9F6B3E] text-white text-[9px] font-black tracking-wide shadow-sm whitespace-nowrap">
+                      最多人選
+                    </span>
+                    <div className="rounded-2xl bg-gradient-to-br from-[#fdf7ef] to-[#f7eee3] border-2 border-[#9F6B3E]/40 p-3 text-center shadow-sm shadow-[#9F6B3E]/15 h-full">
+                      <div className="flex items-center justify-center gap-1 text-[10px] font-black text-[#9F6B3E] tracking-wider mb-1">
+                        <span>🎀</span>階梯 2
+                      </div>
+                      <div className="text-[10px] text-[#9F6B3E]/80 mb-0.5">任選 2 件</div>
+                      <div className="text-lg sm:text-xl font-black text-[#9F6B3E]">
+                        {formatPrice(product.combo_price)}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="relative pt-2">
+                    <div className="rounded-2xl bg-slate-50 border border-slate-200 p-3 text-center opacity-50 h-full">
+                      <div className="text-[10px] text-slate-400">—</div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Tier 3 — VIP */}
+                {product.vip_price ? (
+                  <div className="relative pt-2">
+                    <div className="rounded-2xl bg-gradient-to-br from-[#9F6B3E] via-[#8d5f36] to-[#6b4424] text-white p-3 text-center relative overflow-hidden shadow-md shadow-[#9F6B3E]/30 h-full">
+                      <span className="absolute -top-6 -right-6 w-16 h-16 rounded-full bg-white/10" />
+                      <div className="relative flex items-center justify-center gap-1 text-[10px] font-black text-[#fcd561] tracking-wider mb-1">
+                        <span>👑</span>階梯 3
+                      </div>
+                      <div className="relative text-[10px] text-white/70 mb-0.5">滿 $4,000</div>
+                      <div className="relative text-lg sm:text-xl font-black">
+                        {formatPrice(product.vip_price)}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="relative pt-2">
+                    <div className="rounded-2xl bg-slate-50 border border-slate-200 p-3 text-center opacity-50 h-full">
+                      <div className="text-[10px] text-slate-400">—</div>
+                    </div>
+                  </div>
+                )}
               </div>
 
-              {/* Tier 2 — combo (has floating badge; extra top margin so badge doesn't clip) */}
-              {product.combo_price ? (
-                <div className="relative pt-2">
-                  <span className="absolute top-0 left-1/2 -translate-x-1/2 z-10 px-2 py-0.5 rounded-full bg-[#9F6B3E] text-white text-[9px] font-black tracking-wide shadow-sm whitespace-nowrap">
-                    最多人選
+              {/* Contextual upgrade hint */}
+              {product.combo_price && product.vip_price && (
+                <div className="mt-3 flex items-center gap-2 text-[11px] text-[#7a5836] bg-[#fdf7ef] border border-[#e7d9cb] rounded-xl px-3 py-2">
+                  <span>💡</span>
+                  <span className="flex-1">
+                    整車搭配越多越省 — 滿 $4,000 自動升級 VIP 價
+                    <strong className="text-[#9F6B3E] ml-1">
+                      省 {formatPrice(product.price - product.vip_price)}/件
+                    </strong>
                   </span>
-                  <div className="rounded-2xl bg-gradient-to-br from-[#fdf7ef] to-[#f7eee3] border-2 border-[#9F6B3E]/40 p-3 text-center shadow-sm shadow-[#9F6B3E]/15 h-full">
-                    <div className="flex items-center justify-center gap-1 text-[10px] font-black text-[#9F6B3E] tracking-wider mb-1">
-                      <span>🎀</span>階梯 2
-                    </div>
-                    <div className="text-[10px] text-[#9F6B3E]/80 mb-0.5">任選 2 件</div>
-                    <div className="text-lg sm:text-xl font-black text-[#9F6B3E]">
-                      {formatPrice(product.combo_price)}
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="relative pt-2">
-                  <div className="rounded-2xl bg-slate-50 border border-slate-200 p-3 text-center opacity-50 h-full">
-                    <div className="text-[10px] text-slate-400">—</div>
-                  </div>
-                </div>
-              )}
-
-              {/* Tier 3 — VIP */}
-              {product.vip_price ? (
-                <div className="relative pt-2">
-                  <div className="rounded-2xl bg-gradient-to-br from-[#9F6B3E] via-[#8d5f36] to-[#6b4424] text-white p-3 text-center relative overflow-hidden shadow-md shadow-[#9F6B3E]/30 h-full">
-                    <span className="absolute -top-6 -right-6 w-16 h-16 rounded-full bg-white/10" />
-                    <div className="relative flex items-center justify-center gap-1 text-[10px] font-black text-[#fcd561] tracking-wider mb-1">
-                      <span>👑</span>階梯 3
-                    </div>
-                    <div className="relative text-[10px] text-white/70 mb-0.5">滿 $4,000</div>
-                    <div className="relative text-lg sm:text-xl font-black">
-                      {formatPrice(product.vip_price)}
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="relative pt-2">
-                  <div className="rounded-2xl bg-slate-50 border border-slate-200 p-3 text-center opacity-50 h-full">
-                    <div className="text-[10px] text-slate-400">—</div>
-                  </div>
                 </div>
               )}
             </div>
-
-            {/* Contextual upgrade hint */}
-            {product.combo_price && product.vip_price && (
-              <div className="mt-3 flex items-center gap-2 text-[11px] text-[#7a5836] bg-[#fdf7ef] border border-[#e7d9cb] rounded-xl px-3 py-2">
-                <span>💡</span>
-                <span className="flex-1">
-                  整車搭配越多越省 — 滿 $4,000 自動升級 VIP 價
-                  <strong className="text-[#9F6B3E] ml-1">
-                    省 {formatPrice(product.price - product.vip_price)}/件
-                  </strong>
-                </span>
-              </div>
-            )}
-          </div>
+          )}
 
           {/* Stock status + qty + add-to-cart — desktop only; mobile uses sticky bottom bar */}
           <div className="hidden md:block">
@@ -322,20 +327,9 @@ export default async function ProductDetailPage({ params }: Props) {
         </div>
       </div>
 
-      {/* Related Products — full width on desktop, between Share + 商品說明 on mobile */}
+      {/* Cross-sell add-on with cart progress bar */}
       {relatedProducts.length > 0 && (
-        <section className="mt-12 pt-10 border-t border-gray-200">
-          <div className="flex items-end justify-between mb-6">
-            <div>
-              <div className="text-[10px] font-black tracking-[0.2em] text-[#7a5836]">RECOMMEND</div>
-              <h2 className="text-xl sm:text-2xl font-black text-gray-900 mt-1">搭配推薦</h2>
-            </div>
-            <Link href="/products" className="text-sm font-black text-[#9F6B3E] hover:underline whitespace-nowrap">
-              看全部 →
-            </Link>
-          </div>
-          <ProductCardGrid products={relatedProducts} />
-        </section>
+        <CrossSellAddOn products={relatedProducts} />
       )}
 
       {/* Recently viewed — only shows if user has history (localStorage) */}

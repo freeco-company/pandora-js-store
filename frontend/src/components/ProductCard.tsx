@@ -107,7 +107,7 @@ export default function ProductCard({ product }: { product: Product }) {
         </div>
       </Link>
 
-      <div className="p-2.5 sm:p-4">
+      <div className="p-2.5 sm:p-3">
         <div className="mb-1">
           <ProductBadges badges={product.badges} hfCertNo={product.hf_cert_no} />
         </div>

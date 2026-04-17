@@ -243,88 +243,123 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* ═══ TEAM — full-width alternating layout ═══ */}
-      <section className="relative py-32 sm:py-44 bg-white overflow-hidden">
+      {/* ═══ TEAM — magazine-style cards with layered visuals ═══ */}
+      <section className="relative py-24 sm:py-36 overflow-hidden" style={{ background: 'linear-gradient(180deg, #faf6f1 0%, #fff 40%, #faf6f1 100%)' }}>
+        {/* Large decorative background circles */}
+        <div className="absolute top-[10%] left-[-8%] w-[40vw] h-[40vw] rounded-full bg-[#9F6B3E]/[0.03] blur-3xl pointer-events-none" />
+        <div className="absolute bottom-[5%] right-[-5%] w-[35vw] h-[35vw] rounded-full bg-[#8ccf8c]/[0.04] blur-3xl pointer-events-none" />
+
         <div className="max-w-6xl mx-auto px-6 sm:px-8">
-          <div className="gs-reveal text-center mb-20">
-            <div className="text-[10px] font-black tracking-[0.4em] text-[#9F6B3E]/40 mb-3">WHO WE ARE</div>
+          <div className="gs-reveal text-center mb-16 sm:mb-24">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#9F6B3E]/[0.06] border border-[#9F6B3E]/10 mb-6">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#9F6B3E] animate-pulse" />
+              <span className="text-[10px] font-black tracking-[0.3em] text-[#9F6B3E]">WHO WE ARE</span>
+            </div>
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-[#3d2e22]">陪你蛻變的人</h2>
+            <p className="text-sm text-gray-400 mt-3 max-w-md mx-auto">每一位夥伴，都是你的美麗後盾</p>
           </div>
 
-          {/* Each team member: alternating left/right, large visual + text */}
-          <div className="space-y-24 sm:space-y-32">
-            {/* 朵朵 — visual left */}
-            <div className="flex flex-col md:flex-row items-center gap-10 md:gap-16">
-              <div className="gs-left flex-1 flex justify-center">
-                <div className="relative">
-                  <div className="w-48 h-48 sm:w-64 sm:h-64 rounded-[3rem] bg-gradient-to-br from-[#fdf7ef] to-[#e7d9cb] flex items-center justify-center" data-speed="0.6">
-                    <Icons.Seedling className="w-24 h-24 sm:w-32 sm:h-32 text-[#9F6B3E]/30" />
+          {/* Team cards — staggered grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-6">
+            {/* 朵朵 */}
+            <div className="gs-left group">
+              <div className="relative bg-white rounded-[2rem] overflow-hidden border border-[#e7d9cb]/60 hover:shadow-2xl hover:shadow-[#9F6B3E]/10 transition-all duration-500 hover:-translate-y-2">
+                {/* Visual header */}
+                <div className="relative h-56 sm:h-64 bg-gradient-to-br from-[#fdf7ef] via-[#f7eee3] to-[#e7d9cb] overflow-hidden">
+                  {/* Decorative circles */}
+                  <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-[#9F6B3E]/[0.07]" />
+                  <div className="absolute bottom-[-20%] left-[-10%] w-48 h-48 rounded-full bg-[#9F6B3E]/[0.05]" />
+                  {/* Main icon */}
+                  <div className="absolute inset-0 flex items-center justify-center" data-speed="0.6">
+                    <div className="relative">
+                      <Icons.Seedling className="w-28 h-28 sm:w-32 sm:h-32 text-[#9F6B3E]/20 transition-transform duration-700 group-hover:scale-110" />
+                      <div className="absolute -bottom-2 -right-2 w-10 h-10 rounded-xl bg-[#9F6B3E] flex items-center justify-center shadow-lg shadow-[#9F6B3E]/30">
+                        <Icons.Seedling className="w-5 h-5 text-white" />
+                      </div>
+                    </div>
                   </div>
-                  <div className="absolute -bottom-4 -right-4 w-16 h-16 rounded-2xl bg-[#9F6B3E] flex items-center justify-center gs-scale">
-                    <Icons.Seedling className="w-8 h-8 text-white" />
+                  {/* Floating label */}
+                  <div className="absolute top-4 left-4 px-3 py-1.5 rounded-full bg-white/80 backdrop-blur-sm border border-white">
+                    <span className="text-[10px] font-black tracking-[0.2em] text-[#9F6B3E]">CO-FOUNDER</span>
                   </div>
                 </div>
-              </div>
-              <div className="flex-1">
-                <div className="gs-lines overflow-hidden">
-                  <div className="gs-line text-[10px] font-black tracking-[0.3em] text-[#9F6B3E]/50 mb-3">CO-FOUNDER</div>
+                {/* Text content */}
+                <div className="p-6 sm:p-7">
+                  <h3 className="text-2xl sm:text-3xl font-black text-[#3d2e22] mb-3">朵朵</h3>
+                  <p className="text-sm text-gray-500 leading-relaxed">
+                    用「從仙女變成 Pandora」的精神，把好東西帶給更多女性。健康食品業 8 年，台灣電商創業家。
+                  </p>
+                  <div className="mt-5 flex items-center gap-3">
+                    <div className="flex -space-x-1">
+                      <span className="w-6 h-6 rounded-full bg-[#9F6B3E]/10 flex items-center justify-center text-[9px]">8</span>
+                      <span className="w-6 h-6 rounded-full bg-[#9F6B3E]/20 flex items-center justify-center text-[9px] font-black text-[#9F6B3E]">yr</span>
+                    </div>
+                    <span className="text-[11px] text-gray-400">健康食品業經驗</span>
+                  </div>
                 </div>
-                <div className="gs-lines overflow-hidden">
-                  <div className="gs-line"><h3 className="text-3xl sm:text-4xl font-black text-[#3d2e22]">朵朵</h3></div>
-                </div>
-                <p className="gs-reveal text-sm sm:text-base text-gray-500 mt-4 leading-relaxed max-w-md">
-                  用「從仙女變成 Pandora」的精神，把好東西帶給更多女性。健康食品業 8 年，台灣電商創業家。
-                </p>
               </div>
             </div>
 
-            {/* 營養師 — visual right */}
-            <div className="flex flex-col md:flex-row-reverse items-center gap-10 md:gap-16">
-              <div className="gs-right flex-1 flex justify-center">
-                <div className="relative">
-                  <div className="w-48 h-48 sm:w-64 sm:h-64 rounded-[3rem] bg-gradient-to-br from-[#e8f5e9] to-[#c8e6c9] flex items-center justify-center" data-speed="0.6">
-                    <Icons.Leaf className="w-24 h-24 sm:w-32 sm:h-32 text-[#2e7d32]/25" />
+            {/* 營養師 — offset up on desktop */}
+            <div className="gs-reveal md:-mt-8 group">
+              <div className="relative bg-white rounded-[2rem] overflow-hidden border border-[#c8e6c9]/60 hover:shadow-2xl hover:shadow-[#2e7d32]/10 transition-all duration-500 hover:-translate-y-2">
+                <div className="relative h-56 sm:h-64 bg-gradient-to-br from-[#e8f5e9] via-[#dcedc8] to-[#c8e6c9] overflow-hidden">
+                  <div className="absolute -top-10 -left-10 w-40 h-40 rounded-full bg-[#2e7d32]/[0.06]" />
+                  <div className="absolute bottom-[-15%] right-[-8%] w-44 h-44 rounded-full bg-[#2e7d32]/[0.04]" />
+                  <div className="absolute inset-0 flex items-center justify-center" data-speed="0.6">
+                    <div className="relative">
+                      <Icons.Leaf className="w-28 h-28 sm:w-32 sm:h-32 text-[#2e7d32]/18 transition-transform duration-700 group-hover:scale-110" />
+                      <div className="absolute -bottom-2 -left-2 w-10 h-10 rounded-xl bg-[#2e7d32] flex items-center justify-center shadow-lg shadow-[#2e7d32]/30">
+                        <Icons.Leaf className="w-5 h-5 text-white" />
+                      </div>
+                    </div>
                   </div>
-                  <div className="absolute -bottom-4 -left-4 w-16 h-16 rounded-2xl bg-[#2e7d32] flex items-center justify-center gs-scale">
-                    <Icons.Leaf className="w-8 h-8 text-white" />
+                  <div className="absolute top-4 left-4 px-3 py-1.5 rounded-full bg-white/80 backdrop-blur-sm border border-white">
+                    <span className="text-[10px] font-black tracking-[0.2em] text-[#2e7d32]">NUTRITION TEAM</span>
                   </div>
                 </div>
-              </div>
-              <div className="flex-1">
-                <div className="gs-lines overflow-hidden">
-                  <div className="gs-line text-[10px] font-black tracking-[0.3em] text-[#2e7d32]/50 mb-3">NUTRITION TEAM</div>
+                <div className="p-6 sm:p-7">
+                  <h3 className="text-2xl sm:text-3xl font-black text-[#3d2e22] mb-3">營養師顧問團</h3>
+                  <p className="text-sm text-gray-500 leading-relaxed">
+                    專技高考合格營養師。纖體系列滿額即可加入陪伴班或陪跑班，專屬飲食指導與持續追蹤。
+                  </p>
+                  <div className="mt-5 flex items-center gap-2">
+                    <span className="px-2.5 py-1 rounded-full bg-[#e8f5e9] text-[10px] font-black text-[#2e7d32]">陪伴班</span>
+                    <span className="px-2.5 py-1 rounded-full bg-[#e8f5e9] text-[10px] font-black text-[#2e7d32]">陪跑班</span>
+                    <span className="px-2.5 py-1 rounded-full bg-[#e8f5e9] text-[10px] font-black text-[#2e7d32]">1:1</span>
+                  </div>
                 </div>
-                <div className="gs-lines overflow-hidden">
-                  <div className="gs-line"><h3 className="text-3xl sm:text-4xl font-black text-[#3d2e22]">營養師顧問團</h3></div>
-                </div>
-                <p className="gs-reveal text-sm sm:text-base text-gray-500 mt-4 leading-relaxed max-w-md">
-                  專技高考合格營養師。纖體系列滿額即可加入陪伴班或陪跑班，專屬飲食指導與持續追蹤。
-                </p>
               </div>
             </div>
 
-            {/* 客服 — visual left */}
-            <div className="flex flex-col md:flex-row items-center gap-10 md:gap-16">
-              <div className="gs-left flex-1 flex justify-center">
-                <div className="relative">
-                  <div className="w-48 h-48 sm:w-64 sm:h-64 rounded-[3rem] bg-gradient-to-br from-[#e3f2fd] to-[#bbdefb] flex items-center justify-center" data-speed="0.6">
-                    <Icons.Gift className="w-24 h-24 sm:w-32 sm:h-32 text-[#1565c0]/25" />
+            {/* 客服 */}
+            <div className="gs-right group">
+              <div className="relative bg-white rounded-[2rem] overflow-hidden border border-[#bbdefb]/60 hover:shadow-2xl hover:shadow-[#1565c0]/10 transition-all duration-500 hover:-translate-y-2">
+                <div className="relative h-56 sm:h-64 bg-gradient-to-br from-[#e3f2fd] via-[#d1e8ff] to-[#bbdefb] overflow-hidden">
+                  <div className="absolute -bottom-10 -right-10 w-40 h-40 rounded-full bg-[#1565c0]/[0.06]" />
+                  <div className="absolute top-[-10%] left-[-5%] w-36 h-36 rounded-full bg-[#1565c0]/[0.04]" />
+                  <div className="absolute inset-0 flex items-center justify-center" data-speed="0.6">
+                    <div className="relative">
+                      <Icons.Gift className="w-28 h-28 sm:w-32 sm:h-32 text-[#1565c0]/18 transition-transform duration-700 group-hover:scale-110" />
+                      <div className="absolute -bottom-2 -right-2 w-10 h-10 rounded-xl bg-[#1565c0] flex items-center justify-center shadow-lg shadow-[#1565c0]/30">
+                        <Icons.Gift className="w-5 h-5 text-white" />
+                      </div>
+                    </div>
                   </div>
-                  <div className="absolute -bottom-4 -right-4 w-16 h-16 rounded-2xl bg-[#1565c0] flex items-center justify-center gs-scale">
-                    <Icons.Gift className="w-8 h-8 text-white" />
+                  <div className="absolute top-4 left-4 px-3 py-1.5 rounded-full bg-white/80 backdrop-blur-sm border border-white">
+                    <span className="text-[10px] font-black tracking-[0.2em] text-[#1565c0]">CUSTOMER CARE</span>
                   </div>
                 </div>
-              </div>
-              <div className="flex-1">
-                <div className="gs-lines overflow-hidden">
-                  <div className="gs-line text-[10px] font-black tracking-[0.3em] text-[#1565c0]/50 mb-3">CUSTOMER CARE</div>
+                <div className="p-6 sm:p-7">
+                  <h3 className="text-2xl sm:text-3xl font-black text-[#3d2e22] mb-3">客服仙女</h3>
+                  <p className="text-sm text-gray-500 leading-relaxed">
+                    1 對 1 LINE 諮詢，週一至週五上線。從下單到售後全包辦，平均 1 小時內回覆。
+                  </p>
+                  <div className="mt-5 flex items-center gap-2 text-[11px] text-gray-400">
+                    <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+                    平均 1 小時內回覆
+                  </div>
                 </div>
-                <div className="gs-lines overflow-hidden">
-                  <div className="gs-line"><h3 className="text-3xl sm:text-4xl font-black text-[#3d2e22]">客服仙女</h3></div>
-                </div>
-                <p className="gs-reveal text-sm sm:text-base text-gray-500 mt-4 leading-relaxed max-w-md">
-                  1 對 1 LINE 諮詢，週一至週五上線。從下單到售後全包辦，平均 1 小時內回覆。
-                </p>
               </div>
             </div>
           </div>

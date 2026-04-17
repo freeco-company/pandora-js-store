@@ -80,7 +80,22 @@ class ProductController extends Controller
                 })
                 ->with(['categories', 'seoMeta'])
                 ->firstOrFail();
-            return $this->normalizeProduct($product)->toArray();
+            $data = $this->normalizeProduct($product)->toArray();
+
+            // Append active campaign info if product is part of a running campaign
+            $campaign = $product->active_campaign;
+            if ($campaign) {
+                $data['active_campaign'] = [
+                    'id' => $campaign->id,
+                    'name' => $campaign->name,
+                    'slug' => $campaign->slug,
+                    'description' => $campaign->description,
+                    'end_at' => $campaign->end_at->toISOString(),
+                    'campaign_price' => (float) ($campaign->pivot->campaign_price ?? $product->sale_price ?? $product->price),
+                ];
+            }
+
+            return $data;
         });
 
         return response()->json($payload);
