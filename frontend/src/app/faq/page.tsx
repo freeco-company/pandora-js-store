@@ -13,6 +13,10 @@ export const metadata: Metadata = {
   description:
     '婕樂纖仙女館常見問題：三階梯定價怎麼算？VIP 價怎麼觸發？加盟怎麼加入？ECPay 付款與退換貨政策一次看懂。',
   alternates: { canonical: '/faq' },
+  openGraph: {
+    title: '常見問題｜婕樂纖仙女館',
+    description: '三階梯定價怎麼算？VIP 價怎麼觸發？付款與退換貨政策一次看懂。',
+  },
 };
 
 /**

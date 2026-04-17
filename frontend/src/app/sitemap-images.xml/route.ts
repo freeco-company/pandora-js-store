@@ -7,7 +7,7 @@ import { fetchApi, imageUrl, type Product, type Article } from '@/lib/api';
 export const revalidate = 3600;
 
 export async function GET() {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://pandora-dev.js-store.com.tw';
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://pandora.js-store.com.tw';
 
   const entries: Array<{ page: string; images: Array<{ loc: string; title: string }> }> = [];
 

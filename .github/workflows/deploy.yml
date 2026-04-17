@@ -42,8 +42,7 @@ jobs:
           NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
           NEXT_PUBLIC_STORAGE_URL: ${{ secrets.NEXT_PUBLIC_STORAGE_URL }}
           NEXT_PUBLIC_SITE_URL: ${{ secrets.NEXT_PUBLIC_SITE_URL }}
-          NEXT_PUBLIC_GA_ID: ${{ secrets.NEXT_PUBLIC_GA_ID }}
-          NEXT_PUBLIC_GOOGLE_ADS_ID: ${{ secrets.NEXT_PUBLIC_GOOGLE_ADS_ID }}
+          NEXT_PUBLIC_GTM_ID: ${{ secrets.NEXT_PUBLIC_GTM_ID }}
           NEXT_PUBLIC_APP_VERSION: ${{ github.sha }}
         run: |
           cd frontend
@@ -106,12 +105,9 @@ jobs:
             set -e
             cd /var/www/pandora/frontend
             # .next/ was already rsynced from CI pre-build — no npm run build needed!
-            # IMPORTANT: do NOT use --production here. next.config.ts imports
-            # @next/bundle-analyzer (devDep) which gets compiled into
-            # next.config.compiled.js. Without it, pm2 crash-loops with
-            # MODULE_NOT_FOUND. The ~300 extra dev packages add ~30MB disk
-            # and 3s install time — worth it vs downtime.
-            npm install --prefer-offline --no-audit --no-fund 2>&1 | tail -3
+            # next.config.ts conditionally requires @next/bundle-analyzer only
+            # when ANALYZE=true, so --omit=dev is safe here (saves ~300 pkgs).
+            npm install --omit=dev --prefer-offline --no-audit --no-fund 2>&1 | tail -3
             # Graceful reload: new workers start, old ones drain — zero downtime
             pm2 reload pandora-frontend || pm2 restart pandora-frontend
             : > /root/.pm2/logs/pandora-frontend-error-0.log

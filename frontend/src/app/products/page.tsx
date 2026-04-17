@@ -4,7 +4,7 @@ import ProductBrowser from '@/components/ProductBrowser';
 import ScrollReveal from '@/components/ScrollReveal';
 import { breadcrumbSchema, jsonLdScript } from '@/lib/jsonld';
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://shop.jerosse.tw';
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://pandora.js-store.com.tw';
 import TextReveal from '@/components/TextReveal';
 import FloatingShapes from '@/components/FloatingShapes';
 import LogoLoader from '@/components/LogoLoader';
@@ -15,6 +15,10 @@ export const metadata: Metadata = {
   title: '全館商品',
   description: 'JEROSSE 婕樂纖全系列商品，任選兩件享搭配價，滿額再享VIP優惠。',
   alternates: { canonical: '/products' },
+  openGraph: {
+    title: '全館商品｜婕樂纖仙女館',
+    description: 'JEROSSE 婕樂纖全系列商品，任選兩件享搭配價，滿額再享VIP優惠。',
+  },
 };
 
 type SortValue = '' | 'price_asc' | 'price_desc' | 'newest';

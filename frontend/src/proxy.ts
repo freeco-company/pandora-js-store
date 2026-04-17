@@ -9,7 +9,7 @@ import { NextRequest, NextResponse } from 'next/server';
  * Results are memo-cached per-slug in the worker for the life of the process.
  */
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://pandora-dev.js-store.com.tw/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://pandora.js-store.com.tw/api';
 const memo = new Map<string, string | null>();
 
 export async function proxy(req: NextRequest) {

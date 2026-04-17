@@ -22,9 +22,9 @@ export default function ProductSort({ products, staggerKey }: { products: Produc
     const arr = [...products];
     switch (currentSort) {
       case 'price_asc':
-        return arr.sort((a, b) => (a.combo_price ?? a.price) - (b.combo_price ?? b.price));
+        return arr.sort((a, b) => (a.vip_price ?? a.combo_price ?? a.price) - (b.vip_price ?? b.combo_price ?? b.price));
       case 'price_desc':
-        return arr.sort((a, b) => (b.combo_price ?? b.price) - (a.combo_price ?? a.price));
+        return arr.sort((a, b) => (b.vip_price ?? b.combo_price ?? b.price) - (a.vip_price ?? a.combo_price ?? a.price));
       case 'newest':
         return arr.sort((a, b) => {
           const da = a.created_at ? new Date(a.created_at).getTime() : 0;

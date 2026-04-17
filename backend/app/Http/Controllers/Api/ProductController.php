@@ -36,14 +36,14 @@ class ProductController extends Controller
         ]));
 
         $payload = Cache::remember($cacheKey, self::CACHE_TTL, function () use ($request) {
-            // Hide campaign-only products whose campaigns have ALL ended.
+            // Hide campaign products outside their campaign period.
             // Products with no campaigns are always visible.
             $query = Product::where('is_active', true)
                 ->with(['categories', 'seoMeta'])
                 ->where(function ($q) {
                     $q->whereDoesntHave('campaigns')
                       ->orWhereHas('campaigns', fn ($cq) =>
-                          $cq->where('is_active', true)->where('end_at', '>', now())
+                          $cq->active()
                       );
                 });
 

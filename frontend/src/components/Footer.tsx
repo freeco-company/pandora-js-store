@@ -116,6 +116,11 @@ function FooterInner() {
                 </Link>
               </li>
               <li>
+                <Link href="/terms" className="hover:text-white transition-colors">
+                  服務條款
+                </Link>
+              </li>
+              <li>
                 <Link href="/order-lookup" className="hover:text-white transition-colors">
                   訂單查詢
                 </Link>

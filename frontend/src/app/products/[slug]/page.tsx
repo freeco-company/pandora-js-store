@@ -17,7 +17,7 @@ import SiteIcon from '@/components/SiteIcon';
 import CampaignPricing from '@/components/CampaignPricing';
 import { sanitizeHtml } from '@/lib/sanitize';
 import type { Product } from '@/lib/api';
-import { breadcrumbSchema, jsonLdScript } from '@/lib/jsonld';
+import { breadcrumbSchema, productSchema, jsonLdScript } from '@/lib/jsonld';
 
 export const revalidate = 3600;
 
@@ -41,6 +41,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return {
       title: product.seo_meta?.title || product.name,
       description: product.seo_meta?.description || product.short_description,
+      alternates: { canonical: `/products/${product.slug}` },
       openGraph: {
         type: 'website',
         title: product.name,
@@ -128,23 +129,16 @@ export default async function ProductDetailPage({ params }: Props) {
     // Ignore
   }
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://shop.jerosse.tw';
-  const productSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'Product',
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://pandora.js-store.com.tw';
+  const prodJsonLd = productSchema({
     name: product.name,
     description: product.short_description || product.name,
-    image: product.image ? imageUrl(product.image) : undefined,
-    url: `${siteUrl}/products/${product.slug}`,
-    brand: { '@type': 'Brand', name: 'JEROSSE 婕樂纖' },
-    offers: {
-      '@type': 'Offer',
-      price: product.price,
-      priceCurrency: 'TWD',
-      availability: product.is_active ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
-      url: `${siteUrl}/products/${product.slug}`,
-    },
-  };
+    image: product.image ? imageUrl(product.image) : null,
+    slug: product.slug,
+    price: product.price,
+    isActive: product.is_active,
+    sku: product.slug,
+  });
   const breadcrumbs = breadcrumbSchema([
     { name: '首頁', url: '/' },
     { name: '全館商品', url: '/products' },
@@ -158,7 +152,7 @@ export default async function ProductDetailPage({ params }: Props) {
     <>
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: jsonLdScript(productSchema, breadcrumbs) }}
+      dangerouslySetInnerHTML={{ __html: jsonLdScript(prodJsonLd, breadcrumbs) }}
     />
     <div className="max-w-[1290px] mx-auto px-5 sm:px-6 lg:px-8 py-6 sm:py-10 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-10">
       {/* Breadcrumb bar (visual, complements JSON-LD) */}

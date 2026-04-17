@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next';
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://shop.jerosse.tw';
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://pandora.js-store.com.tw';
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -8,9 +8,23 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: '*',
         allow: '/',
-        disallow: ['/cart', '/checkout', '/order-complete', '/order-lookup', '/admin', '/api/', '/account'],
+        disallow: [
+          '/cart',
+          '/checkout',
+          '/order-complete',
+          '/order-lookup',
+          '/admin',
+          '/api/',
+          '/account',
+          '/auth/',
+          '/login',
+          '/register',
+        ],
       },
     ],
-    sitemap: `${siteUrl}/sitemap.xml`,
+    sitemap: [
+      `${siteUrl}/sitemap.xml`,
+      `${siteUrl}/sitemap-images.xml`,
+    ],
   };
 }

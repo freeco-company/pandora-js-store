@@ -17,7 +17,7 @@ import MobileBottomNavWrapper from '@/components/MobileBottomNavWrapper';
 // LenisProvider removed — conflicts with GSAP ScrollTrigger, causes scroll to freeze
 // import LenisProvider from '@/components/LenisProvider';
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://shop.jerosse.tw';
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://pandora.js-store.com.tw';
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -65,7 +65,7 @@ export const metadata: Metadata = {
 // Derive the storage origin for preconnect (images served from Laravel /storage/)
 const storageOrigin = (() => {
   try {
-    return new URL(process.env.NEXT_PUBLIC_STORAGE_URL || 'https://pandora-dev.js-store.com.tw').origin;
+    return new URL(process.env.NEXT_PUBLIC_STORAGE_URL || 'https://pandora.js-store.com.tw').origin;
   } catch {
     return null;
   }

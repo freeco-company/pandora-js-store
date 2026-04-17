@@ -11,6 +11,7 @@ use App\Models\CustomerAddress;
 use App\Models\Order;
 use App\Models\Product;
 use App\Services\CartPricingService;
+use App\Services\DiscordNotifier;
 use App\Services\EcpayLogisticsService;
 use App\Services\OrderAchievementEvaluator;
 use App\Services\OutfitService;
@@ -207,6 +208,11 @@ class OrderController extends Controller
                 'order' => $order->order_number,
                 'error' => $e->getMessage(),
             ]);
+            DiscordNotifier::orders()->embed(
+                title: "⚠️ 物流建立失敗 · {$order->order_number}",
+                description: "需從後台手動重建物流\n**錯誤**: " . mb_substr($e->getMessage(), 0, 200),
+                color: 0xE8A93B,
+            );
         }
     }
 

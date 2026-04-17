@@ -6,7 +6,7 @@ import ImageWithFallback, { LogoPlaceholder } from '@/components/ImageWithFallba
 import ShareButtons from '@/components/ShareButtons';
 import ProductCardGrid from '@/components/ProductCardGrid';
 import { sanitizeHtml } from '@/lib/sanitize';
-import { breadcrumbSchema, jsonLdScript } from '@/lib/jsonld';
+import { breadcrumbSchema, articleSchema, jsonLdScript } from '@/lib/jsonld';
 import { estimateReadingTime } from '@/lib/reading-time';
 
 export const revalidate = 3600;
@@ -45,6 +45,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return {
       title: article.seo_meta?.title || article.title,
       description: article.seo_meta?.description || article.excerpt,
+      alternates: { canonical: `/articles/${article.slug}` },
       openGraph: {
         title: article.title,
         description: article.excerpt,
@@ -107,22 +108,13 @@ export default async function ArticleDetailPage({ params }: Props) {
             ? '口碑推薦'
             : '文章';
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://pandora-dev.js-store.com.tw';
-  const articleJsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'Article',
-    headline: article.title,
-    description: article.excerpt || article.title,
-    image: article.featured_image ? imageUrl(article.featured_image) : undefined,
-    datePublished: article.published_at,
-    author: { '@type': 'Organization', name: '婕樂纖仙女館' },
-    publisher: {
-      '@type': 'Organization',
-      name: '婕樂纖仙女館',
-      logo: { '@type': 'ImageObject', url: `${siteUrl}/favicon.svg` },
-    },
-    mainEntityOfPage: { '@type': 'WebPage', '@id': `${siteUrl}/articles/${article.slug}` },
-  };
+  const articleJsonLd = articleSchema({
+    title: article.title,
+    excerpt: article.excerpt || article.title,
+    image: article.featured_image ? imageUrl(article.featured_image) : null,
+    slug: article.slug,
+    publishedAt: article.published_at,
+  });
   const typeLabel =
     article.source_type === 'blog' || article.source_type === 'news'
       ? '婕樂纖誌'
@@ -209,7 +201,7 @@ export default async function ArticleDetailPage({ params }: Props) {
 
       {/* Share */}
       <ShareButtons
-        url={`${process.env.NEXT_PUBLIC_SITE_URL || 'https://shop.jerosse.tw'}/articles/${article.slug}`}
+        url={`${process.env.NEXT_PUBLIC_SITE_URL || 'https://pandora.js-store.com.tw'}/articles/${article.slug}`}
         title={article.title}
       />
 

@@ -38,13 +38,13 @@ return [
     'google' => [
         'client_id' => env('GOOGLE_CLIENT_ID'),
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
-        'redirect' => env('GOOGLE_REDIRECT_URI', 'http://localhost:3000/auth/google/callback'),
+        'redirect' => env('GOOGLE_REDIRECT_URI', 'https://pandora.js-store.com.tw/auth/google/callback'),
     ],
 
     'line' => [
         'client_id' => env('LINE_CHANNEL_ID'),
         'client_secret' => env('LINE_CHANNEL_SECRET'),
-        'redirect' => env('LINE_REDIRECT_URI', 'https://pandora-dev.js-store.com.tw/api/auth/line/callback'),
+        'redirect' => env('LINE_REDIRECT_URI', 'https://pandora.js-store.com.tw/api/auth/line/callback'),
     ],
 
     'discord' => [

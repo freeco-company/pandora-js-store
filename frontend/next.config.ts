@@ -1,18 +1,34 @@
 import type { NextConfig } from "next";
-import nextBundleAnalyzer from "@next/bundle-analyzer";
 
+// Bundle analyzer — only loaded when ANALYZE=true so the server can
+// use `npm install --omit=dev` without hitting MODULE_NOT_FOUND.
 // Enable with: ANALYZE=true npm run build
-// Outputs HTML reports to .next/analyze/ (open client.html / server.html)
-const withBundleAnalyzer = nextBundleAnalyzer({
-  enabled: process.env.ANALYZE === "true",
-  openAnalyzer: false,
-});
+const withBundleAnalyzer =
+  process.env.ANALYZE === "true"
+    ? require("@next/bundle-analyzer")({ enabled: true, openAnalyzer: false })
+    : (config: NextConfig) => config;
 
 const nextConfig: NextConfig = {
+  async headers() {
+    return [
+      {
+        source: "/(.*)",
+        headers: [
+          { key: "X-Frame-Options", value: "SAMEORIGIN" },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+          {
+            key: "Strict-Transport-Security",
+            value: "max-age=63072000; includeSubDomains; preload",
+          },
+        ],
+      },
+    ];
+  },
   images: {
     remotePatterns: [
-      { protocol: "https", hostname: "shop.jerosse.tw" },
-      { protocol: "https", hostname: "pandora-dev.js-store.com.tw" },
+      { protocol: "https", hostname: "pandora.js-store.com.tw" },
       { protocol: "https", hostname: "**.js-store.com.tw" },
       { protocol: "http", hostname: "localhost", port: "8000" },
       { protocol: "http", hostname: "127.0.0.1", port: "8000" },

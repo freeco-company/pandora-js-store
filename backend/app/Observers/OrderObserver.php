@@ -22,6 +22,14 @@ class OrderObserver
 
         $order->loadMissing('customer');
         Blacklist::blockForCodNoPickup($order);
+
+        $name = $order->customer->name ?? '—';
+        $email = $order->customer->email ?? '';
+        DiscordNotifier::compliance()->embed(
+            title: "🚫 COD 黑名單 · {$order->order_number}",
+            description: "**客戶**: {$name} ({$email})\n逾期未取貨，已封鎖貨到付款",
+            color: 0xE0748C,
+        );
     }
 
     public function created(Order $order): void

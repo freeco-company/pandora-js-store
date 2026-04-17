@@ -118,19 +118,23 @@ export default function ProductCard({ product }: { product: Product }) {
             <div>
               <div className="flex items-baseline gap-1.5 sm:gap-2">
                 <span className="text-lg sm:text-2xl font-black text-[#c0392b] leading-none">
-                  {formatPrice(product.combo_price ?? product.price)}
+                  {formatPrice(product.vip_price ?? product.combo_price ?? product.price)}
                 </span>
                 <span className="text-[11px] sm:text-sm text-gray-400 line-through">
                   {formatPrice(product.price)}
                 </span>
               </div>
-              {product.combo_price && product.price - product.combo_price > 0 && (
-                <div className="mt-1 inline-flex items-center px-1.5 py-0.5 rounded-full bg-[#c0392b]/10">
-                  <span className="text-[10px] font-black text-[#c0392b]">
-                    省 {formatPrice(product.price - product.combo_price)}
-                  </span>
-                </div>
-              )}
+              {(() => {
+                const bestPrice = product.vip_price ?? product.combo_price;
+                const saving = bestPrice ? product.price - bestPrice : 0;
+                return saving > 0 ? (
+                  <div className="mt-1 inline-flex items-center px-1.5 py-0.5 rounded-full bg-[#c0392b]/10">
+                    <span className="text-[10px] font-black text-[#c0392b]">
+                      省 {formatPrice(saving)}
+                    </span>
+                  </div>
+                ) : null;
+              })()}
             </div>
           ) : (
             <span className="text-lg sm:text-2xl font-black text-[#c0392b] leading-none">

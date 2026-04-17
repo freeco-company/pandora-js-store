@@ -1,8 +1,17 @@
 import type { MetadataRoute } from 'next';
 import { fetchApi, type Product, type Article } from '@/lib/api';
 
+interface Campaign {
+  id: number;
+  slug: string;
+  name: string;
+  start_at: string;
+  end_at: string;
+  is_running: boolean;
+}
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://shop.jerosse.tw';
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://pandora.js-store.com.tw';
 
   const staticPages: MetadataRoute.Sitemap = [
     { url: baseUrl, lastModified: new Date(), changeFrequency: 'daily', priority: 1 },
@@ -39,5 +48,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }));
   } catch {}
 
-  return [...staticPages, ...productPages, ...articlePages];
+  // Dynamic campaign pages
+  let campaignPages: MetadataRoute.Sitemap = [];
+  try {
+    const campaigns = await fetchApi<Campaign[]>('/campaigns');
+    campaignPages = campaigns
+      .filter((c) => c.is_running)
+      .map((c) => ({
+        url: `${baseUrl}/campaigns/${c.slug}`,
+        lastModified: new Date(c.start_at),
+        changeFrequency: 'weekly' as const,
+        priority: 0.7,
+      }));
+  } catch {}
+
+  return [...staticPages, ...productPages, ...articlePages, ...campaignPages];
 }

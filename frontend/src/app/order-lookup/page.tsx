@@ -7,7 +7,9 @@ import SiteIcon from '@/components/SiteIcon';
 
 export const metadata: Metadata = {
   title: '訂單查詢',
+  description: '輸入訂單編號與 Email，即時查詢婕樂纖仙女館訂單狀態與物流進度。',
   alternates: { canonical: '/order-lookup' },
+  robots: { index: false, follow: true },
 };
 
 export default function OrderLookupPage() {

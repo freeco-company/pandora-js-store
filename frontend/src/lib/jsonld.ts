@@ -6,7 +6,7 @@
  */
 
 const siteUrl =
-  process.env.NEXT_PUBLIC_SITE_URL || 'https://pandora-dev.js-store.com.tw';
+  process.env.NEXT_PUBLIC_SITE_URL || 'https://pandora.js-store.com.tw';
 
 /**
  * Organization — Google knowledge panel + AI search (Perplexity/Google AI Overview).
@@ -145,10 +145,85 @@ export function howToSchema() {
 }
 
 /**
+ * Product schema helper — includes seller, sku, brand for Google Merchant
+ * Center and Shopping rich results.
+ */
+export function productSchema(product: {
+  name: string;
+  description: string;
+  image?: string | null;
+  slug: string;
+  price: number;
+  isActive: boolean;
+  sku?: string | null;
+}) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: product.name,
+    description: product.description,
+    image: product.image || undefined,
+    url: `${siteUrl}/products/${product.slug}`,
+    brand: { '@type': 'Brand', name: 'JEROSSE 婕樂纖' },
+    sku: product.sku || product.slug,
+    offers: {
+      '@type': 'Offer',
+      price: product.price,
+      priceCurrency: 'TWD',
+      availability: product.isActive
+        ? 'https://schema.org/InStock'
+        : 'https://schema.org/OutOfStock',
+      url: `${siteUrl}/products/${product.slug}`,
+      seller: { '@id': `${siteUrl}/#organization` },
+      priceValidUntil: new Date(
+        new Date().getFullYear(),
+        11,
+        31,
+      ).toISOString().split('T')[0],
+    },
+  };
+}
+
+/**
+ * Article schema helper — includes dateModified for freshness signal.
+ */
+export function articleSchema(article: {
+  title: string;
+  excerpt?: string;
+  image?: string | null;
+  slug: string;
+  publishedAt: string;
+  updatedAt?: string | null;
+}) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: article.title,
+    description: article.excerpt || article.title,
+    image: article.image || undefined,
+    datePublished: article.publishedAt,
+    ...(article.updatedAt ? { dateModified: article.updatedAt } : { dateModified: article.publishedAt }),
+    author: { '@type': 'Organization', name: '婕樂纖仙女館' },
+    publisher: {
+      '@type': 'Organization',
+      name: '婕樂纖仙女館',
+      logo: { '@type': 'ImageObject', url: `${siteUrl}/favicon.svg` },
+    },
+    mainEntityOfPage: { '@type': 'WebPage', '@id': `${siteUrl}/articles/${article.slug}` },
+  };
+}
+
+/**
  * Serialize one or more schemas into a single <script> payload.
+ * Uses @graph wrapper for multi-schema payloads for cleaner linked data.
  * React renders this via dangerouslySetInnerHTML.
  */
 export function jsonLdScript(...schemas: object[]): string {
   if (schemas.length === 1) return JSON.stringify(schemas[0]);
-  return JSON.stringify(schemas);
+  // Strip individual @context from each schema and wrap in a single @graph
+  const stripped = schemas.map((s) => {
+    const { '@context': _, ...rest } = s as Record<string, unknown>;
+    return rest;
+  });
+  return JSON.stringify({ '@context': 'https://schema.org', '@graph': stripped });
 }

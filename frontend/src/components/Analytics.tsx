@@ -4,120 +4,96 @@ import { useEffect } from 'react';
 import Script from 'next/script';
 import { usePathname } from 'next/navigation';
 
-const GA_ID = process.env.NEXT_PUBLIC_GA_ID;
-const GADS_ID = process.env.NEXT_PUBLIC_GOOGLE_ADS_ID;
-const META_PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID;
+const GTM_ID = process.env.NEXT_PUBLIC_GTM_ID;
 
 declare global {
   interface Window {
-    gtag: (...args: unknown[]) => void;
-    dataLayer: unknown[];
-    fbq: (...args: unknown[]) => void;
-    _fbq: (...args: unknown[]) => void;
+    dataLayer: Record<string, unknown>[];
   }
 }
 
-/** Track add-to-cart event across all platforms */
-export function trackAddToCart(productName: string, price: number, productId?: number) {
+/**
+ * Push an ecommerce event to GTM's dataLayer.
+ * All tag logic (GA4, Google Ads conversion, Meta Pixel, LINE Tag…)
+ * lives inside GTM — no vendor-specific code here.
+ */
+export function pushEvent(event: string, data: Record<string, unknown> = {}) {
   if (typeof window === 'undefined') return;
-  if (typeof window.gtag === 'function') {
-    window.gtag('event', 'add_to_cart', {
+  window.dataLayer = window.dataLayer || [];
+  // Clear previous ecommerce object to avoid stale data bleeding across events
+  window.dataLayer.push({ ecommerce: null });
+  window.dataLayer.push({ event, ...data });
+}
+
+export function trackAddToCart(productName: string, price: number, productId?: number, quantity = 1) {
+  pushEvent('add_to_cart', {
+    ecommerce: {
       currency: 'TWD',
-      value: price,
-      items: [{ item_id: productId, item_name: productName, price }],
-    });
-  }
-  if (typeof window.fbq === 'function') {
-    window.fbq('track', 'AddToCart', { content_name: productName, value: price, currency: 'TWD' });
-  }
+      value: price * quantity,
+      items: [{ item_id: String(productId), item_name: productName, price, quantity }],
+    },
+  });
 }
 
-/** Track purchase completion */
-export function trackPurchase(orderId: string, total: number, items: { name: string; price: number; qty: number }[]) {
-  if (typeof window === 'undefined') return;
-  if (typeof window.gtag === 'function') {
-    window.gtag('event', 'purchase', {
-      transaction_id: orderId,
+export function trackBeginCheckout(total: number, items: { id: number; name: string; price: number; qty: number }[]) {
+  pushEvent('begin_checkout', {
+    ecommerce: {
+      currency: 'TWD',
       value: total,
-      currency: 'TWD',
-      items: items.map((i) => ({ item_name: i.name, price: i.price, quantity: i.qty })),
-    });
-    // Google Ads conversion
-    if (GADS_ID) {
-      window.gtag('event', 'conversion', {
-        send_to: `${GADS_ID}/purchase`,
-        value: total,
-        currency: 'TWD',
-        transaction_id: orderId,
-      });
-    }
-  }
-  if (typeof window.fbq === 'function') {
-    window.fbq('track', 'Purchase', { value: total, currency: 'TWD', content_type: 'product' });
-  }
+      items: items.map((i) => ({
+        item_id: String(i.id),
+        item_name: i.name,
+        price: i.price,
+        quantity: i.qty,
+      })),
+    },
+  });
 }
 
-/** Track begin checkout */
-export function trackBeginCheckout(total: number) {
-  if (typeof window === 'undefined') return;
-  if (typeof window.gtag === 'function') {
-    window.gtag('event', 'begin_checkout', { value: total, currency: 'TWD' });
-  }
-  if (typeof window.fbq === 'function') {
-    window.fbq('track', 'InitiateCheckout', { value: total, currency: 'TWD' });
-  }
+export function trackPurchase(
+  orderId: string,
+  total: number,
+  items: { id: number; name: string; price: number; qty: number }[],
+  paymentMethod?: string,
+) {
+  pushEvent('purchase', {
+    ecommerce: {
+      transaction_id: orderId,
+      currency: 'TWD',
+      value: total,
+      payment_type: paymentMethod,
+      items: items.map((i) => ({
+        item_id: String(i.id),
+        item_name: i.name,
+        price: i.price,
+        quantity: i.qty,
+      })),
+    },
+  });
 }
 
 export default function Analytics() {
   const pathname = usePathname();
 
+  // Virtual pageview on client-side navigation
   useEffect(() => {
-    if (GA_ID && typeof window.gtag === 'function') {
-      window.gtag('config', GA_ID, { page_path: pathname });
-    }
-    if (META_PIXEL_ID && typeof window.fbq === 'function') {
-      window.fbq('track', 'PageView');
-    }
+    pushEvent('page_view', { page_path: pathname });
   }, [pathname]);
+
+  if (!GTM_ID) return null;
 
   return (
     <>
-      {/* Google Analytics 4 + Google Ads */}
-      {(GA_ID || GADS_ID) && (
-        <>
-          <Script
-            src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID || GADS_ID}`}
-            strategy="afterInteractive"
-          />
-          <Script id="ga-init" strategy="afterInteractive">
-            {`
-              window.dataLayer = window.dataLayer || [];
-              function gtag(){dataLayer.push(arguments);}
-              gtag('js', new Date());
-              ${GA_ID ? `gtag('config', '${GA_ID}');` : ''}
-              ${GADS_ID ? `gtag('config', '${GADS_ID}');` : ''}
-            `}
-          </Script>
-        </>
-      )}
-
-      {/* Meta Pixel */}
-      {META_PIXEL_ID && (
-        <Script id="meta-pixel-init" strategy="afterInteractive">
-          {`
-            !function(f,b,e,v,n,t,s)
-            {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-            n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-            if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-            n.queue=[];t=b.createElement(e);t.async=!0;
-            t.src=v;s=b.getElementsByTagName(e)[0];
-            s.parentNode.insertBefore(t,s)}(window, document,'script',
-            'https://connect.facebook.net/en_US/fbevents.js');
-            fbq('init', '${META_PIXEL_ID}');
-            fbq('track', 'PageView');
-          `}
-        </Script>
-      )}
+      {/* Google Tag Manager — loads GA4, Ads, Meta Pixel, LINE Tag, etc. */}
+      <Script id="gtm-init" strategy="afterInteractive">
+        {`
+          (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+          new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+          j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+          'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+          })(window,document,'script','dataLayer','${GTM_ID}');
+        `}
+      </Script>
     </>
   );
 }

@@ -17,10 +17,12 @@ use App\Http\Controllers\Api\ProductController;
 use Illuminate\Support\Facades\Route;
 
 // Auth (Google + LINE OAuth)
-Route::get('/auth/google', [AuthController::class, 'redirectToGoogle']);
-Route::get('/auth/google/callback', [AuthController::class, 'handleGoogleCallback']);
-Route::get('/auth/line', [AuthController::class, 'redirectToLine']);
-Route::get('/auth/line/callback', [AuthController::class, 'handleLineCallback']);
+Route::middleware('throttle:auth')->group(function () {
+    Route::get('/auth/google', [AuthController::class, 'redirectToGoogle']);
+    Route::get('/auth/google/callback', [AuthController::class, 'handleGoogleCallback']);
+    Route::get('/auth/line', [AuthController::class, 'redirectToLine']);
+    Route::get('/auth/line/callback', [AuthController::class, 'handleLineCallback']);
+});
 Route::middleware('auth:sanctum')->get('/auth/me', [AuthController::class, 'me']);
 
 // Products
@@ -32,15 +34,15 @@ Route::get('/product-categories', [ProductController::class, 'categories']);
 Route::post('/cart/calculate', [CartController::class, 'calculate']);
 
 // Coupons
-Route::post('/coupons/validate', [CouponController::class, 'validate']);
+Route::post('/coupons/validate', [CouponController::class, 'validate'])->middleware('throttle:strict');
 
 // Orders
-Route::post('/orders', [OrderController::class, 'store']);
+Route::post('/orders', [OrderController::class, 'store'])->middleware('throttle:strict');
 Route::get('/orders/{orderNumber}', [OrderController::class, 'show']);
-Route::post('/orders/check-cod', [OrderController::class, 'checkCod']);
+Route::post('/orders/check-cod', [OrderController::class, 'checkCod'])->middleware('throttle:strict');
 
 // Payment
-Route::post('/payment/create', [PaymentController::class, 'createPayment']);
+Route::post('/payment/create', [PaymentController::class, 'createPayment'])->middleware('throttle:strict');
 Route::post('/payment/ecpay/callback', [PaymentController::class, 'ecpayCallback']);
 
 // Articles
@@ -80,7 +82,7 @@ Route::post('/logistics/ecpay/reply', [LogisticsController::class, 'ecpayReply']
 Route::post('/logistics/ecpay/status', [LogisticsController::class, 'ecpayStatus'])->withoutMiddleware(['web']);
 
 // Back-in-stock notify
-Route::post('/products/{slug}/notify-stock', [StockNotificationController::class, 'subscribe']);
+Route::post('/products/{slug}/notify-stock', [StockNotificationController::class, 'subscribe'])->middleware('throttle:strict');
 
 // Campaigns (活動管理)
 Route::get('/campaigns', [CampaignController::class, 'index']);

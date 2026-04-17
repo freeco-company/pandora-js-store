@@ -8,6 +8,7 @@ import ImageWithFallback, { LogoPlaceholder } from '@/components/ImageWithFallba
 import { useAuth } from '@/components/AuthProvider';
 import { useFormValidation } from '@/hooks/useFormValidation';
 import { useToast } from '@/components/Toast';
+import { trackBeginCheckout, trackPurchase } from '@/components/Analytics';
 import { tierLabel } from '@/lib/pricing';
 import { formatPrice } from '@/lib/format';
 import { fetchApi, imageUrl, type CelebrationKeys } from '@/lib/api';
@@ -203,6 +204,14 @@ export default function CheckoutPage() {
 
     setSubmitting(true);
 
+    trackBeginCheckout(
+      finalTotal,
+      items.map((i) => {
+        const p = itemPrices.find((ip) => ip.productId === i.product.id);
+        return { id: i.product.id, name: i.product.name, price: p?.unitPrice ?? i.product.price, qty: i.quantity };
+      }),
+    );
+
     try {
       const payload = {
         items: items.map((i) => ({ product_id: i.product.id, quantity: i.quantity })),
@@ -228,6 +237,16 @@ export default function CheckoutPage() {
         method: 'POST',
         body: JSON.stringify(payload),
       });
+
+      trackPurchase(
+        order.order_number,
+        finalTotal,
+        items.map((i) => {
+          const p = itemPrices.find((ip) => ip.productId === i.product.id);
+          return { id: i.product.id, name: i.product.name, price: p?.unitPrice ?? i.product.price, qty: i.quantity };
+        }),
+        form.payment_method,
+      );
 
       celebrateMany(order._achievements, order._outfits);
       if (order._serendipity) showSerendipity(order._serendipity);

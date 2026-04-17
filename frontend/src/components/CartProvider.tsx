@@ -15,6 +15,7 @@ import {
   type PricingTier,
 } from '@/lib/pricing';
 import { markActivation } from '@/lib/api';
+import { trackAddToCart } from '@/components/Analytics';
 
 interface CartContextValue {
   items: LocalCartItem[];
@@ -74,6 +75,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
       }
       return [...prev, { product, quantity }];
     });
+
+    trackAddToCart(product.name, product.price, product.id, quantity);
 
     // Fire-and-forget activation marker for logged-in users
     try {

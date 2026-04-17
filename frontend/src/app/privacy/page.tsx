@@ -4,6 +4,10 @@ export const metadata: Metadata = {
   title: '隱私權條款',
   description: '婕樂纖仙女館隱私權條款，說明我們如何蒐集、使用及保護您的個人資料。',
   alternates: { canonical: '/privacy' },
+  openGraph: {
+    title: '隱私權條款｜婕樂纖仙女館',
+    description: '婕樂纖仙女館隱私權條款，說明我們如何蒐集、使用及保護您的個人資料。',
+  },
 };
 
 export default function PrivacyPage() {

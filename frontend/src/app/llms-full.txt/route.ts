@@ -3,7 +3,7 @@ import { fetchApi, type Product, type Article } from '@/lib/api';
 export const revalidate = 3600;
 
 export async function GET() {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://shop.jerosse.tw';
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://pandora.js-store.com.tw';
 
   let products: Product[] = [];
   let articles: { data: Article[] } = { data: [] };

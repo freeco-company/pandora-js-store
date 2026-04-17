@@ -13,7 +13,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        $middleware->api(prepend: [
+            \Illuminate\Routing\Middleware\ThrottleRequests::class.':api',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         // Sentry reports exceptions when SENTRY_LARAVEL_DSN env is set; no-op otherwise.

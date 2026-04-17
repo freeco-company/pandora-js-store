@@ -174,8 +174,8 @@ export default function SearchModal({
                           {product.name}
                         </p>
                         <p className="text-sm text-[#9F6B3E] font-semibold">
-                          {formatPrice(product.combo_price ?? product.price)}
-                          {product.combo_price && (
+                          {formatPrice(product.vip_price ?? product.combo_price ?? product.price)}
+                          {(product.vip_price || product.combo_price) && (
                             <span className="text-xs text-gray-400 line-through ml-2">
                               {formatPrice(product.price)}
                             </span>

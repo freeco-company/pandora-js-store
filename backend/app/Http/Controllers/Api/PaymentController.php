@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
+use App\Services\DiscordNotifier;
 use App\Services\EcpayService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -91,6 +92,15 @@ class PaymentController extends Controller
             $order->update([
                 'payment_status' => 'failed',
             ]);
+
+            $order->loadMissing('customer');
+            DiscordNotifier::orders()->embed(
+                title: "❌ 付款失敗 · {$order->order_number}",
+                description: "**客戶**: " . ($order->customer->name ?? '—')
+                    . "\n**金額**: NT$" . number_format((int) $order->total)
+                    . "\n**ECPay 回傳**: [{$data['RtnCode']}] " . ($data['RtnMsg'] ?? ''),
+                color: 0xE0748C,
+            );
         }
 
         return '1|OK';

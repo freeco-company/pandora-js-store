@@ -21,7 +21,7 @@ return [
 
     'allowed_origins' => array_filter([
         env('FRONTEND_URL', 'http://localhost:3000'),
-        'https://shop.jerosse.tw',
+        'https://pandora.js-store.com.tw',
     ]),
 
     'allowed_origins_patterns' => [],

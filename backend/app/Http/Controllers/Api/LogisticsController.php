@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
+use App\Services\DiscordNotifier;
 use App\Services\EcpayLogisticsService;
 use App\Services\EcpayService;
 use Illuminate\Http\JsonResponse;
@@ -195,6 +196,21 @@ HTML;
             'rtn_code' => $rtnCode,
             'new_status' => $newStatus,
         ]);
+
+        if ($newStatus) {
+            $statusLabels = [
+                'shipped'        => ['📦 已送達門市', 0x4A9D5F],
+                'completed'      => ['✅ 已取貨', 0x4A9D5F],
+                'cod_no_pickup'  => ['🚫 逾期未取（貨到付款）', 0xE0748C],
+                'cancelled'      => ['↩️ 已退回', 0xE8A93B],
+            ];
+            [$label, $color] = $statusLabels[$newStatus] ?? [$newStatus, 0x999999];
+            DiscordNotifier::orders()->embed(
+                title: "{$label} · {$order->order_number}",
+                description: "**狀態碼**: [{$rtnCode}] {$rtnMsg}",
+                color: $color,
+            );
+        }
 
         return '1|OK';
     }

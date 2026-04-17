@@ -13,6 +13,10 @@ export const metadata: Metadata = {
   title: '最新文章',
   description: '婕樂纖誌 — 營養師專欄、媒體報導、品牌故事與真實口碑。',
   alternates: { canonical: '/articles' },
+  openGraph: {
+    title: '婕樂纖誌｜營養師專欄・媒體報導・品牌故事',
+    description: '婕樂纖誌 — 營養師專欄、媒體報導、品牌故事與真實口碑。',
+  },
 };
 
 export default async function ArticlesPage({
