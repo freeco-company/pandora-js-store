@@ -1,9 +1,8 @@
 'use client';
 
 /**
- * Campaign countdown — shows below hero banner when active campaign exists.
- * Redesigned: clean, brand-consistent, not a standalone banner but
- * an integrated section with product thumbnails + countdown.
+ * Campaign countdown — immersive hero-style section below the main banner.
+ * Full-width with campaign banner image, large countdown, product thumbnails.
  */
 
 import { useEffect, useState } from 'react';
@@ -47,7 +46,11 @@ function useCountdown(endAt: string) {
   };
   const [r, setR] = useState(calc);
   useEffect(() => {
-    const t = setInterval(() => { const v = calc(); setR(v); if (v.total <= 0) clearInterval(t); }, 1000);
+    const t = setInterval(() => {
+      const v = calc();
+      setR(v);
+      if (v.total <= 0) clearInterval(t);
+    }, 1000);
     return () => clearInterval(t);
   }, [endAt]);
   return r;
@@ -58,7 +61,7 @@ export default function CampaignCountdown() {
 
   useEffect(() => {
     fetch(`${API_URL}/campaigns`)
-      .then((r) => r.ok ? r.json() : [])
+      .then((r) => (r.ok ? r.json() : []))
       .then((list: Campaign[]) => {
         const running = list.find((c) => c.is_running);
         if (running) setCampaign(running);
@@ -75,91 +78,177 @@ function CountdownSection({ campaign }: { campaign: Campaign }) {
   const { total, days, hours, minutes, seconds } = useCountdown(campaign.end_at);
   if (total <= 0) return null;
 
+  const hasBanner = !!campaign.banner_image;
+  const bestPrice = campaign.products.length > 0
+    ? Math.min(...campaign.products.map((p) => p.campaign_price ?? p.price))
+    : null;
+
   return (
-    <section className="relative bg-gradient-to-r from-[#fdf7ef] via-white to-[#fdf7ef] border-b border-[#e7d9cb]/50">
-      <div className="max-w-[1290px] mx-auto px-5 sm:px-6 lg:px-8 py-6 sm:py-8">
-        {/* Top: campaign name + countdown */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-5">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#9F6B3E] to-[#85572F] flex items-center justify-center shrink-0">
-              <Icons.Fire className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <div className="text-[10px] font-black tracking-[0.2em] text-[#9F6B3E]/60">LIMITED EVENT</div>
-              <h3 className="text-lg sm:text-xl font-black text-[#3d2e22]">{campaign.name}</h3>
-            </div>
-          </div>
-
-          {/* Countdown */}
-          <div className="flex items-center gap-1.5 sm:gap-2">
-            {[
-              { v: days, l: '天' },
-              { v: hours, l: '時' },
-              { v: minutes, l: '分' },
-              { v: seconds, l: '秒' },
-            ].map(({ v, l }) => (
-              <div key={l} className="flex flex-col items-center">
-                <div className="w-11 h-11 sm:w-13 sm:h-13 rounded-xl bg-[#3d2e22] flex items-center justify-center">
-                  <span className="text-lg sm:text-xl font-black text-white tabular-nums">
-                    {String(v).padStart(2, '0')}
-                  </span>
-                </div>
-                <span className="text-[9px] font-bold text-gray-400 mt-1">{l}</span>
-              </div>
-            ))}
-          </div>
+    <section className="relative overflow-hidden">
+      {/* Background: campaign banner or gradient fallback */}
+      {hasBanner ? (
+        <div className="absolute inset-0">
+          <Image
+            src={imageUrl(campaign.banner_image!)!}
+            alt={campaign.name}
+            fill
+            sizes="100vw"
+            className="object-cover"
+            priority
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#1a1410]/80 via-[#1a1410]/50 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#1a1410]/60 to-transparent" />
         </div>
+      ) : (
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              'linear-gradient(135deg, #3d2e22 0%, #6b4424 40%, #9F6B3E 100%)',
+          }}
+        />
+      )}
 
-        {/* Products row */}
-        {campaign.products.length > 0 && (
-          <div className="flex gap-3 sm:gap-4 overflow-x-auto scrollbar-hide pb-1">
-            {campaign.products.map((p) => (
-              <Link
-                key={p.id}
-                href={`/products/${p.slug}`}
-                className="shrink-0 w-[140px] sm:w-[180px] bg-white rounded-2xl border border-[#e7d9cb] overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group"
-              >
-                <div className="relative aspect-square bg-gradient-to-br from-[#fdf7ef] to-[#f7eee3] overflow-hidden">
-                  {p.image ? (
-                    <Image
-                      src={imageUrl(p.image)!}
-                      alt={p.name}
-                      fill
-                      sizes="180px"
-                      className="object-cover transition-transform duration-500 group-hover:scale-110"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <Icons.ShoppingBag className="w-8 h-8 text-[#9F6B3E]/20" />
+      {/* Decorative elements */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden>
+        <div className="absolute -top-20 -right-20 w-80 h-80 rounded-full bg-white/[0.04] blur-2xl" />
+        <div className="absolute bottom-0 left-[20%] w-60 h-60 rounded-full bg-[#f7c79a]/[0.06] blur-3xl" />
+      </div>
+
+      <div className="relative max-w-[1290px] mx-auto px-5 sm:px-6 lg:px-8 py-10 sm:py-14 lg:py-16">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-8 lg:gap-12 items-center">
+          {/* Left: campaign info */}
+          <div>
+            {/* Badge */}
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 mb-5">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
+              </span>
+              <span className="text-[10px] font-black tracking-[0.2em] text-white/90">
+                LIMITED · 限時活動
+              </span>
+            </div>
+
+            {/* Title */}
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white leading-tight mb-3">
+              {campaign.name}
+            </h2>
+
+            {/* Description */}
+            {campaign.description && (
+              <p className="text-sm sm:text-base text-white/60 leading-relaxed mb-6 max-w-lg">
+                {campaign.description}
+              </p>
+            )}
+
+            {/* Countdown — large */}
+            <div className="mb-6">
+              <div className="text-[10px] font-black tracking-[0.2em] text-white/40 mb-3">
+                倒數計時
+              </div>
+              <div className="flex gap-2 sm:gap-3">
+                {[
+                  { v: days, l: '天' },
+                  { v: hours, l: '時' },
+                  { v: minutes, l: '分' },
+                  { v: seconds, l: '秒' },
+                ].map(({ v, l }, i) => (
+                  <div key={l} className="flex items-center gap-2 sm:gap-3">
+                    <div className="flex flex-col items-center">
+                      <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20 flex items-center justify-center">
+                        <span className="text-2xl sm:text-3xl font-black text-white tabular-nums">
+                          {String(v).padStart(2, '0')}
+                        </span>
+                      </div>
+                      <span className="text-[10px] font-bold text-white/40 mt-1.5">
+                        {l}
+                      </span>
                     </div>
-                  )}
-                  {/* VIP badge */}
-                  <span className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-[#9F6B3E] text-white text-[9px] font-black">
-                    VIP 價
-                  </span>
-                </div>
-                <div className="p-2.5">
-                  <div className="text-xs font-bold text-gray-800 line-clamp-1">{p.name}</div>
-                  <div className="mt-1 flex items-baseline gap-1.5">
-                    <span className="text-sm font-black text-[#9F6B3E]">
-                      ${(p.campaign_price ?? p.price).toLocaleString()}
-                    </span>
-                    {p.price > (p.campaign_price ?? p.price) && (
-                      <span className="text-[10px] text-gray-400 line-through">
-                        ${p.price.toLocaleString()}
+                    {i < 3 && (
+                      <span className="text-xl font-black text-white/20 -mt-4">
+                        :
                       </span>
                     )}
                   </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        )}
+                ))}
+              </div>
+            </div>
 
-        {/* Hint */}
-        <div className="mt-4 flex items-center justify-center gap-2 text-[11px] text-[#9F6B3E]/70 font-bold">
-          <Icons.Diamond className="w-3.5 h-3.5" />
-          <span>活動商品加入購物車，全車享 VIP 優惠價</span>
+            {/* CTA + price hint */}
+            <div className="flex flex-wrap items-center gap-4">
+              <Link
+                href={`/campaigns/${campaign.slug}`}
+                className="inline-flex items-center gap-2 px-7 py-3.5 bg-white text-[#9F6B3E] font-black rounded-full shadow-xl shadow-black/20 hover:bg-[#fdf7ef] hover:shadow-2xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 min-h-[48px]"
+              >
+                <Icons.Fire className="w-4 h-4" />
+                查看活動
+              </Link>
+              {bestPrice && (
+                <div className="text-white/70 text-sm">
+                  <span className="text-white/40">最低</span>{' '}
+                  <span className="text-xl font-black text-[#fcd561]">
+                    ${bestPrice.toLocaleString()}
+                  </span>
+                  <span className="text-white/40"> 起</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Right: product cards stack */}
+          {campaign.products.length > 0 && (
+            <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2 lg:grid lg:grid-cols-2 lg:gap-3 lg:overflow-visible lg:max-w-[380px]">
+              {campaign.products.slice(0, 4).map((p, i) => (
+                <Link
+                  key={p.id}
+                  href={`/products/${p.slug}`}
+                  className="shrink-0 w-[140px] sm:w-[160px] lg:w-auto bg-white/10 backdrop-blur-sm rounded-2xl border border-white/15 overflow-hidden hover:bg-white/20 hover:-translate-y-1 hover:shadow-xl transition-all duration-300 group"
+                  style={{ animationDelay: `${i * 80}ms` }}
+                >
+                  <div className="relative aspect-square overflow-hidden">
+                    {p.image ? (
+                      <Image
+                        src={imageUrl(p.image)!}
+                        alt={p.name}
+                        fill
+                        sizes="(max-width: 1024px) 160px, 180px"
+                        className="object-cover transition-transform duration-500 group-hover:scale-110"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-white/5">
+                        <Icons.ShoppingBag className="w-8 h-8 text-white/20" />
+                      </div>
+                    )}
+                    {/* Savings badge */}
+                    {p.price > (p.campaign_price ?? p.price) && (
+                      <span className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-red-500/90 text-white text-[9px] font-black shadow-sm">
+                        省 $
+                        {(
+                          p.price - (p.campaign_price ?? p.price)
+                        ).toLocaleString()}
+                      </span>
+                    )}
+                  </div>
+                  <div className="p-2.5">
+                    <div className="text-[11px] font-bold text-white/80 line-clamp-1">
+                      {p.name}
+                    </div>
+                    <div className="mt-1 flex items-baseline gap-1.5">
+                      <span className="text-sm font-black text-[#fcd561]">
+                        ${(p.campaign_price ?? p.price).toLocaleString()}
+                      </span>
+                      {p.price > (p.campaign_price ?? p.price) && (
+                        <span className="text-[10px] text-white/30 line-through">
+                          ${p.price.toLocaleString()}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </section>
