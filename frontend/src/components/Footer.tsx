@@ -42,29 +42,21 @@ function FooterInner() {
   return (
     <footer className="mt-auto pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-0" style={{ backgroundColor: '#1e1e1e' }}>
       {/* Trust strip — 官方授權 / 詐騙警語 / 合規聲明 */}
-      <div className="bg-gradient-to-r from-[#2a1f17] via-[#1e1e1e] to-[#2a1f17] border-b border-white/5">
-        <div className="max-w-[1290px] mx-auto px-5 sm:px-6 lg:px-8 py-6 grid grid-cols-1 md:grid-cols-3 gap-5 text-center md:text-left">
-          <div className="flex items-start gap-3">
-            <span className="text-xl">🔒</span>
-            <div>
-              <div className="text-white text-sm font-bold">JEROSSE 官方正品授權</div>
-              <div className="text-gray-400 text-xs mt-1 leading-relaxed">法芮可有限公司授權經銷，每件商品皆為原廠出貨</div>
+      <div className="bg-gradient-to-b md:bg-gradient-to-r from-[#2a1f17] via-[#1e1e1e] to-[#2a1f17] border-b border-white/5">
+        <div className="max-w-[1290px] mx-auto px-5 sm:px-6 lg:px-8 py-5 grid grid-cols-1 md:grid-cols-3 gap-4">
+          {([
+            ['🔒', 'JEROSSE 官方正品授權', '法芮可有限公司授權經銷，每件商品皆為原廠出貨'],
+            ['⚠️', '小心詐騙電商', '認明官方域名 pandora.js-store.com.tw'],
+            ['✅', '食品合規聲明', '本站商品為食品，非藥品，不具醫療療效'],
+          ] as const).map(([icon, title, desc]) => (
+            <div key={title} className="flex items-center gap-3 md:items-start px-2 py-1.5 md:p-0">
+              <span className="text-lg shrink-0 w-8 h-8 flex items-center justify-center rounded-lg bg-white/5">{icon}</span>
+              <div className="min-w-0">
+                <div className="text-white text-[13px] font-bold">{title}</div>
+                <div className="text-gray-400 text-[11px] mt-0.5 leading-snug">{desc}</div>
+              </div>
             </div>
-          </div>
-          <div className="flex items-start gap-3">
-            <span className="text-xl">⚠️</span>
-            <div>
-              <div className="text-white text-sm font-bold">小心詐騙電商</div>
-              <div className="text-gray-400 text-xs mt-1 leading-relaxed">本站為 <span className="text-gray-200">pandora.js-store.com.tw</span> 唯一官方域名，請勿相信仿冒站點</div>
-            </div>
-          </div>
-          <div className="flex items-start gap-3">
-            <span className="text-xl">✅</span>
-            <div>
-              <div className="text-white text-sm font-bold">食品合規聲明</div>
-              <div className="text-gray-400 text-xs mt-1 leading-relaxed">本站商品為食品，非藥品，不具醫療療效</div>
-            </div>
-          </div>
+          ))}
         </div>
       </div>
       <div className="max-w-[1290px] mx-auto px-5 sm:px-6 lg:px-8 py-12">
@@ -202,7 +194,8 @@ function FooterInner() {
         </div>
 
         <div className="border-t border-white/10 mt-8 pt-8 text-center text-sm text-gray-500">
-          &copy; {new Date().getFullYear()} 婕樂纖仙女館 JEROSSE. All rights reserved.
+          <div>&copy; {new Date().getFullYear()} 婕樂纖仙女館 JEROSSE. All rights reserved.</div>
+          <div className="mt-1 text-[10px] text-gray-600">v{process.env.NEXT_PUBLIC_APP_VERSION || '2.0.0'}</div>
         </div>
       </div>
     </footer>

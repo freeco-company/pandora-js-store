@@ -34,6 +34,7 @@ interface OrderForm {
   shipping_address: string;
   shipping_store_id: string;
   shipping_store_name: string;
+  social_id: string;
   note: string;
   same_as_customer: boolean;
 }
@@ -69,6 +70,7 @@ export default function CheckoutPage() {
     shipping_address: '',
     shipping_store_id: '',
     shipping_store_name: '',
+    social_id: '',
     note: '',
     same_as_customer: true,
   });
@@ -173,6 +175,9 @@ export default function CheckoutPage() {
     shipping_phone: [
       { required: true, message: '請輸入收件人電話', when: () => !form.same_as_customer },
     ],
+    social_id: [
+      { required: true, message: '請填寫您的社群帳號以利聯繫', when: () => form.payment_method === 'cod' },
+    ],
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -212,7 +217,10 @@ export default function CheckoutPage() {
         shipping_address: isCvs ? undefined : form.shipping_address,
         shipping_store_id: isCvs ? form.shipping_store_id : undefined,
         shipping_store_name: isCvs ? form.shipping_store_name : undefined,
-        note: form.note || undefined,
+        note: [
+          form.social_id ? `[社群帳號] ${form.social_id}` : '',
+          form.note || '',
+        ].filter(Boolean).join('\n') || undefined,
       };
 
       const order = await fetchApi<{ order_number: string } & CelebrationKeys>('/orders', {
@@ -630,20 +638,36 @@ export default function CheckoutPage() {
                 </div>
               )}
 
-              {/* COD policy reminder — always visible when COD is selectable */}
+              {/* COD social ID + policy — visible when COD selected */}
               {isLoggedIn && !codStatus.blocked && form.payment_method === 'cod' && (
-                <div className="flex items-start gap-2 p-3 bg-[#fdf7ef] border border-[#e7d9cb] rounded-lg text-[12px] text-[#7a5836] leading-relaxed">
-                  <span className="text-base shrink-0 mt-0.5">⚠️</span>
-                  <div>
-                    <p className="font-black text-sm text-[#9F6B3E]">貨到付款注意事項</p>
-                    <ul className="mt-1.5 space-y-1 list-disc list-inside marker:text-[#9F6B3E]">
-                      <li>超商取貨須於 <strong>7 天內</strong>到店取件，逾期視同放棄。</li>
-                      <li>
-                        <strong className="text-red-600">一次未取件將永久停用貨到付款</strong>
-                      </li>
-                    </ul>
+                <>
+                  <div className="space-y-2">
+                    <label className="block text-sm font-semibold text-gray-700">
+                      社群帳號 <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={form.social_id}
+                      onChange={(e) => update('social_id', e.target.value)}
+                      placeholder="請填寫 IG、FB 或 LINE 的帳號（擇一即可）"
+                      className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-[#9F6B3E] focus:border-transparent outline-none text-sm ${errors.social_id ? 'border-red-400' : 'border-gray-300'}`}
+                    />
+                    <p className="text-[11px] text-gray-400">方便我們在取件異常時聯繫您，不會公開顯示</p>
+                    {errors.social_id && <p className="field-error-text">{errors.social_id}</p>}
                   </div>
-                </div>
+                  <div className="flex items-start gap-2 p-3 bg-[#fdf7ef] border border-[#e7d9cb] rounded-lg text-[12px] text-[#7a5836] leading-relaxed">
+                    <span className="text-base shrink-0 mt-0.5">⚠️</span>
+                    <div>
+                      <p className="font-black text-sm text-[#9F6B3E]">貨到付款注意事項</p>
+                      <ul className="mt-1.5 space-y-1 list-disc list-inside marker:text-[#9F6B3E]">
+                        <li>超商取貨須於 <strong>7 天內</strong>到店取件，逾期視同放棄。</li>
+                        <li>
+                          <strong className="text-red-600">一次未取件將永久停用貨到付款</strong>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </>
               )}
             </div>
           </section>
