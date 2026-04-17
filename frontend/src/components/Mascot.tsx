@@ -63,65 +63,92 @@ export default function Mascot({
 
         {stage === 'bloom' && (
           <>
-            {/* Stem + side leaves — slightly fuller than sprout */}
-            <path d="M50 72 Q50 52 50 38" stroke="#7ab87a" strokeWidth="3.2" fill="none" strokeLinecap="round" />
-            <path d="M50 58 Q40 55 36 48" stroke="#7ab87a" strokeWidth="1.6" fill="none" strokeLinecap="round" />
-            <path d="M50 58 Q60 55 64 48" stroke="#7ab87a" strokeWidth="1.6" fill="none" strokeLinecap="round" />
-            <ellipse cx="38" cy="50" rx="10" ry="6" fill="url(#leafGrad)" transform="rotate(-25 38 50)" />
-            <ellipse cx="62" cy="50" rx="10" ry="6" fill="url(#leafGrad)" transform="rotate(25 62 50)" />
+            {/* Defs first — gradients, filters, glow */}
+            <defs>
+              <linearGradient id="petalGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="#ffecf1" />
+                <stop offset="50%" stopColor="#ffc6d1" />
+                <stop offset="100%" stopColor="#ff8fa8" />
+              </linearGradient>
+              <linearGradient id="petalGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#ffe0e8" />
+                <stop offset="100%" stopColor="#ffb3c6" />
+              </linearGradient>
+              <linearGradient id="leafGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#a7e3a7" />
+                <stop offset="100%" stopColor="#6faa6f" />
+              </linearGradient>
+              <radialGradient id="bloomGlow">
+                <stop offset="0%" stopColor="#ffcdd2" stopOpacity="0.5" />
+                <stop offset="100%" stopColor="#ffcdd2" stopOpacity="0" />
+              </radialGradient>
+              <filter id="petalShadow" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur in="SourceAlpha" stdDeviation="1" />
+                <feOffset dy="1.5" />
+                <feComponentTransfer><feFuncA type="linear" slope="0.3" /></feComponentTransfer>
+                <feMerge><feMergeNode /><feMergeNode in="SourceGraphic" /></feMerge>
+              </filter>
+            </defs>
 
-            {/* Body (head) — the mascot's face sits here */}
-            <circle cx="50" cy="36" r="10.5" fill="#9edc9e" />
-            <circle cx="47" cy="33" r="2" fill="#b8ecb8" opacity="0.8" />
+            {/* Stem + vines — organic curves */}
+            <path d="M50 72 Q49 56 50 38" stroke="#6fa86f" strokeWidth="3" fill="none" strokeLinecap="round" />
+            <path d="M50 62 Q42 58 35 50" stroke="#7ab87a" strokeWidth="1.5" fill="none" strokeLinecap="round" className="bloom-leaf-l" />
+            <path d="M50 62 Q58 58 65 50" stroke="#7ab87a" strokeWidth="1.5" fill="none" strokeLinecap="round" className="bloom-leaf-r" />
 
-            {/* 5-petal cherry-blossom crown centred on (50, 22).
-                Each petal is an ellipse rotated to a pentagon vertex; pink
-                gradient fill + subtle notch makes it read as a flower
-                rather than overlapping dots. */}
+            {/* Leaves — animated gentle sway */}
+            <ellipse cx="37" cy="51" rx="10" ry="5.5" fill="url(#leafGrad)" transform="rotate(-28 37 51)" className="bloom-leaf-l" />
+            <ellipse cx="63" cy="51" rx="10" ry="5.5" fill="url(#leafGrad)" transform="rotate(28 63 51)" className="bloom-leaf-r" />
+            {/* Tiny inner leaf */}
+            <ellipse cx="42" cy="55" rx="5" ry="3" fill="#8ccf8c" opacity="0.7" transform="rotate(-15 42 55)" />
+            <ellipse cx="58" cy="55" rx="5" ry="3" fill="#8ccf8c" opacity="0.7" transform="rotate(15 58 55)" />
+
+            {/* Body — breathing scale */}
+            <g className="bloom-body-breathe">
+              <circle cx="50" cy="36" r="11" fill="#9edc9e" />
+              <circle cx="46" cy="33" r="2.5" fill="#b8ecb8" opacity="0.6" />
+              <circle cx="54" cy="38" r="1.5" fill="#b8ecb8" opacity="0.4" />
+            </g>
+
+            {/* Flower glow aura */}
+            <circle cx="50" cy="22" r="18" fill="url(#bloomGlow)" className="bloom-aura" />
+
+            {/* 5-petal cherry-blossom — each petal sways independently */}
             <g filter="url(#petalShadow)">
-              {[0, 72, 144, 216, 288].map((deg) => (
-                <g key={deg} transform={`rotate(${deg} 50 22)`}>
+              {[0, 72, 144, 216, 288].map((deg, i) => (
+                <g key={deg} transform={`rotate(${deg} 50 22)`} className={`bloom-petal bloom-petal-${i}`}>
                   <path
-                    d="M50 12 C 54 12, 57 16, 57 20 C 57 23, 53.5 24, 50 24 C 46.5 24, 43 23, 43 20 C 43 16, 46 12, 50 12 Z"
-                    fill="url(#petalGrad)"
+                    d="M50 11 C 54.5 11, 58 15.5, 58 20 C 58 23.5, 54 25, 50 25 C 46 25, 42 23.5, 42 20 C 42 15.5, 45.5 11, 50 11 Z"
+                    fill={i % 2 === 0 ? 'url(#petalGrad)' : 'url(#petalGrad2)'}
                   />
+                  {/* Petal vein */}
+                  <path d={`M50 13 Q50 18 50 23`} stroke="#ffb3c6" strokeWidth="0.3" fill="none" opacity="0.5" />
                 </g>
               ))}
-              {/* Stamen cluster */}
-              <circle cx="50" cy="22" r="2.6" fill="#fff176" />
-              <circle cx="48.3" cy="21" r="0.8" fill="#f9a825" />
-              <circle cx="51.7" cy="21" r="0.8" fill="#f9a825" />
-              <circle cx="50" cy="23.5" r="0.8" fill="#f9a825" />
+              {/* Stamen cluster — richer */}
+              <circle cx="50" cy="22" r="3.2" fill="#fff176" />
+              <circle cx="50" cy="22" r="2" fill="#ffee58" />
+              {[0, 60, 120, 180, 240, 300].map((a) => {
+                const r = 1.8;
+                const x = 50 + Math.cos((a * Math.PI) / 180) * r;
+                const y = 22 + Math.sin((a * Math.PI) / 180) * r;
+                return <circle key={a} cx={x} cy={y} r="0.6" fill="#f9a825" />;
+              })}
             </g>
 
-            {/* Sparkle accents — tiny cross stars framing the bloom */}
+            {/* Falling petals — 2 tiny petals drifting down */}
+            <g className="bloom-falling">
+              <path d="M32 40 C 33 39, 35 40, 34 41 C 33 42, 31 41, 32 40 Z" fill="#ffc6d1" opacity="0.7" className="bloom-fall-1" />
+              <path d="M66 35 C 67 34, 69 35, 68 36 C 67 37, 65 36, 66 35 Z" fill="#ffb3c6" opacity="0.5" className="bloom-fall-2" />
+            </g>
+
+            {/* Sparkles — more refined cross-stars */}
             <g fill="#fff9c4" className="mascot-sparkle">
-              <path d="M30 18 l1 2 l2 1 l-2 1 l-1 2 l-1 -2 l-2 -1 l2 -1 z" />
-              <path d="M70 26 l0.8 1.6 l1.6 0.8 l-1.6 0.8 l-0.8 1.6 l-0.8 -1.6 l-1.6 -0.8 l1.6 -0.8 z" />
-              <path d="M22 32 l0.7 1.4 l1.4 0.7 l-1.4 0.7 l-0.7 1.4 l-0.7 -1.4 l-1.4 -0.7 l1.4 -0.7 z" />
+              <path d="M28 16 l1 2.5 l2.5 1 l-2.5 1 l-1 2.5 l-1 -2.5 l-2.5 -1 l2.5 -1 z" />
+              <path d="M72 24 l0.8 1.8 l1.8 0.8 l-1.8 0.8 l-0.8 1.8 l-0.8 -1.8 l-1.8 -0.8 l1.8 -0.8 z" />
+              <path d="M24 36 l0.6 1.2 l1.2 0.6 l-1.2 0.6 l-0.6 1.2 l-0.6 -1.2 l-1.2 -0.6 l1.2 -0.6 z" />
+              <path d="M76 14 l0.5 1 l1 0.5 l-1 0.5 l-0.5 1 l-0.5 -1 l-1 -0.5 l1 -0.5 z" />
             </g>
           </>
-        )}
-
-        {/* Gradients + shadow definitions (only rendered when bloom) */}
-        {stage === 'bloom' && (
-          <defs>
-            <linearGradient id="petalGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="#ffecf1" />
-              <stop offset="60%" stopColor="#ffc6d1" />
-              <stop offset="100%" stopColor="#ff8fa8" />
-            </linearGradient>
-            <linearGradient id="leafGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#a7e3a7" />
-              <stop offset="100%" stopColor="#6faa6f" />
-            </linearGradient>
-            <filter id="petalShadow" x="-20%" y="-20%" width="140%" height="140%">
-              <feGaussianBlur in="SourceAlpha" stdDeviation="0.8" />
-              <feOffset dy="1" />
-              <feComponentTransfer><feFuncA type="linear" slope="0.35" /></feComponentTransfer>
-              <feMerge><feMergeNode /><feMergeNode in="SourceGraphic" /></feMerge>
-            </filter>
-          </defs>
         )}
 
         {/* Face — always on the "head" (body) */}
@@ -136,23 +163,91 @@ export default function Mascot({
           0%, 100% { transform: translateY(0); }
           50% { transform: translateY(-3px); }
         }
-        .mascot-bounce {
-          animation: mascotBounce 2.8s ease-in-out infinite;
-        }
+        .mascot-bounce { animation: mascotBounce 2.8s ease-in-out infinite; }
+
+        /* Sparkles */
         @keyframes mascotSparkle {
-          0%, 100% { opacity: 0.25; transform: scale(0.8); }
-          50% { opacity: 1; transform: scale(1.1); }
+          0%, 100% { opacity: 0.15; transform: scale(0.7); }
+          50% { opacity: 1; transform: scale(1.15); }
         }
         :global(.mascot-sparkle path) {
-          transform-origin: center;
-          transform-box: fill-box;
+          transform-origin: center; transform-box: fill-box;
           animation: mascotSparkle 2.4s ease-in-out infinite;
         }
-        :global(.mascot-sparkle path:nth-child(2)) { animation-delay: 0.5s; }
-        :global(.mascot-sparkle path:nth-child(3)) { animation-delay: 1.1s; }
+        :global(.mascot-sparkle path:nth-child(2)) { animation-delay: 0.6s; }
+        :global(.mascot-sparkle path:nth-child(3)) { animation-delay: 1.2s; }
+        :global(.mascot-sparkle path:nth-child(4)) { animation-delay: 1.8s; }
+
+        /* Bloom: petal sway — each rotates slightly around the flower center */
+        @keyframes petalSway {
+          0%, 100% { transform: rotate(0deg); }
+          50% { transform: rotate(3deg); }
+        }
+        :global(.bloom-petal) {
+          transform-origin: 50px 22px; /* flower center */
+          animation: petalSway 4s ease-in-out infinite;
+        }
+        :global(.bloom-petal-1) { animation-delay: 0.3s; animation-duration: 4.5s; }
+        :global(.bloom-petal-2) { animation-delay: 0.6s; animation-duration: 5s; }
+        :global(.bloom-petal-3) { animation-delay: 0.9s; animation-duration: 4.2s; }
+        :global(.bloom-petal-4) { animation-delay: 1.2s; animation-duration: 4.8s; }
+
+        /* Bloom: body breathing */
+        @keyframes bodyBreathe {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.04); }
+        }
+        :global(.bloom-body-breathe) {
+          transform-origin: 50px 36px;
+          animation: bodyBreathe 3.5s ease-in-out infinite;
+        }
+
+        /* Bloom: aura pulse */
+        @keyframes auraPulse {
+          0%, 100% { opacity: 0.3; transform: scale(0.9); }
+          50% { opacity: 0.7; transform: scale(1.1); }
+        }
+        :global(.bloom-aura) {
+          transform-origin: 50px 22px;
+          animation: auraPulse 3s ease-in-out infinite;
+        }
+
+        /* Bloom: leaf sway */
+        @keyframes leafSwayL {
+          0%, 100% { transform: rotate(0deg); }
+          50% { transform: rotate(-4deg); }
+        }
+        @keyframes leafSwayR {
+          0%, 100% { transform: rotate(0deg); }
+          50% { transform: rotate(4deg); }
+        }
+        :global(.bloom-leaf-l) { transform-origin: 50px 62px; animation: leafSwayL 5s ease-in-out infinite; }
+        :global(.bloom-leaf-r) { transform-origin: 50px 62px; animation: leafSwayR 5s ease-in-out infinite 0.5s; }
+
+        /* Bloom: falling petals */
+        @keyframes petalFall1 {
+          0% { transform: translate(0, 0) rotate(0deg); opacity: 0; }
+          10% { opacity: 0.7; }
+          100% { transform: translate(-12px, 30px) rotate(-60deg); opacity: 0; }
+        }
+        @keyframes petalFall2 {
+          0% { transform: translate(0, 0) rotate(0deg); opacity: 0; }
+          10% { opacity: 0.5; }
+          100% { transform: translate(10px, 35px) rotate(45deg); opacity: 0; }
+        }
+        :global(.bloom-fall-1) { animation: petalFall1 6s ease-in-out infinite 1s; }
+        :global(.bloom-fall-2) { animation: petalFall2 7s ease-in-out infinite 3s; }
+
         @media (prefers-reduced-motion: reduce) {
           .mascot-bounce,
-          :global(.mascot-sparkle path) { animation: none; }
+          :global(.mascot-sparkle path),
+          :global(.bloom-petal),
+          :global(.bloom-body-breathe),
+          :global(.bloom-aura),
+          :global(.bloom-leaf-l),
+          :global(.bloom-leaf-r),
+          :global(.bloom-fall-1),
+          :global(.bloom-fall-2) { animation: none; }
         }
       `}</style>
     </div>
