@@ -35,17 +35,17 @@ const TEAM: Member[] = [
     name: '朵朵',
     role: 'Co-Founder · 婕樂纖仙女館',
     credentials: ['健康食品業 8 年資歷', '台灣電商創業家'],
-    bio: '從自己體驗過婕樂纖開始，因為真的看到身邊人改變，決定成為仙女館的 Co-founder，把好東西帶給更多女性。主張「一次性付費、永久加盟」的公平模式。',
-    specialties: ['女性保健', '團隊管理', '品牌經營'],
+    bio: '從自己體驗過婕樂纖開始，因為真的看到身邊的人改變，決定創辦仙女館 FP，用「從仙女變成 Pandora」的精神，帶領團隊把好東西分享給更多女性。',
+    specialties: ['女性保健', '品牌經營', '顧客服務'],
     emoji: '🌸',
   },
   {
     slug: 'consultant-nutrition',
     name: '營養師顧問團',
-    role: '每月 2 場線上直播',
+    role: '營養師陪伴班',
     credentials: ['中華民國專技高考合格營養師', '食品科學碩士'],
-    bio: '由合格營養師組成的諮詢團隊，協助會員搭配最適合的保健組合。每月第 2、4 週四晚上 8 點 LINE 直播回答問題。',
-    specialties: ['體重管理', '保健食品搭配', '營養衛教'],
+    bio: '由合格營養師組成的陪伴團隊。纖體系列單筆滿 $6,600 即可加入營養師陪伴班，享有專屬飲食指導與持續追蹤。完成訂單後私訊截圖即可啟動。',
+    specialties: ['體重管理', '飲食指導', '營養衛教'],
     emoji: '🥗',
   },
   {
@@ -53,8 +53,8 @@ const TEAM: Member[] = [
     name: '客服仙女',
     role: '1 對 1 LINE 諮詢',
     credentials: ['週一至週五 10:00-18:00 上線'],
-    bio: '每位 FP 會員背後都有一位客服仙女，從下單到售後、換貨、加盟諮詢全包辦。平均 1 小時內回覆訊息。',
-    specialties: ['訂單處理', '售後服務', '加盟引導'],
+    bio: '每位顧客背後都有專屬客服仙女，從下單到售後、換貨、產品諮詢全包辦。平均 1 小時內回覆訊息。',
+    specialties: ['訂單處理', '售後服務', '產品諮詢'],
     emoji: '💬',
   },
 ];
@@ -169,16 +169,19 @@ export default function TeamPage() {
           </article>
         ))}
 
+        {/* 營養師陪伴班 CTA */}
         <section className="mt-8 bg-gradient-to-br from-[#fdf7ef] to-[#f7eee3] rounded-3xl p-6 sm:p-8 border border-[#e7d9cb] text-center">
-          <h3 className="text-lg font-black text-[#9F6B3E]">想加入仙女團隊？</h3>
+          <h3 className="text-lg font-black text-[#9F6B3E]">營養師陪伴班</h3>
           <p className="text-sm text-gray-700 mt-2 mb-5">
-            系統化培訓、1 對 1 督導、階梯式獎金 — 一起把 FP 變成你的事業
+            纖體系列單筆滿 $6,600，即可享有營養師專屬飲食指導與持續追蹤陪伴。
+            <br />
+            完成訂單後私訊截圖即可啟動。
           </p>
           <Link
-            href="/join"
+            href="/products"
             className="inline-flex items-center gap-2 px-6 py-3 bg-[#9F6B3E] text-white font-black rounded-full hover:bg-[#85572F] transition-colors"
           >
-            了解加入方式 →
+            選購纖體商品 →
           </Link>
         </section>
       </main>
