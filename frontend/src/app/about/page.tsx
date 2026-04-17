@@ -4,7 +4,7 @@ import FloatingShapes from '@/components/FloatingShapes';
 import ScrollReveal from '@/components/ScrollReveal';
 import TextReveal from '@/components/TextReveal';
 import Mascot from '@/components/Mascot';
-import ScrollMascotGrowth from '@/components/ScrollMascotGrowth';
+import AboutScrollStory from '@/components/AboutScrollStory';
 import { breadcrumbSchema, jsonLdScript } from '@/lib/jsonld';
 
 export const revalidate = 86400;
@@ -90,145 +90,8 @@ export default function AboutPage() {
     <div className="relative">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(breadcrumbs, ...teamJsonLd) }} />
 
-      {/* ═══ HERO ═══ */}
-      <section className="relative min-h-[70vh] sm:min-h-[80vh] flex items-center overflow-hidden">
-        <div className="absolute inset-0" style={{
-          background:
-            'radial-gradient(ellipse at 30% 20%, rgba(247,199,154,0.3), transparent 60%),' +
-            'radial-gradient(ellipse at 70% 80%, rgba(159,107,62,0.15), transparent 50%),' +
-            'linear-gradient(180deg, #e7d9cb 0%, #f7eee3 40%, #ffffff 100%)',
-        }} />
-        <FloatingShapes />
-        <div className="relative w-full max-w-5xl mx-auto px-5 sm:px-8 lg:px-12 py-16 sm:py-24">
-          <div className="flex flex-col lg:flex-row items-center gap-10 lg:gap-16">
-            <div className="flex items-end gap-3 sm:gap-4 shrink-0">
-              <ScrollReveal variant="fade-up" delay={0}>
-                <div className="text-center opacity-50">
-                  <Mascot stage="seedling" mood="neutral" size={56} />
-                  <div className="text-[9px] font-bold text-gray-400 mt-1">萌芽</div>
-                </div>
-              </ScrollReveal>
-              <ScrollReveal variant="fade-up" delay={150}>
-                <div className="text-center opacity-70">
-                  <Mascot stage="sprout" mood="happy" size={80} />
-                  <div className="text-[10px] font-bold text-[#9F6B3E] mt-1">成長</div>
-                </div>
-              </ScrollReveal>
-              <ScrollReveal variant="fade-up" delay={300}>
-                <div className="text-center">
-                  <Mascot stage="bloom" mood="excited" size={110} />
-                  <div className="text-[11px] font-black text-[#9F6B3E] mt-1">綻放</div>
-                </div>
-              </ScrollReveal>
-            </div>
-            <div className="text-center lg:text-left flex-1">
-              <ScrollReveal variant="fade-up">
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/70 backdrop-blur rounded-full border border-white/80 shadow-sm mb-5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#9F6B3E] animate-pulse" />
-                  <span className="text-[10px] font-black text-[#9F6B3E] tracking-[0.25em]">FAIRY PANDORA</span>
-                </div>
-              </ScrollReveal>
-              <TextReveal as="h1" text="從仙女，到潘朵拉" className="text-3xl sm:text-4xl lg:text-5xl font-black text-[#3d2e22] tracking-tight leading-tight" stagger={80} />
-              <ScrollReveal variant="fade-up" delay={400}>
-                <p className="text-base sm:text-lg text-gray-600 mt-5 max-w-lg leading-relaxed">
-                  每位女性心裡都住著一位仙女。<br className="hidden sm:block" />
-                  FP 的使命，是陪你打開那個專屬的盒子 —<br className="hidden sm:block" />
-                  <strong className="text-[#9F6B3E]">從認識自己，到綻放成最好的自己。</strong>
-                </p>
-              </ScrollReveal>
-              <ScrollReveal variant="fade-up" delay={600}>
-                <div className="mt-8">
-                  <Link href="/products" className="inline-flex items-center gap-2 px-7 py-3.5 bg-[#9F6B3E] text-white font-black rounded-full hover:bg-[#85572F] transition-all shadow-lg shadow-[#9F6B3E]/20 min-h-[48px]">
-                    開始我的蛻變旅程 →
-                  </Link>
-                </div>
-              </ScrollReveal>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ═══ OUR STORY ═══ */}
-      <section className="bg-white py-16 sm:py-24">
-        <div className="max-w-4xl mx-auto px-5 sm:px-8">
-          <ScrollReveal variant="fade-up">
-            <div className="text-center mb-12">
-              <div className="text-[10px] font-black tracking-[0.3em] text-[#9F6B3E] mb-2">OUR STORY</div>
-              <h2 className="text-2xl sm:text-3xl font-black text-[#3d2e22]">為什麼叫 Fairy Pandora？</h2>
-            </div>
-          </ScrollReveal>
-          <div className="grid md:grid-cols-2 gap-8">
-            <ScrollReveal variant="fade-up" delay={100}>
-              <div className="bg-gradient-to-br from-[#fdf7ef] to-[#f7eee3] rounded-3xl p-8 border border-[#e7d9cb] h-full">
-                <div className="w-14 h-14 rounded-2xl bg-white/80 flex items-center justify-center text-[#9F6B3E] shadow-sm mb-4">
-                  {Icon.Fairy('w-8 h-8')}
-                </div>
-                <h3 className="text-lg font-black text-[#9F6B3E]">Fairy · 仙女</h3>
-                <p className="text-sm text-gray-600 mt-3 leading-relaxed">
-                  每個女生都是仙女，只是有時候忘了。婕樂纖是我們找回自信的起點 — 不是變成別人，而是成為更好的自己。
-                </p>
-              </div>
-            </ScrollReveal>
-            <ScrollReveal variant="fade-up" delay={250}>
-              <div className="bg-gradient-to-br from-[#f7eee3] to-[#e7d9cb] rounded-3xl p-8 border border-[#d4c4b0] h-full">
-                <div className="w-14 h-14 rounded-2xl bg-white/80 flex items-center justify-center text-[#85572F] shadow-sm mb-4">
-                  {Icon.Box('w-8 h-8')}
-                </div>
-                <h3 className="text-lg font-black text-[#85572F]">Pandora · 潘朵拉</h3>
-                <p className="text-sm text-gray-600 mt-3 leading-relaxed">
-                  潘朵拉的盒子不是災難，是希望。打開它需要勇氣 — 而我們在這裡，陪你一起打開。裡面裝的是屬於你的健康、美麗、和自信。
-                </p>
-              </div>
-            </ScrollReveal>
-          </div>
-        </div>
-      </section>
-
-      {/* ═══ JOURNEY — scroll-driven mascot growth ═══ */}
-      <section className="py-16 sm:py-24 relative" style={{ background: 'linear-gradient(180deg, #fff 0%, #fdf7ef 50%, #fff 100%)' }}>
-        <div className="max-w-5xl mx-auto px-5 sm:px-8">
-          <ScrollReveal variant="fade-up">
-            <div className="text-center mb-8">
-              <div className="text-[10px] font-black tracking-[0.3em] text-[#9F6B3E] mb-2">YOUR JOURNEY</div>
-              <h2 className="text-2xl sm:text-3xl font-black text-[#3d2e22]">你的蛻變旅程</h2>
-              <p className="text-sm text-gray-500 mt-2">向下捲動，看芽芽跟你一起成長</p>
-            </div>
-          </ScrollReveal>
-
-          {/* Desktop: mascot left, steps right. Mobile: mascot center, steps below */}
-          <div className="flex flex-col lg:flex-row items-start gap-8 lg:gap-12">
-            {/* Scroll-driven mascot — sticky on desktop */}
-            <div className="w-full lg:w-auto lg:sticky lg:top-24 flex justify-center lg:block shrink-0">
-              <ScrollMascotGrowth size={220} className="drop-shadow-xl" />
-            </div>
-
-            {/* 4 journey steps */}
-            <div className="flex-1 space-y-6">
-              {[
-                { step: '01', icon: Icon.Leaf, title: '遇見', desc: '第一次認識婕樂纖，對健康有了新的想像。一顆小小的種子，悄悄種在心裡。', color: 'from-[#e8f5e9] to-[#c8e6c9]', iconColor: 'text-[#4caf50]' },
-                { step: '02', icon: Icon.Sparkles, title: '探索', desc: '了解三階梯定價，搭配最適合自己的組合。根扎得更深，葉子開始伸展。', color: 'from-[#fdf7ef] to-[#f7eee3]', iconColor: 'text-[#9F6B3E]' },
-                { step: '03', icon: Icon.Heart, title: '蛻變', desc: '營養師陪伴，堅持讓改變發生。一天一天，你開始看見自己的不同。', color: 'from-[#fce4ec] to-[#f8bbd0]', iconColor: 'text-[#e91e63]' },
-                { step: '04', icon: Icon.Star, title: '綻放', desc: '成為自信的潘朵拉。花開了，你把這份美好分享給身邊的人。', color: 'from-[#fff8e1] to-[#ffecb3]', iconColor: 'text-[#ff8f00]' },
-              ].map((s, i) => (
-                <ScrollReveal key={s.step} variant="fade-up" delay={i * 80}>
-                  <div className={`bg-gradient-to-br ${s.color} rounded-3xl p-6 sm:p-8 border border-white/50 hover:shadow-lg transition-all`}>
-                    <div className="flex items-start gap-4">
-                      <div className={`w-12 h-12 rounded-xl bg-white/70 flex items-center justify-center ${s.iconColor} shrink-0`}>
-                        {s.icon('w-6 h-6')}
-                      </div>
-                      <div>
-                        <div className="text-[10px] font-black tracking-[0.2em] text-gray-400 mb-1">STEP {s.step}</div>
-                        <h3 className="text-lg font-black text-[#3d2e22]">{s.title}</h3>
-                        <p className="text-sm text-gray-600 mt-2 leading-relaxed">{s.desc}</p>
-                      </div>
-                    </div>
-                  </div>
-                </ScrollReveal>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* ═══ SCROLL STORY: 5-act 從仙女到潘朵拉 ═══ */}
+      <AboutScrollStory />
 
       {/* ═══ TEAM ═══ */}
       <section className="bg-white py-16 sm:py-24">
