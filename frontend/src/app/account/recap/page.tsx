@@ -25,6 +25,8 @@ interface OrderSummary {
   total: number;
   created_at: string;
   status: string;
+  payment_status: string;
+  payment_method: string;
 }
 
 export default function RecapPage() {
@@ -62,10 +64,17 @@ export default function RecapPage() {
   const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
   const lastMonth = `${lastMonthDate.getFullYear()}-${String(lastMonthDate.getMonth() + 1).padStart(2, '0')}`;
 
+  // Only count orders where payment actually cleared. Unpaid credit-card
+  // orders and unconfirmed bank transfers are NOT real spend — showing
+  // $21,000 when nothing was paid is misleading for the gamification.
+  const isPaid = (o: OrderSummary) =>
+    o.payment_status === 'paid' ||
+    (o.payment_method === 'cod' && !['cancelled', 'cod_no_pickup', 'refunded'].includes(o.status));
+
   const byMonth = orders.reduce<Record<string, { count: number; total: number }>>((acc, o) => {
     const key = o.created_at.slice(0, 7);
     if (!acc[key]) acc[key] = { count: 0, total: 0 };
-    if (o.status !== 'cancelled' && o.status !== 'refunded') {
+    if (isPaid(o)) {
       acc[key].count++;
       acc[key].total += Number(o.total);
     }

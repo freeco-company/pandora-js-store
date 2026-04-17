@@ -21,6 +21,7 @@ interface OrderItem {
 interface Order {
   order_number: string;
   status: string;
+  payment_status: string;
   total: number;
   payment_method: string;
   shipping_method: string;
@@ -34,12 +35,21 @@ interface Order {
 
 const STATUS_MAP: Record<string, { label: string; color: string }> = {
   pending: { label: '待處理', color: 'bg-yellow-100 text-yellow-800' },
+  pending_payment: { label: '待付款', color: 'bg-orange-100 text-orange-800' },
   processing: { label: '處理中', color: 'bg-blue-100 text-blue-800' },
   shipped: { label: '已出貨', color: 'bg-blue-100 text-blue-800' },
   completed: { label: '已完成', color: 'bg-green-100 text-green-800' },
   cancelled: { label: '已取消', color: 'bg-red-100 text-red-800' },
   refunded: { label: '已退款', color: 'bg-red-100 text-red-800' },
 };
+
+/** Derive display status: pending + unpaid ecpay_credit → 待付款 */
+function displayStatus(o: Order): string {
+  if (o.status === 'pending' && o.payment_status === 'unpaid' && o.payment_method !== 'cod') {
+    return 'pending_payment';
+  }
+  return o.status;
+}
 
 const PAYMENT_MAP: Record<string, string> = {
   ecpay_credit: '信用卡（綠界）',
@@ -114,7 +124,7 @@ export default function OrderLookupForm() {
     }
   };
 
-  const status = order ? STATUS_MAP[order.status] || { label: order.status, color: 'bg-gray-100 text-gray-800' } : null;
+  const status = order ? STATUS_MAP[displayStatus(order)] || { label: order.status, color: 'bg-gray-100 text-gray-800' } : null;
 
   return (
     <div>
@@ -317,7 +327,7 @@ function MyOrdersList({ orders, loading }: { orders: Order[] | null; loading: bo
         您的訂單 ({orders.length})
       </div>
       {orders.map((o) => {
-        const status = STATUS_MAP[o.status] || { label: o.status, color: 'bg-gray-100 text-gray-800' };
+        const status = STATUS_MAP[displayStatus(o)] || { label: o.status, color: 'bg-gray-100 text-gray-800' };
         const isOpen = openId === o.order_number;
         return (
           <div

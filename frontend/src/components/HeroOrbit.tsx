@@ -1,7 +1,10 @@
 'use client';
 
+import Mascot from './Mascot';
+
 /**
- * Hero orbit visual — central glowing orb + floating badges + orbit rings.
+ * Hero orbit visual — central glowing orb with 芽芽 mascot at center,
+ * floating badges + orbit rings.
  * Responsive: `size` controls the orb; badges scale proportionally.
  */
 
@@ -53,6 +56,16 @@ export default function HeroOrbit({ size = 420, className = '' }: Props) {
           background: 'radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%)',
         }}
       />
+
+      {/* 芽芽 mascot at the center of the sphere */}
+      <div
+        className="absolute flex items-center justify-center hero-mascot-float"
+        style={{
+          inset: '22%',
+        }}
+      >
+        <Mascot stage="sprout" mood="happy" size={Math.round(size * 0.38)} />
+      </div>
 
       {/* 健康內在 (right-top) */}
       <div
@@ -160,6 +173,12 @@ export default function HeroOrbit({ size = 420, className = '' }: Props) {
         }
         :global(.hero-pulse) { animation: hero-pulse 4s ease-in-out infinite; }
 
+        @keyframes hero-mascot-float {
+          0%, 100% { transform: translateY(0) scale(1); }
+          50% { transform: translateY(-6px) scale(1.03); }
+        }
+        :global(.hero-mascot-float) { animation: hero-mascot-float 5s ease-in-out infinite 0.5s; }
+
         @keyframes hero-ring-spin {
           from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }
@@ -206,7 +225,7 @@ export default function HeroOrbit({ size = 420, className = '' }: Props) {
           :global(.hero-orb), :global(.hero-pulse), :global(.hero-ring-spin),
           :global(.hero-orbit-a), :global(.hero-orbit-b), :global(.hero-orbit-c),
           :global(.hero-orbit-d), :global(.hero-orbit-e), :global(.hero-orbit-f),
-          :global(.hero-particle) { animation: none; }
+          :global(.hero-particle), :global(.hero-mascot-float) { animation: none; }
         }
       `}</style>
     </div>
