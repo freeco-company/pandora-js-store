@@ -271,26 +271,37 @@ export default function CartPage() {
           )}
         </div>
 
-        {/* 營養師陪伴班 reminder — $6,600 纖體系列 */}
-        {total >= 6600 && (
-          <div className="mt-4 flex items-start gap-2.5 p-3 bg-gradient-to-r from-[#e8f5e9] to-[#f1f8e9] border border-[#c8e6c9] rounded-xl text-[12px] text-[#2e7d32] leading-relaxed">
-            <span className="text-lg shrink-0">🥗</span>
-            <div>
-              <p className="font-black text-sm">恭喜！您已達到營養師陪伴班門檻</p>
-              <p className="mt-1">完成訂單後，私訊截圖即可加入營養師專屬飲食指導與持續追蹤。</p>
-            </div>
-          </div>
-        )}
+        {/* 營養師陪伴班 reminder — only 纖體系列 (slimming) products count */}
+        {(() => {
+          const slimmingTotal = items
+            .filter((it) => it.product.categories?.some((c) => c.slug === 'slimming'))
+            .reduce((sum, it) => {
+              const pi = itemPrices.find((p) => p.productId === it.product.id);
+              return sum + (pi ? pi.subtotal : it.product.price * it.quantity);
+            }, 0);
 
-        {total >= 3840 && total < 6600 && (
-          <div className="mt-4 flex items-start gap-2.5 p-3 bg-[#fdf7ef] border border-[#e7d9cb] rounded-xl text-[12px] text-[#7a5836] leading-relaxed">
-            <span className="text-lg shrink-0">💡</span>
-            <div>
-              <p className="font-black text-sm">再 {formatPrice(6600 - total)} 即可加入營養師陪伴班</p>
-              <p className="mt-1">纖體系列滿 $6,600 享營養師專屬飲食指導，完成訂單私訊截圖即可啟動。</p>
+          if (slimmingTotal >= 6600) return (
+            <div className="mt-4 flex items-start gap-2.5 p-3 bg-gradient-to-r from-[#e8f5e9] to-[#f1f8e9] border border-[#c8e6c9] rounded-xl text-[12px] text-[#2e7d32] leading-relaxed">
+              <span className="text-lg shrink-0">🥗</span>
+              <div>
+                <p className="font-black text-sm">恭喜！纖體系列已達營養師陪伴班門檻</p>
+                <p className="mt-1">完成訂單後，私訊截圖即可加入營養師專屬飲食指導與持續追蹤。</p>
+              </div>
             </div>
-          </div>
-        )}
+          );
+
+          if (slimmingTotal > 0 && slimmingTotal < 6600) return (
+            <div className="mt-4 flex items-start gap-2.5 p-3 bg-[#fdf7ef] border border-[#e7d9cb] rounded-xl text-[12px] text-[#7a5836] leading-relaxed">
+              <span className="text-lg shrink-0">💡</span>
+              <div>
+                <p className="font-black text-sm">纖體系列再加 {formatPrice(6600 - slimmingTotal)} 即可加入營養師陪伴班</p>
+                <p className="mt-1">纖體商品滿 $6,600 享營養師專屬飲食指導，完成訂單私訊截圖即可啟動。</p>
+              </div>
+            </div>
+          );
+
+          return null;
+        })()}
 
         {/* Desktop CTA — mobile has sticky bottom bar */}
         <Link
