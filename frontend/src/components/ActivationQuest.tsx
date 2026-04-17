@@ -6,7 +6,8 @@
  */
 
 import Link from 'next/link';
-import { useMemo } from 'react';
+import { useMemo, type ReactNode } from 'react';
+import Icons from '@/components/SvgIcons';
 
 export interface ActivationProgress {
   first_browse?: boolean;       // visited /products
@@ -21,15 +22,15 @@ interface Step {
   title: string;
   cta: string;
   href: string;
-  emoji: string;
+  icon: ReactNode;
 }
 
 const STEPS: Step[] = [
-  { key: 'first_browse', title: '逛逛全館商品', cta: '去逛逛 →', href: '/products', emoji: '🛍️' },
-  { key: 'first_article', title: '看一篇仙女誌', cta: '去閱讀 →', href: '/articles', emoji: '📖' },
-  { key: 'first_brand', title: '了解 FP 團隊', cta: '認識團隊 →', href: '/about', emoji: '🌸' },
-  { key: 'first_cart', title: '挑件心動商品', cta: '去選購 →', href: '/products', emoji: '🛒' },
-  { key: 'first_mascot', title: '進入芽芽之家', cta: '去換裝 →', href: '/account/mascot', emoji: '🌱' },
+  { key: 'first_browse', title: '逛逛全館商品', cta: '去逛逛 →', href: '/products', icon: <Icons.ShoppingBag className="w-5 h-5 text-[#9F6B3E]" /> },
+  { key: 'first_article', title: '看一篇仙女誌', cta: '去閱讀 →', href: '/articles', icon: <Icons.Leaf className="w-5 h-5 text-[#9F6B3E]" /> },
+  { key: 'first_brand', title: '了解 FP 團隊', cta: '認識團隊 →', href: '/about', icon: <Icons.Ribbon className="w-5 h-5 text-[#9F6B3E]" /> },
+  { key: 'first_cart', title: '挑件心動商品', cta: '去選購 →', href: '/products', icon: <Icons.ShoppingBag className="w-5 h-5 text-[#9F6B3E]" /> },
+  { key: 'first_mascot', title: '進入芽芽之家', cta: '去換裝 →', href: '/account/mascot', icon: <Icons.Seedling className="w-5 h-5 text-[#9F6B3E]" /> },
 ];
 
 export default function ActivationQuest({ progress }: { progress: ActivationProgress }) {
@@ -76,8 +77,8 @@ export default function ActivationQuest({ progress }: { progress: ActivationProg
               href={s.href}
               className="px-5 py-3 flex items-center gap-3 active:bg-slate-50 transition-colors min-h-[56px]"
             >
-              <div className="w-9 h-9 rounded-xl bg-[#e7d9cb]/50 flex items-center justify-center text-xl shrink-0">
-                {s.emoji}
+              <div className="w-9 h-9 rounded-xl bg-[#e7d9cb]/50 flex items-center justify-center shrink-0">
+                {s.icon}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="text-sm font-black text-slate-800">{s.title}</div>

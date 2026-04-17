@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import Icons from '@/components/SvgIcons';
 import { useCart } from '@/components/CartProvider';
 import { tierLabel, getPrice } from '@/lib/pricing';
 import { formatPrice } from '@/lib/format';
@@ -81,7 +82,7 @@ export default function CartPage() {
           className="block mb-4 p-4 rounded-2xl bg-gradient-to-br from-[#fef6e4] to-[#fbe4b0] border border-[#E8A93B]/40 hover:border-[#E8A93B] hover:shadow-md transition-all group"
         >
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-[#E8A93B] flex items-center justify-center shrink-0 text-lg">🌱</div>
+            <div className="w-10 h-10 rounded-full bg-[#E8A93B] flex items-center justify-center shrink-0"><Icons.Seedling className="w-5 h-5 text-white" /></div>
             <div className="flex-1 min-w-0">
               <div className="text-sm font-black text-[#7a5836]">加盟會員價更省 · 一次 NT$6,600 永久享優惠</div>
               <div className="text-[11px] text-[#7a5836]/80 mt-0.5">了解自用加盟方案 →</div>
@@ -447,16 +448,16 @@ function SlimmingProgress({
 
   // Status message
   const statusMsg = reachedTier2
-    ? { icon: '🎉', bg: 'bg-[#e8f5e9]', color: 'text-[#2e7d32]', bold: '已達陪跑班門檻！', rest: '完成訂單後私訊截圖即可啟動。' }
+    ? { icon: <Icons.Party className="w-5 h-5 text-[#2e7d32]" />, bg: 'bg-[#e8f5e9]', color: 'text-[#2e7d32]', bold: '已達陪跑班門檻！', rest: '完成訂單後私訊截圖即可啟動。' }
     : reachedTier1
-      ? { icon: '✨', bg: 'bg-[#fdf7ef]', color: 'text-[#7a5836]', bold: '已達陪伴班！', rest: `再加 $${(TIER2 - slimmingTotal).toLocaleString()} 可升級陪跑班。` }
-      : { icon: '💡', bg: 'bg-gray-50', color: 'text-gray-600', bold: `再加 $${(TIER1 - slimmingTotal).toLocaleString()}`, rest: '纖體商品即可加入營養師陪伴班。' };
+      ? { icon: <Icons.Sparkles className="w-5 h-5 text-[#7a5836]" />, bg: 'bg-[#fdf7ef]', color: 'text-[#7a5836]', bold: '已達陪伴班！', rest: `再加 $${(TIER2 - slimmingTotal).toLocaleString()} 可升級陪跑班。` }
+      : { icon: <Icons.Lightbulb className="w-5 h-5 text-gray-500" />, bg: 'bg-gray-50', color: 'text-gray-600', bold: `再加 $${(TIER1 - slimmingTotal).toLocaleString()}`, rest: '纖體商品即可加入營養師陪伴班。' };
 
   return (
     <div className="mb-5 pb-4 border-b border-gray-200">
       {/* Status card */}
       <div className={`flex items-center gap-2.5 p-3 rounded-xl ${statusMsg.bg}`}>
-        <span className="text-xl shrink-0">{statusMsg.icon}</span>
+        <span className="shrink-0">{statusMsg.icon}</span>
         <div className={`flex-1 min-w-0 text-[12px] ${statusMsg.color}`}>
           <span className="font-black">{statusMsg.bold}</span>{' '}
           <span>{statusMsg.rest}</span>

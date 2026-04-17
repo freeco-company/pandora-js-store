@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import Icons from '@/components/SvgIcons';
 import { useAuth } from '@/components/AuthProvider';
 import { useCelebrate } from '@/components/Celebration';
 import { useSerendipity } from '@/components/Serendipity';
@@ -68,7 +69,7 @@ export default function AccountPage() {
               onClick={login}
               className="px-7 py-3.5 rounded-full bg-[#9F6B3E] text-white font-black hover:bg-[#85572F] transition-colors min-h-[52px] shadow-lg shadow-[#9F6B3E]/30"
             >
-              🌱 使用 Google 登入
+              <Icons.Seedling className="w-5 h-5 inline-block" /> 使用 Google 登入
             </button>
           </div>
         </section>
@@ -77,7 +78,7 @@ export default function AccountPage() {
         <section>
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-sm font-black text-slate-800 flex items-center gap-2">
-              🏆 你可以解鎖的成就
+              <Icons.Trophy className="w-5 h-5 inline-block" /> 你可以解鎖的成就
             </h2>
             <span className="text-[10px] font-bold text-slate-400">全部 {Object.keys(ACHIEVEMENT_CATALOG).length} 個</span>
           </div>
@@ -89,7 +90,7 @@ export default function AccountPage() {
               >
                 <div className="text-3xl mb-1 grayscale">{def.emoji}</div>
                 <div className="text-[10px] font-black leading-tight text-slate-400">{def.name}</div>
-                <div className="absolute top-1.5 right-1.5 text-[10px]">🔒</div>
+                <div className="absolute top-1.5 right-1.5"><Icons.Lock className="w-3.5 h-3.5 text-slate-400" /></div>
               </div>
             ))}
           </div>
@@ -98,18 +99,18 @@ export default function AccountPage() {
 
         {/* Benefits list */}
         <section className="bg-white rounded-3xl p-6 sm:p-8 border border-[#e7d9cb]">
-          <h2 className="text-base font-black text-slate-800 mb-4">🌸 加入仙女館好處</h2>
+          <h2 className="text-base font-black text-slate-800 mb-4 flex items-center gap-2"><Icons.Ribbon className="w-5 h-5 text-[#9F6B3E]" /> 加入仙女館好處</h2>
           <ul className="space-y-3 text-sm text-slate-700">
-            {[
-              { icon: '🔥', title: '連續造訪 Streak', desc: '7/30/100 天解鎖獎章與稀有服裝' },
-              { icon: '🎀', title: '成就收集', desc: '首購、VIP 解鎖、類別探索⋯各種事件都有回饋' },
-              { icon: '👒', title: '芽芽衣櫃', desc: '橡實帽、花冠、珍珠項鍊⋯換裝展現你的風格' },
-              { icon: '✨', title: '驚喜彩蛋', desc: '隨機出現的芽芽訊息，偶爾送上專屬暖心話' },
-              { icon: '🛍️', title: '訂單查詢', desc: '隨時查看訂單狀態、歷史紀錄' },
-              { icon: '💎', title: 'VIP 價', desc: '搭配滿 $4,000 自動升級最優惠' },
-            ].map((b, i) => (
+            {([
+              { icon: <Icons.Fire className="w-5 h-5 text-[#9F6B3E]" />, title: '連續造訪 Streak', desc: '7/30/100 天解鎖獎章與稀有服裝' },
+              { icon: <Icons.Ribbon className="w-5 h-5 text-[#9F6B3E]" />, title: '成就收集', desc: '首購、VIP 解鎖、類別探索⋯各種事件都有回饋' },
+              { icon: <Icons.Crown className="w-5 h-5 text-[#9F6B3E]" />, title: '芽芽衣櫃', desc: '橡實帽、花冠、珍珠項鍊⋯換裝展現你的風格' },
+              { icon: <Icons.Sparkles className="w-5 h-5 text-[#9F6B3E]" />, title: '驚喜彩蛋', desc: '隨機出現的芽芽訊息，偶爾送上專屬暖心話' },
+              { icon: <Icons.ShoppingBag className="w-5 h-5 text-[#9F6B3E]" />, title: '訂單查詢', desc: '隨時查看訂單狀態、歷史紀錄' },
+              { icon: <Icons.Diamond className="w-5 h-5 text-[#9F6B3E]" />, title: 'VIP 價', desc: '搭配滿 $4,000 自動升級最優惠' },
+            ] as const).map((b, i) => (
               <li key={i} className="flex items-start gap-3">
-                <span className="w-9 h-9 rounded-xl bg-[#fdf7ef] flex items-center justify-center text-lg shrink-0">
+                <span className="w-9 h-9 rounded-xl bg-[#fdf7ef] flex items-center justify-center shrink-0">
                   {b.icon}
                 </span>
                 <div>
@@ -127,7 +128,7 @@ export default function AccountPage() {
             onClick={login}
             className="px-8 py-3.5 rounded-full bg-[#9F6B3E] text-white font-black hover:bg-[#85572F] transition-colors min-h-[52px] shadow-lg shadow-[#9F6B3E]/30"
           >
-            🌱 立即登入解鎖
+            <Icons.Seedling className="w-5 h-5 inline-block" /> 立即登入解鎖
           </button>
           <div className="mt-4">
             <Link href="/products" className="text-xs font-bold text-slate-500 hover:text-[#9F6B3E] transition-colors">
@@ -180,9 +181,9 @@ export default function AccountPage() {
           <div className="text-[10px] font-black tracking-[0.2em] text-[#7a5836]">哈囉仙女</div>
           <h1 className="text-xl font-black text-slate-800 truncate">{data.customer.name || customer?.name}</h1>
           <div className="mt-2 flex items-center gap-3 text-[11px] font-black text-slate-600">
-            <span>🔥 {data.customer.streak_days} 天</span>
-            <span>🛒 {data.customer.total_orders} 單</span>
-            <span>⭐ Lv.{level}</span>
+            <span className="inline-flex items-center gap-0.5"><Icons.Fire className="w-3.5 h-3.5" /> {data.customer.streak_days} 天</span>
+            <span className="inline-flex items-center gap-0.5"><Icons.ShoppingBag className="w-3.5 h-3.5" /> {data.customer.total_orders} 單</span>
+            <span className="inline-flex items-center gap-0.5"><Icons.Star className="w-3.5 h-3.5" /> Lv.{level}</span>
           </div>
           {/* XP progress bar */}
           <div className="mt-2">
@@ -210,7 +211,7 @@ export default function AccountPage() {
       {referral_code && (
         <section className="bg-gradient-to-br from-[#fdf7ef] to-[#f7eee3] border border-[#e7d9cb] rounded-3xl p-5">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-white flex items-center justify-center text-2xl shadow-sm shrink-0">🎁</div>
+            <div className="w-14 h-14 rounded-2xl bg-white flex items-center justify-center shadow-sm shrink-0"><Icons.Gift className="w-7 h-7 text-[#9F6B3E]" /></div>
             <div className="flex-1 min-w-0">
               <div className="text-sm font-black text-slate-800">邀請朋友一起當仙女</div>
               <div className="text-[11px] text-slate-500 mt-0.5">分享推薦碼，雙方都可獲得成就經驗值</div>
@@ -239,7 +240,7 @@ export default function AccountPage() {
           href="/account/mascot"
           className="group bg-white border border-[#e7d9cb] rounded-2xl p-4 hover:shadow-md transition-all text-center"
         >
-          <div className="text-3xl mb-1">👒</div>
+          <div className="mb-1"><Icons.Crown className="w-8 h-8 text-[#9F6B3E]" /></div>
           <div className="text-xs font-black text-slate-800">芽芽衣櫃</div>
           <div className="text-[10px] text-slate-400 mt-0.5">
             {Object.keys(data.outfits.catalog).filter((c) => ownedCodes.has(c)).length}/{Object.keys(data.outfits.catalog).length} 服裝
@@ -249,7 +250,7 @@ export default function AccountPage() {
           href="/account/recap"
           className="group bg-white border border-[#e7d9cb] rounded-2xl p-4 hover:shadow-md transition-all text-center"
         >
-          <div className="text-3xl mb-1">📊</div>
+          <div className="mb-1"><Icons.TierSteps className="w-8 h-8 text-[#9F6B3E]" /></div>
           <div className="text-xs font-black text-slate-800">月度回顧</div>
           <div className="text-[10px] text-slate-400 mt-0.5">消費分析 + 成就進度</div>
         </Link>
@@ -258,22 +259,22 @@ export default function AccountPage() {
       {/* Settings / account management links */}
       <section className="bg-white rounded-3xl border border-[#e7d9cb] overflow-hidden divide-y divide-[#e7d9cb]">
         <Link href="/account/referral" className="flex items-center gap-3 px-5 py-4 active:bg-[#fdf7ef]">
-          <div className="w-9 h-9 rounded-xl bg-[#fdf7ef] flex items-center justify-center text-lg shrink-0">🎁</div>
+          <div className="w-9 h-9 rounded-xl bg-[#fdf7ef] flex items-center justify-center shrink-0"><Icons.Gift className="w-5 h-5 text-[#9F6B3E]" /></div>
           <div className="flex-1 text-sm font-black text-slate-800">推薦好友</div>
           {chevron}
         </Link>
         <Link href="/account/profile" className="flex items-center gap-3 px-5 py-4 active:bg-[#fdf7ef]">
-          <div className="w-9 h-9 rounded-xl bg-[#fdf7ef] flex items-center justify-center text-lg shrink-0">👤</div>
+          <div className="w-9 h-9 rounded-xl bg-[#fdf7ef] flex items-center justify-center shrink-0"><Icons.Shield className="w-5 h-5 text-[#9F6B3E]" /></div>
           <div className="flex-1 text-sm font-black text-slate-800">個人資料</div>
           {chevron}
         </Link>
         <Link href="/account/addresses" className="flex items-center gap-3 px-5 py-4 active:bg-[#fdf7ef]">
-          <div className="w-9 h-9 rounded-xl bg-[#fdf7ef] flex items-center justify-center text-lg shrink-0">📍</div>
+          <div className="w-9 h-9 rounded-xl bg-[#fdf7ef] flex items-center justify-center shrink-0"><Icons.Star className="w-5 h-5 text-[#9F6B3E]" /></div>
           <div className="flex-1 text-sm font-black text-slate-800">常用地址</div>
           {chevron}
         </Link>
         <Link href="/order-lookup" className="flex items-center gap-3 px-5 py-4 active:bg-[#fdf7ef]">
-          <div className="w-9 h-9 rounded-xl bg-[#fdf7ef] flex items-center justify-center text-lg shrink-0">📦</div>
+          <div className="w-9 h-9 rounded-xl bg-[#fdf7ef] flex items-center justify-center shrink-0"><Icons.ShoppingBag className="w-5 h-5 text-[#9F6B3E]" /></div>
           <div className="flex-1 text-sm font-black text-slate-800">訂單紀錄</div>
           {chevron}
         </Link>

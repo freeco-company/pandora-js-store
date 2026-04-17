@@ -8,6 +8,7 @@
  */
 
 import Link from 'next/link';
+import Icons from '@/components/SvgIcons';
 import { useCart } from './CartProvider';
 import { useAuth } from './AuthProvider';
 import { useMobileMenu } from './MobileMenuContext';
@@ -16,11 +17,11 @@ import SearchModal from './SearchModal';
 import { useState } from 'react';
 
 const NAV_LINKS = [
-  { href: '/', label: '首頁', icon: '🏠' },
-  { href: '/products', label: '全館商品', icon: '🛍️' },
-  { href: '/articles', label: '專欄文章', icon: '📰' },
-  { href: '/about', label: '關於 FP', icon: '🌸' },
-  { href: '/join', label: '加入我們', icon: '💎' },
+  { href: '/', label: '首頁', icon: <Icons.Heart className="w-5 h-5 text-[#9F6B3E]" /> },
+  { href: '/products', label: '全館商品', icon: <Icons.ShoppingBag className="w-5 h-5 text-[#9F6B3E]" /> },
+  { href: '/articles', label: '專欄文章', icon: <Icons.Leaf className="w-5 h-5 text-[#9F6B3E]" /> },
+  { href: '/about', label: '關於 FP', icon: <Icons.Ribbon className="w-5 h-5 text-[#9F6B3E]" /> },
+  { href: '/join', label: '加入我們', icon: <Icons.Diamond className="w-5 h-5 text-[#9F6B3E]" /> },
 ];
 
 export default function MobileDrawer() {
@@ -80,7 +81,7 @@ export default function MobileDrawer() {
                 transition: `opacity 0.3s ${i * 40 + 120}ms ease, transform 0.3s ${i * 40 + 120}ms ease`,
               }}
             >
-              <span className="w-8 h-8 rounded-lg bg-[#fdf7ef] flex items-center justify-center text-base shrink-0">
+              <span className="w-8 h-8 rounded-lg bg-[#fdf7ef] flex items-center justify-center shrink-0">
                 {link.icon}
               </span>
               <span className="flex-1">{link.label}</span>
@@ -108,7 +109,7 @@ export default function MobileDrawer() {
                 className="flex items-center gap-3 p-3 rounded-2xl bg-white border border-[#e7d9cb] hover:border-[#9F6B3E]/40 transition-colors"
                 onClick={close}
               >
-                <span className="w-9 h-9 rounded-full bg-gradient-to-br from-[#9F6B3E] to-[#b08257] flex items-center justify-center text-white text-base shrink-0">🌱</span>
+                <span className="w-9 h-9 rounded-full bg-gradient-to-br from-[#9F6B3E] to-[#b08257] flex items-center justify-center text-white shrink-0"><Icons.Seedling className="w-5 h-5" /></span>
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-black text-gray-800 truncate">{customer?.name || '仙女'}</div>
                   <div className="text-[11px] text-[#9F6B3E] font-bold">我的仙女館 →</div>
@@ -119,7 +120,7 @@ export default function MobileDrawer() {
                 className="flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 hover:text-[#9F6B3E] transition-colors"
                 onClick={close}
               >
-                <span>📦</span>訂單查詢
+                <Icons.ShoppingBag className="w-4 h-4" />訂單查詢
               </Link>
               <button
                 onClick={() => { logout(); close(); }}
@@ -134,7 +135,7 @@ export default function MobileDrawer() {
               className="flex items-center justify-center gap-2 w-full py-3 bg-[#9F6B3E] text-white font-black rounded-full hover:bg-[#85572F] transition-colors min-h-[48px]"
               onClick={close}
             >
-              🌱 登入 / 開始仙女任務
+              <Icons.Seedling className="w-5 h-5 inline-block" /> 登入 / 開始仙女任務
             </Link>
           )}
 
@@ -143,7 +144,7 @@ export default function MobileDrawer() {
             className="flex items-center justify-between w-full px-4 py-3 bg-white border border-[#e7d9cb] rounded-full font-black text-gray-800 hover:border-[#9F6B3E]/50 transition-colors min-h-[48px]"
             onClick={close}
           >
-            <span className="flex items-center gap-2">🛒 購物車</span>
+            <span className="flex items-center gap-2"><Icons.ShoppingBag className="w-5 h-5" /> 購物車</span>
             {itemCount > 0 ? (
               <span className="inline-flex items-center justify-center bg-[#9F6B3E] text-white text-xs font-black rounded-full min-w-[24px] h-6 px-2">
                 {itemCount}
