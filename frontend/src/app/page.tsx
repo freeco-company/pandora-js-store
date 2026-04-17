@@ -18,6 +18,7 @@ const MarqueeKeywords = dynamic(() => import('@/components/MarqueeKeywords'));
 const HealthBeautyNarrative = dynamic(() => import('@/components/HealthBeautyNarrative'));
 const HomePopupModal = dynamic(() => import('@/components/HomePopupModal'));
 const CampaignCountdown = dynamic(() => import('@/components/CampaignCountdown'));
+const GsapScrollInit = dynamic(() => import('@/components/GsapScrollInit'));
 
 export const revalidate = 3600;
 
@@ -134,7 +135,7 @@ export default async function HomePage() {
                     href="/products"
                     className="px-8 py-4 bg-[#9F6B3E] text-white font-black rounded-full shadow-lg shadow-[#9F6B3E]/30 hover:bg-[#85572F] hover:shadow-xl hover:shadow-[#9F6B3E]/40 min-h-[52px]"
                   >
-                    🌿 立即選購
+                    立即選購
                   </MagneticButton>
                   <MagneticButton
                     href="/about"
@@ -149,7 +150,7 @@ export default async function HomePage() {
               <ScrollReveal variant="fade-up" delay={850}>
                 <div className="mt-12 flex items-center gap-6 text-xs sm:text-sm">
                   <div className="flex items-center gap-2">
-                    <div className="w-9 h-9 rounded-full bg-white/80 flex items-center justify-center text-lg shadow-sm">🏆</div>
+                    <div className="w-9 h-9 rounded-full bg-white/80 flex items-center justify-center shadow-sm text-[#9F6B3E]"><svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}><path d="M6 9H4.5a2.5 2.5 0 010-5H6"/><path d="M18 9h1.5a2.5 2.5 0 000-5H18"/><path d="M4 22h16"/><path d="M18 2H6v7a6 6 0 1012 0V2z"/></svg></div>
                     <div>
                       <div className="font-black text-gray-800">玉山獎</div>
                       <div className="text-[10px] text-gray-500">雙首獎肯定</div>
@@ -157,7 +158,7 @@ export default async function HomePage() {
                   </div>
                   <div className="w-px h-10 bg-[#9F6B3E]/20" />
                   <div className="flex items-center gap-2">
-                    <div className="w-9 h-9 rounded-full bg-white/80 flex items-center justify-center text-lg shadow-sm">🛡️</div>
+                    <div className="w-9 h-9 rounded-full bg-white/80 flex items-center justify-center shadow-sm text-[#9F6B3E]"><svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg></div>
                     <div>
                       <div className="font-black text-gray-800">官方授權</div>
                       <div className="text-[10px] text-gray-500">防偽標籤</div>
@@ -165,7 +166,7 @@ export default async function HomePage() {
                   </div>
                   <div className="w-px h-10 bg-[#9F6B3E]/20" />
                   <div className="flex items-center gap-2">
-                    <div className="w-9 h-9 rounded-full bg-white/80 flex items-center justify-center text-lg shadow-sm">💎</div>
+                    <div className="w-9 h-9 rounded-full bg-white/80 flex items-center justify-center shadow-sm text-[#9F6B3E]"><svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}><path d="M2.7 10.3a2.41 2.41 0 000 3.41l7.59 7.59a2.41 2.41 0 003.41 0l7.59-7.59a2.41 2.41 0 000-3.41L13.7 2.71a2.41 2.41 0 00-3.41 0z"/></svg></div>
                     <div>
                       <div className="font-black text-gray-800">VIP 價</div>
                       <div className="text-[10px] text-gray-500">滿 $4,000</div>
@@ -241,7 +242,7 @@ export default async function HomePage() {
                     <span className="w-1.5 h-1.5 rounded-full bg-[#c9b89a]" />
                     階梯 1
                   </span>
-                  <span className="text-2xl">🌱</span>
+                  <span className="text-xl text-[#7ab87a]">●</span>
                 </div>
                 <div className="text-xs font-black text-gray-500 mb-1 tracking-wider">SINGLE · 單件購買</div>
                 <div className="text-xl sm:text-2xl font-black text-gray-900">原價</div>
@@ -288,7 +289,7 @@ export default async function HomePage() {
                     <span className="w-1.5 h-1.5 rounded-full bg-[#fcd561]" />
                     階梯 3
                   </span>
-                  <span className="text-2xl">👑</span>
+                  <span className="text-xl text-[#E8A93B]">★</span>
                 </div>
                 <div className="text-xs font-black text-[#fcd561] mb-1 tracking-wider relative">VIP · 滿 $4,000</div>
                 <div className="text-xl sm:text-2xl font-black relative">VIP 優惠價</div>
@@ -355,10 +356,10 @@ export default async function HomePage() {
           <ScrollReveal variant="fade-up">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
               {[
-                { emoji: '💳', t: '多元支付 / 貨到付款', d: '刷卡分期・超商取貨' },
-                { emoji: '🚚', t: '全館現貨・快速出貨', d: '24H 內發貨' },
+                { emoji: '⬡', icon: '<svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>', t: '多元支付 / 貨到付款', d: '刷卡分期・超商取貨' },
+                { emoji: '⟐', t: '全館現貨・快速出貨', d: '24H 內發貨' },
                 { emoji: '🛡️', t: '官方授權・正品保證', d: '防偽標籤可驗證' },
-                { emoji: '👩‍⚕️', t: '專業營養師諮詢', d: '1 對 1 真人服務' },
+                { emoji: '✚', t: '專業營養師諮詢', d: '1 對 1 真人服務' },
               ].map((item, i) => (
                 <ScrollReveal key={i} variant="fade-up" delay={i * 100}>
                   <div className="flex flex-col items-center gap-3 p-4 rounded-2xl hover:bg-white/60 transition-colors">
@@ -393,7 +394,7 @@ export default async function HomePage() {
                 // Visual tokens by category slug/name — unified height, distinct color
                 const visual: { emoji: string; grad: string; ring: string; accent: string } =
                   cat.slug === 'slimming' || cat.name.includes('體重')
-                    ? { emoji: '💪', grad: 'from-[#fef6e4] to-[#fbe4b0]', ring: 'ring-[#e0a43a]/20', accent: 'text-[#b37908]' }
+                    ? { emoji: '⚡', grad: 'from-[#fef6e4] to-[#fbe4b0]', ring: 'ring-[#e0a43a]/20', accent: 'text-[#b37908]' }
                   : cat.slug === 'health' || cat.name.includes('健康保健')
                     ? { emoji: '🛡️', grad: 'from-[#e6f5ef] to-[#c3e5d3]', ring: 'ring-[#4a9d5f]/20', accent: 'text-[#2f6b3e]' }
                   : cat.slug === 'beauty' || cat.name.includes('美容保養')
@@ -401,10 +402,10 @@ export default async function HomePage() {
                   : cat.name.includes('健康活力')
                     ? { emoji: '🌿', grad: 'from-[#ecf7d9] to-[#cae89e]', ring: 'ring-[#6b9e3c]/20', accent: 'text-[#4a6e27]' }
                   : cat.name.includes('健康維持')
-                    ? { emoji: '🍃', grad: 'from-[#e3f1ee] to-[#b7dad1]', ring: 'ring-[#388a7a]/20', accent: 'text-[#256358]' }
+                    ? { emoji: '♻', grad: 'from-[#e3f1ee] to-[#b7dad1]', ring: 'ring-[#388a7a]/20', accent: 'text-[#256358]' }
                   : cat.name.includes('美容美體')
-                    ? { emoji: '🌸', grad: 'from-[#fde3ec] to-[#f9b3c9]', ring: 'ring-[#d04d7d]/20', accent: 'text-[#8e2350]' }
-                    : { emoji: '🌼', grad: 'from-[#fdf7ef] to-[#f7eee3]', ring: 'ring-[#9F6B3E]/20', accent: 'text-[#9F6B3E]' };
+                    ? { emoji: '✿', grad: 'from-[#fde3ec] to-[#f9b3c9]', ring: 'ring-[#d04d7d]/20', accent: 'text-[#8e2350]' }
+                    : { emoji: '❋', grad: 'from-[#fdf7ef] to-[#f7eee3]', ring: 'ring-[#9F6B3E]/20', accent: 'text-[#9F6B3E]' };
 
                 return (
                   <ScrollReveal key={cat.id} variant="zoom-in" delay={i * 70}>
@@ -470,19 +471,22 @@ export default async function HomePage() {
                 href="/products"
                 className="px-10 py-4 bg-white text-[#9F6B3E] font-black rounded-full shadow-xl hover:bg-[#fdf7ef] min-h-[52px]"
               >
-                🌿 前往選購
+                前往選購
               </MagneticButton>
               <MagneticButton
                 href="/account"
                 className="px-10 py-4 bg-white/10 backdrop-blur border-2 border-white/40 text-white font-black rounded-full hover:bg-white/20 min-h-[52px]"
                 strength={0.25}
               >
-                🌱 我的仙女任務
+                我的仙女任務
               </MagneticButton>
             </div>
           </ScrollReveal>
         </div>
       </section>
+
+      {/* GSAP ScrollTrigger — global init for gs-* classes */}
+      <GsapScrollInit />
     </>
   );
 }
