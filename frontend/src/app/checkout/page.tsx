@@ -421,19 +421,21 @@ export default function CheckoutPage() {
 
             {/* Shipping details */}
             <div className="mt-4 space-y-4">
-              {/* Saved-address picker — logged-in users only. Picks a card → untick
-                  "same as customer" and autofill the shipping_* fields. */}
-              <SavedAddressPicker
-                selectedId={selectedAddressId}
-                onSelect={(a) => {
-                  setSelectedAddressId(a.id);
-                  update('same_as_customer', false);
-                  update('shipping_name', a.recipient_name);
-                  update('shipping_phone', a.phone);
-                  const full = [a.postal_code, a.city, a.district, a.street].filter(Boolean).join(' ');
-                  update('shipping_address', full);
-                }}
-              />
+              {/* Saved-address picker — logged-in users only, home-delivery only.
+                  CVS uses ECPay store map, so the address book is irrelevant there. */}
+              {!isCvs && (
+                <SavedAddressPicker
+                  selectedId={selectedAddressId}
+                  onSelect={(a) => {
+                    setSelectedAddressId(a.id);
+                    update('same_as_customer', false);
+                    update('shipping_name', a.recipient_name);
+                    update('shipping_phone', a.phone);
+                    const full = [a.postal_code, a.city, a.district, a.street].filter(Boolean).join(' ');
+                    update('shipping_address', full);
+                  }}
+                />
+              )}
 
               <label className="flex items-center gap-2">
                 <input
