@@ -147,22 +147,70 @@
     margin-left: auto !important;
   }
 
+  /* Non-text columns (IconColumn / ToggleColumn / ImageColumn) — their
+   * inner wrappers default to block/full-width which leaves icons flush
+   * left inside the flex cell. Collapse them to auto width so the parent
+   * flex-end pushes them to the right edge. */
+  .fi-ta-table-stacked-on-mobile .fi-ta-cell-content > .fi-ta-icon-col,
+  .fi-ta-table-stacked-on-mobile .fi-ta-cell-content > .fi-ta-toggle-col,
+  .fi-ta-table-stacked-on-mobile .fi-ta-cell-content > .fi-ta-image-col,
+  .fi-ta-table-stacked-on-mobile .fi-ta-cell-content > .fi-ta-color-col,
+  .fi-ta-table-stacked-on-mobile .fi-ta-cell-content > .fi-ta-select-col {
+    width: auto !important;
+    margin-left: auto !important;
+    display: inline-flex !important;
+    justify-content: flex-end !important;
+  }
+
   /* Inline editors keep a sensible width, not the whole row */
   .fi-ta-table-stacked-on-mobile .fi-ta-cell-content .fi-fo-select,
   .fi-ta-table-stacked-on-mobile .fi-ta-cell-content .fi-input-wrp {
     min-width: 9rem;
     max-width: 100%;
   }
-  /* Action icons (edit/delete) right-aligned, no wasted label space */
+
+  /* Actions row: stretch the edit/delete button full-width like a normal
+   * bottom-of-card button instead of a tiny icon tucked in the corner. */
   .fi-ta-table-stacked-on-mobile .fi-ta-actions-cell {
-    padding-top: 10px !important;
+    padding-top: 12px !important;
+    margin-top: 4px !important;
+    border-top: 1px solid #f0e6d8 !important;
+    border-bottom: none !important;
   }
   .fi-ta-table-stacked-on-mobile .fi-ta-actions-cell .fi-ta-cell-label {
     display: none !important;
   }
   .fi-ta-table-stacked-on-mobile .fi-ta-actions-cell .fi-ta-cell-content {
-    width: 100%;
-    justify-content: flex-end;
+    width: 100% !important;
+    flex: 1 1 100% !important;
+    justify-content: stretch !important;
+  }
+  .fi-ta-table-stacked-on-mobile .fi-ta-actions-cell .fi-ta-actions {
+    width: 100% !important;
+    display: flex !important;
+    gap: 8px !important;
+  }
+  .fi-ta-table-stacked-on-mobile .fi-ta-actions-cell .fi-ta-actions > * {
+    flex: 1 1 0 !important;
+  }
+  .fi-ta-table-stacked-on-mobile .fi-ta-actions-cell .fi-ta-actions .fi-icon-btn,
+  .fi-ta-table-stacked-on-mobile .fi-ta-actions-cell .fi-ta-actions .fi-btn {
+    width: 100% !important;
+    min-height: 40px !important;
+    justify-content: center !important;
+    align-items: center !important;
+    border-radius: 10px !important;
+    background-color: rgba(159, 107, 62, 0.08) !important;
+    color: #9F6B3E !important;
+    font-weight: 600 !important;
+    gap: 6px !important;
+  }
+  /* Pull aria-label text into the button so icon-only actions look like
+   * normal labelled buttons on mobile. attr(aria-label) reads whatever
+   * Filament set (编辑/删除/檢視…) — works for any action type. */
+  .fi-ta-table-stacked-on-mobile .fi-ta-actions-cell .fi-ta-actions .fi-icon-btn::after {
+    content: attr(aria-label);
+    font-size: 13px;
   }
 
   /* Kill default table cell padding that fights our card padding */
