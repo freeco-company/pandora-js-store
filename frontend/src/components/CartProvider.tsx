@@ -51,9 +51,25 @@ export function CartProvider({ children }: { children: ReactNode }) {
         const parsed: LocalCartItem[] = JSON.parse(stored);
         // Filter out any item missing either product or bundle payload
         // (older cart shapes with partial fields would otherwise crash pricing)
-        const valid = parsed.filter(
-          (i) => (isBundleItem(i) && i.bundle) || (isProductItem(i) && i.product),
-        );
+        const valid = parsed
+          .filter(
+            (i) => (isBundleItem(i) && i.bundle) || (isProductItem(i) && i.product),
+          )
+          // Backfill fields added after a bundle was already saved to cart, so
+          // rendering code can assume they exist (e.g. .length / .map).
+          .map((i) =>
+            isBundleItem(i)
+              ? {
+                  ...i,
+                  bundle: {
+                    ...i.bundle,
+                    custom_gifts: i.bundle.custom_gifts ?? [],
+                    gift_items: i.bundle.gift_items ?? [],
+                    buy_items: i.bundle.buy_items ?? [],
+                  },
+                }
+              : i,
+          );
         setItems(valid);
       }
     } catch {
