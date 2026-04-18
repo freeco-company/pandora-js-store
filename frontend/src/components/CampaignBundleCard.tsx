@@ -60,9 +60,9 @@ export default function CampaignBundleCard({ bundle }: { bundle: CampaignBundle 
   };
 
   return (
-    <div className="rounded-3xl overflow-hidden border border-[#e7d9cb] bg-white shadow-lg shadow-[#9F6B3E]/5">
+    <div className="relative rounded-3xl overflow-visible border border-[#e7d9cb] bg-white shadow-lg shadow-[#9F6B3E]/5">
       {/* Badge bar */}
-      <div className="bg-gradient-to-r from-[#9F6B3E] to-[#85572F] text-white px-5 py-3 flex items-center justify-between">
+      <div className="bg-gradient-to-r from-[#9F6B3E] to-[#85572F] text-white px-5 py-3 flex items-center justify-between rounded-t-3xl">
         <div className="flex items-center gap-2">
           <span className="relative flex h-2 w-2">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
@@ -70,12 +70,21 @@ export default function CampaignBundleCard({ bundle }: { bundle: CampaignBundle 
           </span>
           <span className="text-xs font-black tracking-wider">活動限時優惠</span>
         </div>
-        {pct > 0 && (
-          <span className="px-2 py-0.5 rounded-full bg-red-500 text-white text-[10px] font-black">
-            省 {pct}%
-          </span>
-        )}
       </div>
+      {/* Blob discount badge — 和首頁/活動頁同款 */}
+      {pct > 0 && (
+        <div className="absolute -top-5 -right-4 z-20">
+          <div className="relative w-[84px] h-[64px] flex items-center justify-center animate-[badge-wobble_4s_ease-in-out_infinite]">
+            <svg className="absolute inset-0 w-full h-full drop-shadow-lg" viewBox="0 0 120 90" fill="none">
+              <path d="M30 70 C10 70 0 58 4 46 C0 36 8 24 22 22 C24 10 36 2 50 4 C58 -2 72 -2 82 6 C90 2 104 8 108 20 C118 26 120 42 112 52 C118 62 112 74 98 76 C94 84 82 90 70 86 C62 92 48 90 42 82 C34 86 20 80 30 70Z" fill="#c0392b" />
+            </svg>
+            <div className="relative text-center leading-none -mt-0.5">
+              <div className="text-white font-black text-2xl" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.15)' }}>{pct}</div>
+              <div className="text-white/80 font-black text-[8px] tracking-wider -mt-0.5">%OFF</div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="p-5 sm:p-6">
         {/* Title */}
