@@ -9,11 +9,9 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import Link from 'next/link';
-import { imageUrl } from '@/lib/api';
+import { API_URL, imageUrl } from '@/lib/api';
 import ImageWithFallback, { LogoPlaceholder } from './ImageWithFallback';
 import SiteIcon from '@/components/SiteIcon';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
 
 interface CampaignProduct {
   id: number;

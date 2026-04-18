@@ -11,13 +11,11 @@ import { useToast } from '@/components/Toast';
 import { trackBeginCheckout, trackPurchase } from '@/components/Analytics';
 import { tierLabel } from '@/lib/pricing';
 import { formatPrice } from '@/lib/format';
-import { fetchApi, imageUrl, type CelebrationKeys } from '@/lib/api';
+import { API_URL, fetchApi, imageUrl, type CelebrationKeys } from '@/lib/api';
 import CheckoutStickyCTA from '@/components/CheckoutStickyCTA';
 import SavedAddressPicker from '@/components/SavedAddressPicker';
 import type { CustomerAddress } from '@/lib/api';
 import { TW_CITIES, districtsFor, zipFor } from '@/lib/tw-regions';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
 import { useCelebrate } from '@/components/Celebration';
 import SiteIcon from '@/components/SiteIcon';
 import { useSerendipity } from '@/components/Serendipity';

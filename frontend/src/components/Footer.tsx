@@ -19,23 +19,24 @@ function FooterInner() {
   const [email, setEmail] = useState('');
   const [subscribed, setSubscribed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
 
   const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || submitting) return;
     setSubmitting(true);
+    setError('');
     try {
-      await fetch('/api/subscriptions', {
+      const res = await fetch('/api/subscriptions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
       });
+      if (!res.ok) throw new Error('subscribe failed');
       setSubscribed(true);
       setEmail('');
     } catch {
-      // silently fail — API not built yet
-      setSubscribed(true);
-      setEmail('');
+      setError('訂閱失敗，請稍後再試。');
     } finally {
       setSubmitting(false);
     }
@@ -125,6 +126,16 @@ function FooterInner() {
                   訂單查詢
                 </Link>
               </li>
+              <li>
+                <Link href="/reviews" className="hover:text-white transition-colors">
+                  買家好評
+                </Link>
+              </li>
+              <li>
+                <Link href="/where-to-buy" className="hover:text-white transition-colors">
+                  哪裡買
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -132,10 +143,10 @@ function FooterInner() {
           <div>
             <h4 className="text-sm font-semibold text-white mb-3">商品分類</h4>
             <ul className="space-y-2 text-sm text-gray-400">
-              <li><Link href="/products?category=healthy-vitality-series" className="hover:text-white transition-colors">健康活力系列</Link></li>
-              <li><Link href="/products?category=functional-health-series" className="hover:text-white transition-colors">健康維持系列</Link></li>
-              <li><Link href="/products?category=body-beauty-series" className="hover:text-white transition-colors">美容美體系列</Link></li>
-              <li><Link href="/products?category=slimming" className="hover:text-white transition-colors">體重管理</Link></li>
+              <li><Link href="/products/category/healthy-vitality-series" className="hover:text-white transition-colors">健康活力系列</Link></li>
+              <li><Link href="/products/category/functional-health-series" className="hover:text-white transition-colors">健康維持系列</Link></li>
+              <li><Link href="/products/category/body-beauty-series" className="hover:text-white transition-colors">美容美體系列</Link></li>
+              <li><Link href="/products/category/slimming" className="hover:text-white transition-colors">體重管理</Link></li>
               <li><Link href="/products" className="hover:text-white transition-colors">全部商品 →</Link></li>
             </ul>
           </div>
@@ -177,6 +188,8 @@ function FooterInner() {
             <p className="text-xs text-gray-400 mb-4">搶先獲得新品上架與優惠資訊</p>
             {subscribed ? (
               <p className="text-sm text-[#06C755] font-medium">訂閱成功！</p>
+            ) : error ? (
+              <p className="text-sm text-red-400 font-medium">{error}</p>
             ) : (
               <form onSubmit={handleSubscribe} className="flex gap-2">
                 <input

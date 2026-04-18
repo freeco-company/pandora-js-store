@@ -12,14 +12,13 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
 import LogoLoader from '@/components/LogoLoader';
 import {
+  API_URL,
   getCustomerDashboard,
   type CustomerDashboard,
 } from '@/lib/api';
 import { ACHIEVEMENT_CATALOG, TIER_GRADIENTS } from '@/lib/achievements';
 import { formatPrice } from '@/lib/format';
 import SiteIcon from '@/components/SiteIcon';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
 
 interface OrderSummary {
   order_number: string;

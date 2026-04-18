@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
+import { API_URL } from '@/lib/api';
 
 export default function LineCallbackPage() {
   const searchParams = useSearchParams();
@@ -16,8 +17,6 @@ export default function LineCallbackPage() {
       setError(true);
       return;
     }
-
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
 
     fetch(`${API_URL}/auth/me`, {
       headers: {

@@ -13,8 +13,7 @@ import { useAuth } from '@/components/AuthProvider';
 import { useToast } from '@/components/Toast';
 import LogoLoader from '@/components/LogoLoader';
 import SiteIcon from '@/components/SiteIcon';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+import { API_URL } from '@/lib/api';
 
 interface ReferralState {
   referral_code: string;

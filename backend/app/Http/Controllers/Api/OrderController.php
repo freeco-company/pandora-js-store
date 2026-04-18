@@ -18,6 +18,7 @@ use App\Services\OutfitService;
 use App\Services\SerendipityService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
@@ -98,42 +99,45 @@ class OrderController extends Controller
 
         $total = $pricing['total'] - $discount;
 
-        $order = Order::create([
-            'order_number' => 'PD' . now()->format('ymd') . strtoupper(Str::random(6)),
-            'customer_id' => $customer->id,
-            'coupon_id' => $coupon?->id,
-            'status' => 'pending',
-            'pricing_tier' => $pricing['tier'],
-            'subtotal' => $pricing['total'],
-            'shipping_fee' => 0, // Free shipping
-            'discount' => $discount,
-            'total' => $total,
-            'payment_method' => $request->payment_method,
-            'payment_status' => 'unpaid',
-            'shipping_method' => $request->shipping_method,
-            'shipping_name' => $request->shipping_name,
-            'shipping_phone' => $request->shipping_phone,
-            'shipping_address' => $request->shipping_address,
-            'shipping_store_id' => $request->shipping_store_id,
-            'shipping_store_name' => $request->shipping_store_name,
-            'note' => $request->note,
-        ]);
-
-        // Increment coupon usage
-        if ($coupon) {
-            $coupon->increment('used_count');
-        }
-
-        foreach ($pricing['items'] as $item) {
-            $order->items()->create([
-                'product_id' => $item['product_id'],
-                'product_name' => $item['name'],
-                'quantity' => $item['quantity'],
-                'unit_price' => $item['unit_price'],
-                'subtotal' => $item['subtotal'],
-                'created_at' => now(),
+        $order = DB::transaction(function () use ($request, $customer, $coupon, $pricing, $discount, $total) {
+            $order = Order::create([
+                'order_number' => 'PD' . now()->format('ymd') . strtoupper(Str::random(6)),
+                'customer_id' => $customer->id,
+                'coupon_id' => $coupon?->id,
+                'status' => 'pending',
+                'pricing_tier' => $pricing['tier'],
+                'subtotal' => $pricing['total'],
+                'shipping_fee' => 0, // Free shipping
+                'discount' => $discount,
+                'total' => $total,
+                'payment_method' => $request->payment_method,
+                'payment_status' => 'unpaid',
+                'shipping_method' => $request->shipping_method,
+                'shipping_name' => $request->shipping_name,
+                'shipping_phone' => $request->shipping_phone,
+                'shipping_address' => $request->shipping_address,
+                'shipping_store_id' => $request->shipping_store_id,
+                'shipping_store_name' => $request->shipping_store_name,
+                'note' => $request->note,
             ]);
-        }
+
+            if ($coupon) {
+                $coupon->increment('used_count');
+            }
+
+            foreach ($pricing['items'] as $item) {
+                $order->items()->create([
+                    'product_id' => $item['product_id'],
+                    'product_name' => $item['name'],
+                    'quantity' => $item['quantity'],
+                    'unit_price' => $item['unit_price'],
+                    'subtotal' => $item['subtotal'],
+                    'created_at' => now(),
+                ]);
+            }
+
+            return $order;
+        });
 
         $order->load('items');
 

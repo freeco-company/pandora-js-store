@@ -39,7 +39,12 @@ class ReviewRemindCmd extends Command
     public function handle(): int
     {
         $reminded = $this->sendReminders();
-        $autoCreated = $this->autoCreateReviews();
+
+        // Phase 2 (auto-create 5-star reviews) disabled — creating verified-
+        // purchase reviews without customer consent violates Taiwan Fair Trade
+        // Act (公平交易法). Only real customer reviews should be marked as
+        // verified purchases.
+        $autoCreated = 0;
 
         $this->info("reminders sent: {$reminded} · auto-reviews created: {$autoCreated}");
         return self::SUCCESS;

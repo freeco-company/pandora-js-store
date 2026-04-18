@@ -5,9 +5,7 @@ import ProductCardGrid from '@/components/ProductCardGrid';
 import FloatingShapes from '@/components/FloatingShapes';
 import ScrollReveal from '@/components/ScrollReveal';
 import SiteIcon from '@/components/SiteIcon';
-import type { Product } from '@/lib/api';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+import { API_URL, type Product } from '@/lib/api';
 
 interface Campaign {
   id: number;

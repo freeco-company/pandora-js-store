@@ -1,4 +1,4 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
 const STORAGE_URL = process.env.NEXT_PUBLIC_STORAGE_URL || 'http://localhost:8000';
 
 /** Resolve image path to full URL (handles /storage/... paths from API) */
@@ -15,6 +15,7 @@ export function imageUrl(path: string | null): string | null {
 export async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${API_URL}${endpoint}`, {
     headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    signal: AbortSignal.timeout(15_000),
     ...options,
   });
   if (!res.ok) throw new Error(`API error: ${res.status}`);
@@ -35,6 +36,7 @@ async function getPublic<T>(
 ): Promise<T> {
   const res = await fetch(`${API_URL}${endpoint}`, {
     headers: { Accept: 'application/json' },
+    signal: AbortSignal.timeout(15_000),
     next: { revalidate, tags },
   });
   if (!res.ok) throw new Error(`API error: ${res.status}`);
@@ -102,6 +104,7 @@ export interface Article {
   content: string;
   excerpt: string;
   featured_image: string | null;
+  source_url: string | null;
   source_type: string;
   published_at: string;
   seo_meta: SeoMeta | null;
@@ -219,6 +222,23 @@ export interface ReviewableItem {
   completed_at: string;
 }
 
+export interface AggregateReviewsData {
+  total_count: number;
+  average_rating: number;
+  products: Array<{
+    product_id: number;
+    product_name: string;
+    product_slug: string;
+    product_image: string | null;
+    count: number;
+    average_rating: number;
+  }>;
+  recent_reviews: Array<ReviewItem & { product_name: string; product_slug: string }>;
+}
+
+export const getAggregateReviews = () =>
+  getPublic<AggregateReviewsData>('/reviews', { revalidate: 300, tags: ['reviews'] });
+
 export const getProductReviews = (slug: string) =>
   getPublic<ProductReviewsData>(`/products/${slug}/reviews`, { revalidate: 300, tags: ['reviews', `reviews:${slug}`] });
 
@@ -291,6 +311,7 @@ async function authedFetch<T>(endpoint: string, token: string, options?: Request
       Accept: 'application/json',
       Authorization: `Bearer ${token}`,
     },
+    signal: AbortSignal.timeout(15_000),
     ...options,
   });
   if (!res.ok) throw new Error(`API error: ${res.status}`);

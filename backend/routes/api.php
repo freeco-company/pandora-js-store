@@ -39,7 +39,7 @@ Route::post('/coupons/validate', [CouponController::class, 'validate'])->middlew
 
 // Orders
 Route::post('/orders', [OrderController::class, 'store'])->middleware('throttle:strict');
-Route::get('/orders/{orderNumber}', [OrderController::class, 'show']);
+Route::get('/orders/{orderNumber}', [OrderController::class, 'show'])->middleware('throttle:strict');
 Route::post('/orders/check-cod', [OrderController::class, 'checkCod'])->middleware('throttle:strict');
 
 // Payment
@@ -87,6 +87,7 @@ Route::post('/logistics/ecpay/reply', [LogisticsController::class, 'ecpayReply']
 Route::post('/logistics/ecpay/status', [LogisticsController::class, 'ecpayStatus'])->withoutMiddleware(['web']);
 
 // Reviews (public)
+Route::get('/reviews', [ReviewController::class, 'aggregate']);
 Route::get('/products/{slug}/reviews', [ReviewController::class, 'index']);
 
 // Back-in-stock notify

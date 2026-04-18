@@ -10,8 +10,7 @@ import { useState } from 'react';
 import { useAuth } from './AuthProvider';
 import { useToast } from './Toast';
 import SiteIcon from '@/components/SiteIcon';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+import { API_URL } from '@/lib/api';
 
 export default function StockNotifyButton({ slug }: { slug: string }) {
   const { token, isLoggedIn } = useAuth();

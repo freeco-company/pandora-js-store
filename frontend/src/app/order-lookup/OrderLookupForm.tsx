@@ -2,13 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { imageUrl } from '@/lib/api';
+import { API_URL, imageUrl } from '@/lib/api';
 import ImageWithFallback, { LogoPlaceholder } from '@/components/ImageWithFallback';
 import { formatPrice } from '@/lib/format';
 import { useAuth } from '@/components/AuthProvider';
 import SiteIcon from '@/components/SiteIcon';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
 
 interface OrderItem {
   product_id: number;

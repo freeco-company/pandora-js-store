@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
+import { API_URL } from '@/lib/api';
 
 export default function GoogleCallbackPage() {
   const searchParams = useSearchParams();
@@ -16,9 +17,6 @@ export default function GoogleCallbackPage() {
       setError(true);
       return;
     }
-
-    // Verify the token and get customer data
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
 
     fetch(`${API_URL}/auth/me`, {
       headers: {

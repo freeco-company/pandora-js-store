@@ -25,7 +25,7 @@ class AuthController extends Controller
      */
     public function handleGoogleCallback(Request $request)
     {
-        $frontendUrl = config('app.frontend_url', 'http://localhost:3000');
+        $frontendUrl = config('services.ecpay.frontend_url', 'http://localhost:3000');
 
         try {
             $googleUser = Socialite::driver('google')->stateless()->user();
@@ -86,7 +86,7 @@ class AuthController extends Controller
      */
     public function handleLineCallback(Request $request)
     {
-        $frontendUrl = config('app.frontend_url', 'http://localhost:3000');
+        $frontendUrl = config('services.ecpay.frontend_url', 'http://localhost:3000');
 
         try {
             $lineUser = Socialite::driver('line')->stateless()->user();
