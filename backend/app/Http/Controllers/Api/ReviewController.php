@@ -49,7 +49,7 @@ class ReviewController extends Controller
                     'reviewer_name' => $r->reviewer_name,
                     'is_verified_purchase' => $r->is_verified_purchase,
                     'created_at' => $r->created_at->toISOString(),
-                ]),
+                ])->values()->all(),
             ];
         });
 
