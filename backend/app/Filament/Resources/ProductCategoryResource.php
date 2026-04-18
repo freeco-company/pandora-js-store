@@ -46,6 +46,7 @@ class ProductCategoryResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->stackedOnMobile()
             ->columns([
                 Tables\Columns\TextColumn::make('name')->searchable()->sortable()->label('名稱'),
                 Tables\Columns\TextColumn::make('slug')->label('網址代稱'),

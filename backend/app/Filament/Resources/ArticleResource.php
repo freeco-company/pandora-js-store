@@ -114,6 +114,7 @@ class ArticleResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->stackedOnMobile()
             ->columns([
                 Tables\Columns\ImageColumn::make('featured_image')
                     ->circular()

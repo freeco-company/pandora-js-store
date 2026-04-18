@@ -107,6 +107,7 @@ class BundlesRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table
+            ->stackedOnMobile()
             ->recordTitleAttribute('name')
             ->columns([
                 Tables\Columns\ImageColumn::make('image')

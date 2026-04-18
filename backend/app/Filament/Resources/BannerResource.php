@@ -67,6 +67,7 @@ class BannerResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->stackedOnMobile()
             ->columns([
                 Tables\Columns\ImageColumn::make('image')->label('圖片'),
                 Tables\Columns\TextColumn::make('title')

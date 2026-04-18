@@ -45,6 +45,7 @@ class CouponResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->stackedOnMobile()
             ->columns([
                 Tables\Columns\TextColumn::make('code')->searchable()->sortable()->label('優惠碼'),
                 Tables\Columns\TextColumn::make('type')

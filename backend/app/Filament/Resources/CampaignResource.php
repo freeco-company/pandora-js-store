@@ -112,6 +112,7 @@ class CampaignResource extends Resource
         };
 
         return $table
+            ->stackedOnMobile()
             ->columns([
                 Tables\Columns\ImageColumn::make('image')
                     ->square()

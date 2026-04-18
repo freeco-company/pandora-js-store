@@ -37,6 +37,7 @@ class OrdersRelationManager extends RelationManager
         ];
 
         return $table
+            ->stackedOnMobile()
             ->recordTitleAttribute('order_number')
             ->columns([
                 Tables\Columns\TextColumn::make('order_number')

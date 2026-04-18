@@ -14,6 +14,7 @@ class ItemsRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table
+            ->stackedOnMobile()
             ->columns([
                 Tables\Columns\ImageColumn::make('product.gallery')
                     ->label('')

@@ -58,6 +58,7 @@ class ReviewResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->stackedOnMobile()
             ->columns([
                 Tables\Columns\TextColumn::make('product.name')->limit(20)->searchable()->sortable()->label('商品'),
                 Tables\Columns\TextColumn::make('reviewer_name')->searchable()->label('評論者'),

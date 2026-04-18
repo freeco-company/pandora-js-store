@@ -174,6 +174,7 @@ class OrderResource extends Resource
         ];
 
         return $table
+            ->stackedOnMobile()
             ->columns([
                 Tables\Columns\TextColumn::make('order_number')
                     ->searchable()
