@@ -99,11 +99,13 @@
     box-shadow: 0 1px 3px rgba(159, 107, 62, 0.06) !important;
   }
 
-  /* Cells: label left, value right, on a single line */
+  /* Cells: label left, value right, on a single line.
+   * Use flex-start + margin-left:auto trick (not space-between) so content
+   * reliably sits flush right regardless of inner element widths. */
   .fi-ta-table-stacked-on-mobile .fi-ta-cell {
     display: flex !important;
     flex-direction: row !important;
-    justify-content: space-between !important;
+    justify-content: flex-start !important;
     align-items: center !important;
     gap: 12px !important;
     padding: 7px 0 !important;
@@ -131,8 +133,9 @@
     padding: 0 !important;
   }
   .fi-ta-table-stacked-on-mobile .fi-ta-cell-content {
-    flex: 1 1 auto;
-    min-width: 0;
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    margin-left: auto !important;
     display: flex !important;
     justify-content: flex-end !important;
     align-items: center !important;
@@ -148,17 +151,21 @@
   }
 
   /* Non-text columns (IconColumn / ToggleColumn / ImageColumn / ColorColumn) —
-   * vendor makes these full-width and justifies start. Override to align right
-   * on mobile so they sit in the same column as text values. */
-  .fi-ta-table-stacked-on-mobile .fi-ta-cell-content > .fi-ta-icon {
-    justify-content: flex-end !important;
-  }
-  .fi-ta-table-stacked-on-mobile .fi-ta-cell-content > .fi-ta-toggle,
-  .fi-ta-table-stacked-on-mobile .fi-ta-cell-content > .fi-ta-image,
-  .fi-ta-table-stacked-on-mobile .fi-ta-cell-content > .fi-ta-color {
-    text-align: right !important;
+   * vendor makes these full-width with justify-start. Force right alignment
+   * on mobile. Descendant selector (not `>`) in case vendor wraps deeper. */
+  .fi-ta-table-stacked-on-mobile .fi-ta-cell .fi-ta-icon,
+  .fi-ta-table-stacked-on-mobile .fi-ta-cell .fi-ta-toggle,
+  .fi-ta-table-stacked-on-mobile .fi-ta-cell .fi-ta-image,
+  .fi-ta-table-stacked-on-mobile .fi-ta-cell .fi-ta-color {
     display: flex !important;
     justify-content: flex-end !important;
+    text-align: right !important;
+    margin-left: auto !important;
+  }
+  /* Badges / inline text — also push to the right so they line up with values */
+  .fi-ta-table-stacked-on-mobile .fi-ta-cell-content > .fi-badge,
+  .fi-ta-table-stacked-on-mobile .fi-ta-cell-content > .fi-ta-text {
+    margin-left: auto !important;
   }
 
   /* Inline editors keep a sensible width, not the whole row */
@@ -168,36 +175,30 @@
     max-width: 100%;
   }
 
-  /* Actions row: stretch the edit/delete button full-width like a normal
-   * bottom-of-card button instead of a tiny icon tucked in the corner.
-   * Filament has no dedicated .fi-ta-actions-cell class — match via :has(). */
-  .fi-ta-table-stacked-on-mobile .fi-ta-cell:has(.fi-ta-actions) {
-    padding-top: 12px !important;
-    margin-top: 4px !important;
+  /* Actions row: the actions cell has no cell-label / cell-content wrappers —
+   * it's just <td class="fi-ta-cell"><div class="fi-ta-actions">...</div></td>.
+   * Match via :has(> .fi-ta-actions) to target only that cell, make it a
+   * full-width block above a pseudo-separator, and stretch each button. */
+  .fi-ta-table-stacked-on-mobile .fi-ta-cell:has(> .fi-ta-actions) {
+    display: block !important;
+    padding: 12px 0 0 !important;
+    margin-top: 6px !important;
     border-top: 1px solid #f0e6d8 !important;
     border-bottom: none !important;
-    flex-direction: column !important;
-    align-items: stretch !important;
   }
-  .fi-ta-table-stacked-on-mobile .fi-ta-cell:has(.fi-ta-actions) .fi-ta-cell-label {
-    display: none !important;
-  }
-  .fi-ta-table-stacked-on-mobile .fi-ta-cell:has(.fi-ta-actions) .fi-ta-cell-content,
   .fi-ta-table-stacked-on-mobile .fi-ta-cell > .fi-ta-actions {
-    width: 100% !important;
-    justify-content: stretch !important;
-  }
-  .fi-ta-table-stacked-on-mobile .fi-ta-cell .fi-ta-actions {
     display: flex !important;
     flex-wrap: nowrap !important;
+    justify-content: stretch !important;
+    width: 100% !important;
     gap: 8px !important;
   }
-  .fi-ta-table-stacked-on-mobile .fi-ta-cell .fi-ta-actions > * {
+  .fi-ta-table-stacked-on-mobile .fi-ta-cell > .fi-ta-actions > * {
     flex: 1 1 0 !important;
     min-width: 0 !important;
   }
-  .fi-ta-table-stacked-on-mobile .fi-ta-cell .fi-ta-actions .fi-icon-btn,
-  .fi-ta-table-stacked-on-mobile .fi-ta-cell .fi-ta-actions .fi-btn {
+  .fi-ta-table-stacked-on-mobile .fi-ta-cell > .fi-ta-actions .fi-icon-btn,
+  .fi-ta-table-stacked-on-mobile .fi-ta-cell > .fi-ta-actions .fi-btn {
     width: 100% !important;
     min-height: 40px !important;
     justify-content: center !important;
@@ -208,10 +209,14 @@
     font-weight: 600 !important;
     gap: 6px !important;
   }
-  /* Pull the action's label text into the icon button so it looks like a
-   * normal labelled button on mobile. attr(aria-label) works for any action
-   * (編輯/刪除/檢視…) and respects whatever Filament rendered. */
-  .fi-ta-table-stacked-on-mobile .fi-ta-cell .fi-ta-actions .fi-icon-btn::after {
+  /* Destructive actions (刪除) keep the red tint */
+  .fi-ta-table-stacked-on-mobile .fi-ta-cell > .fi-ta-actions .fi-icon-btn.fi-color-danger,
+  .fi-ta-table-stacked-on-mobile .fi-ta-cell > .fi-ta-actions .fi-btn.fi-color-danger {
+    background-color: rgba(220, 38, 38, 0.08) !important;
+    color: #b42318 !important;
+  }
+  /* Pull aria-label into the icon button as visible text on mobile */
+  .fi-ta-table-stacked-on-mobile .fi-ta-cell > .fi-ta-actions .fi-icon-btn::after {
     content: attr(aria-label);
     font-size: 13px;
   }
