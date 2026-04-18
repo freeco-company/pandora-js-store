@@ -121,7 +121,7 @@ export default function CrossSellAddOn({ products }: CrossSellAddOnProps) {
       <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-1 sm:grid sm:grid-cols-4 sm:overflow-visible">
         {products.map((p) => {
           const isAdded = addedIds.has(p.id);
-          const inCart = items.some((i) => i.product.id === p.id);
+          const inCart = items.some((i) => i.type !== 'bundle' && 'product' in i && i.product.id === p.id);
           const isOutOfStock = p.stock_status === 'outofstock';
 
           return (

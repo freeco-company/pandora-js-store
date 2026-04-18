@@ -8,7 +8,7 @@
 
 import { useCart } from './CartProvider';
 import { formatPrice } from '@/lib/format';
-import { getPrice } from '@/lib/pricing';
+import { getPrice, isProductItem, isBundleItem } from '@/lib/pricing';
 
 export default function CheckoutStickyCTA({
   submitting,
@@ -22,10 +22,15 @@ export default function CheckoutStickyCTA({
   const { items, total, itemCount } = useCart();
   if (itemCount === 0) return null;
 
-  const regularTotal = items.reduce(
-    (sum, i) => sum + getPrice(i.product, 'regular') * i.quantity,
-    0,
-  );
+  const regularTotal =
+    items.filter(isProductItem).reduce(
+      (sum, i) => sum + getPrice(i.product, 'regular') * i.quantity,
+      0,
+    ) +
+    items.filter(isBundleItem).reduce(
+      (sum, i) => sum + i.bundle.bundle_original_price * i.quantity,
+      0,
+    );
   const savings = Math.max(0, regularTotal - total);
 
   return (

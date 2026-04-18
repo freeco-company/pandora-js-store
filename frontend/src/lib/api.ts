@@ -76,19 +76,6 @@ export interface Product {
   /** Badge codes: snq, monde_selection, clean_label, patent, official */
   badges?: string[] | null;
   created_at?: string;
-  /** True when product belongs to a currently-running campaign */
-  is_campaign?: boolean;
-  /** Present when product belongs to an active campaign (running or upcoming) */
-  active_campaign?: {
-    id: number;
-    name: string;
-    slug: string;
-    description: string;
-    start_at: string;
-    end_at: string;
-    is_running: boolean;
-    campaign_price: number;
-  } | null;
 }
 
 export interface ProductCategory {
@@ -96,6 +83,32 @@ export interface ProductCategory {
   name: string;
   slug: string;
   products_count?: number;
+}
+
+/**
+ * Bundle promotion: "buy N of product A, get M of product B free".
+ * Displayed as a single card on /campaigns/[slug] and as one line item
+ * in the cart. Price = sum of buy items at VIP × quantity.
+ */
+export interface CampaignBundleItem {
+  product: Product;
+  quantity: number;
+}
+
+export interface CampaignBundle {
+  id: number;
+  name: string;
+  slug: string;
+  description: string | null;
+  image: string | null;
+  banner_image: string | null;
+  start_at: string;
+  end_at: string;
+  is_running: boolean;
+  bundle_price: number;           // sum of buy items' VIP × qty
+  bundle_original_price: number;  // sum of buy items' retail × qty
+  buy_items: CampaignBundleItem[];
+  gift_items: CampaignBundleItem[];
 }
 
 export interface Article {
@@ -117,14 +130,26 @@ export interface SeoMeta {
   og_image: string;
 }
 
-export interface CartItem {
+/** Normal product item in a cart payload sent to the server. */
+export interface CartProductPayload {
   product_id: number;
   quantity: number;
+  type?: 'product';
 }
 
+/** Bundle item in a cart payload — represents N copies of a campaign bundle. */
+export interface CartBundlePayload {
+  campaign_id: number;
+  quantity: number;
+  type: 'bundle';
+}
+
+export type CartItem = CartProductPayload | CartBundlePayload;
+
 export interface CartUnavailableItem {
-  product_id: number;
-  reason: 'not_found' | 'inactive' | 'out_of_stock' | 'insufficient_stock';
+  product_id?: number;
+  campaign_id?: number;
+  reason: 'not_found' | 'inactive' | 'out_of_stock' | 'insufficient_stock' | 'bundle_not_found' | 'bundle_expired';
   name: string;
   available?: number;
   requested?: number;
@@ -133,7 +158,9 @@ export interface CartUnavailableItem {
 export interface CartCalculation {
   tier: 'regular' | 'combo' | 'vip';
   total: number;
+  campaign_vip?: boolean;
   items: CartCalculationItem[];
+  bundles?: CartBundleCalculation[];
   unavailable?: CartUnavailableItem[];
 }
 
@@ -145,6 +172,18 @@ export interface CartCalculationItem {
   unit_price: number;
   subtotal: number;
   image: string | null;
+}
+
+export interface CartBundleCalculation {
+  campaign_id: number;
+  name: string;
+  slug: string;
+  image: string | null;
+  quantity: number;
+  unit_price: number;
+  subtotal: number;
+  buy_items: { product_id: number; name: string; image: string | null; quantity: number }[];
+  gift_items: { product_id: number; name: string; image: string | null; quantity: number }[];
 }
 
 export const getProducts = (category?: string) =>
@@ -177,6 +216,12 @@ export const calculateCart = (items: CartItem[]) =>
     method: 'POST',
     body: JSON.stringify({ items }),
   });
+
+export const getCampaign = (slug: string) =>
+  getPublic<CampaignBundle>(`/campaigns/${slug}`, { tags: ['campaigns', `campaign:${slug}`] });
+
+export const getCampaigns = () =>
+  getPublic<CampaignBundle[]>(`/campaigns`, { tags: ['campaigns'] });
 
 // Banner types
 export interface Banner {

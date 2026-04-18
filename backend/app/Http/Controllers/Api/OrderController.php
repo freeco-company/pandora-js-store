@@ -38,7 +38,9 @@ class OrderController extends Controller
     {
         $request->validate([
             'items' => 'required|array|min:1',
-            'items.*.product_id' => 'required|integer|exists:products,id',
+            'items.*.type' => 'nullable|string|in:product,bundle',
+            'items.*.product_id' => 'required_unless:items.*.type,bundle|nullable|integer|exists:products,id',
+            'items.*.campaign_id' => 'required_if:items.*.type,bundle|nullable|integer|exists:campaigns,id',
             'items.*.quantity' => 'required|integer|min:1|max:99',
             'customer.name' => 'required|string|max:100',
             'customer.email' => 'required|email:rfc',
@@ -100,7 +102,7 @@ class OrderController extends Controller
             ], 422);
         }
 
-        if (empty($pricing['items'])) {
+        if (empty($pricing['items']) && empty($pricing['bundles'])) {
             return response()->json(['message' => '購物車中沒有可購買的商品。'], 422);
         }
 
@@ -141,14 +143,26 @@ class OrderController extends Controller
 
         try {
             $order = DB::transaction(function () use ($request, $customer, $coupon, $pricing, $discount, $total) {
-                // Lock and deduct stock for each item
+                // Aggregate stock requirements from product items + bundle items.
+                // A bundle contributes buy_qty × bundle_qty AND gift_qty × bundle_qty
+                // to the product's stock deduction, since we ship both.
+                $stockDemand = [];
                 foreach ($pricing['items'] as $item) {
-                    $product = Product::lockForUpdate()->find($item['product_id']);
-                    if ($product->stock_quantity && $item['quantity'] > $product->stock_quantity) {
+                    $stockDemand[$item['product_id']] = ($stockDemand[$item['product_id']] ?? 0) + $item['quantity'];
+                }
+                foreach ($pricing['bundles'] ?? [] as $bundle) {
+                    foreach (array_merge($bundle['buy_items'], $bundle['gift_items']) as $bi) {
+                        $stockDemand[$bi['product_id']] = ($stockDemand[$bi['product_id']] ?? 0)
+                            + $bi['quantity'] * $bundle['quantity'];
+                    }
+                }
+                foreach ($stockDemand as $productId => $demanded) {
+                    $product = Product::lockForUpdate()->find($productId);
+                    if ($product->stock_quantity && $demanded > $product->stock_quantity) {
                         throw new \RuntimeException("「{$product->name}」庫存不足（剩 {$product->stock_quantity}）");
                     }
                     if ($product->stock_quantity) {
-                        $product->decrement('stock_quantity', $item['quantity']);
+                        $product->decrement('stock_quantity', $demanded);
                         if ($product->stock_quantity <= 0) {
                             $product->update(['stock_status' => 'outofstock']);
                         }
@@ -194,6 +208,38 @@ class OrderController extends Controller
                         'subtotal' => $item['subtotal'],
                         'created_at' => now(),
                     ]);
+                }
+
+                // Bundle items get exploded into order_items. Buy items carry
+                // their VIP share of the bundle price; gift items are recorded
+                // at price=0 so shipping/fulfillment has a full manifest.
+                foreach ($pricing['bundles'] ?? [] as $bundle) {
+                    $bundleQty = $bundle['quantity'];
+                    $buyCount = collect($bundle['buy_items'])->sum('quantity');
+                    foreach ($bundle['buy_items'] as $bi) {
+                        // Distribute bundle_price proportionally across buy items.
+                        $perUnit = $buyCount > 0 ? $bundle['unit_price'] / $buyCount : 0;
+                        $qty = $bi['quantity'] * $bundleQty;
+                        $order->items()->create([
+                            'product_id' => $bi['product_id'],
+                            'product_name' => '【' . $bundle['name'] . '】' . $bi['name'],
+                            'quantity' => $qty,
+                            'unit_price' => round($perUnit, 2),
+                            'subtotal' => round($perUnit * $qty, 2),
+                            'created_at' => now(),
+                        ]);
+                    }
+                    foreach ($bundle['gift_items'] as $gi) {
+                        $qty = $gi['quantity'] * $bundleQty;
+                        $order->items()->create([
+                            'product_id' => $gi['product_id'],
+                            'product_name' => '【' . $bundle['name'] . '｜贈品】' . $gi['name'],
+                            'quantity' => $qty,
+                            'unit_price' => 0,
+                            'subtotal' => 0,
+                            'created_at' => now(),
+                        ]);
+                    }
                 }
 
                 return $order;

@@ -8,7 +8,7 @@
 
 import Link from 'next/link';
 import { useCart } from './CartProvider';
-import { getPrice } from '@/lib/pricing';
+import { getPrice, isProductItem, isBundleItem } from '@/lib/pricing';
 import { formatPrice } from '@/lib/format';
 
 export default function CartStickyCTA({ hasUnavailable = false }: { hasUnavailable?: boolean }) {
@@ -16,10 +16,15 @@ export default function CartStickyCTA({ hasUnavailable = false }: { hasUnavailab
 
   if (itemCount === 0) return null;
 
-  const regularTotal = items.reduce(
-    (sum, i) => sum + getPrice(i.product, 'regular') * i.quantity,
-    0,
-  );
+  const regularTotal =
+    items.filter(isProductItem).reduce(
+      (sum, i) => sum + getPrice(i.product, 'regular') * i.quantity,
+      0,
+    ) +
+    items.filter(isBundleItem).reduce(
+      (sum, i) => sum + i.bundle.bundle_original_price * i.quantity,
+      0,
+    );
   const savings = Math.max(0, regularTotal - total);
 
   return (

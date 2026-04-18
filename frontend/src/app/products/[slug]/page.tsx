@@ -14,7 +14,6 @@ import ProductGallery from '@/components/ProductGallery';
 import ShareButtons from '@/components/ShareButtons';
 import CrossSellAddOn from '@/components/CrossSellAddOn';
 import SiteIcon from '@/components/SiteIcon';
-import CampaignPricing from '@/components/CampaignPricing';
 import ProductReviews from '@/components/ProductReviews';
 import ReviewForm from '@/components/ReviewForm';
 import ProductFaq from '@/components/ProductFaq';
@@ -228,7 +227,7 @@ export default async function ProductDetailPage({ params }: Props) {
             {product.name}
           </h1>
 
-          {product.short_description && !product.active_campaign && (
+          {product.short_description && (
             <ShortDescription text={product.short_description} />
           )}
 
@@ -238,10 +237,8 @@ export default async function ProductDetailPage({ params }: Props) {
             </div>
           )}
 
-          {/* Pricing: campaign deal OR 3-tier */}
-          {product.active_campaign ? (
-            <CampaignPricing campaign={product.active_campaign} originalPrice={product.price} shortDescription={product.short_description} />
-          ) : (
+          {/* 3-tier pricing. Bundle promotions live on /campaigns/[slug]. */}
+          {(
             <div className="mb-6">
               <div className="flex items-center justify-between mb-3">
                 <div className="text-[10px] font-black tracking-[0.2em] text-[#7a5836]">PRICING · 三階梯</div>

@@ -18,6 +18,11 @@ export const metadata: Metadata = {
   openGraph: {
     title: '關於 FP｜婕樂纖仙女館團隊',
     description: 'Fairy Pandora — JEROSSE 官方正品授權。認識創辦人朵朵與皇家團隊。',
+    images: ['/opengraph-image'],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    images: ['/opengraph-image'],
   },
 };
 

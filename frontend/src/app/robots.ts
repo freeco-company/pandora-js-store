@@ -1,6 +1,9 @@
 import type { MetadataRoute } from 'next';
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://pandora.js-store.com.tw';
+// Hardcoded: the canonical production URL doesn't change. Reading from env
+// caused a post-launch regression where stale pandora-dev.* in PM2's
+// process env leaked into the Sitemap declaration served to Google.
+const siteUrl = 'https://pandora.js-store.com.tw';
 
 export default function robots(): MetadataRoute.Robots {
   return {

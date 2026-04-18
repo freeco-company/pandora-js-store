@@ -18,6 +18,11 @@ export const metadata: Metadata = {
     title: '婕樂纖誌｜營養師專欄・媒體報導・品牌故事',
     description:
       '婕樂纖誌 — 營養師專欄、媒體報導、品牌事蹟與真實口碑推薦。深入了解產品背後的健康知識與使用心得。',
+    images: ['/opengraph-image'],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    images: ['/opengraph-image'],
   },
 };
 

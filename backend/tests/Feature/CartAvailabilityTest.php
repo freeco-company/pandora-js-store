@@ -162,6 +162,76 @@ class CartAvailabilityTest extends TestCase
         $this->assertContains($expired->slug, $slugs);
     }
 
+    // ── Bundle promotion model ─────────────────────────────────
+
+    public function test_campaign_show_returns_bundle_shape(): void
+    {
+        $probio = $this->activeProduct(['name' => '益生菌', 'price' => 1000, 'vip_price' => 800]);
+        $campaign = Campaign::create([
+            'name' => '母親節套組',
+            'slug' => 'mothers-day',
+            'is_active' => true,
+            'start_at' => now()->subDay(),
+            'end_at' => now()->addDay(),
+        ]);
+        $campaign->products()->attach($probio->id, ['role' => 'buy', 'quantity' => 3]);
+        $campaign->products()->attach($probio->id, ['role' => 'gift', 'quantity' => 1]);
+
+        $res = $this->getJson('/api/campaigns/mothers-day');
+        $res->assertOk()
+            ->assertJsonPath('bundle_price', 2400)          // 800 × 3
+            ->assertJsonPath('bundle_original_price', 3000) // 1000 × 3
+            ->assertJsonCount(1, 'buy_items')
+            ->assertJsonCount(1, 'gift_items')
+            ->assertJsonPath('buy_items.0.quantity', 3)
+            ->assertJsonPath('gift_items.0.quantity', 1);
+    }
+
+    public function test_cart_bundle_pricing_triggers_vip_for_whole_cart(): void
+    {
+        $probio = $this->activeProduct(['name' => '益生菌', 'price' => 1000, 'combo_price' => 900, 'vip_price' => 800]);
+        $other = $this->activeProduct(['name' => 'Other', 'price' => 500, 'combo_price' => 450, 'vip_price' => 400]);
+
+        $campaign = Campaign::create([
+            'name' => 'Bundle', 'slug' => 'bundle', 'is_active' => true,
+            'start_at' => now()->subDay(), 'end_at' => now()->addDay(),
+        ]);
+        $campaign->products()->attach($probio->id, ['role' => 'buy', 'quantity' => 3]);
+        $campaign->products()->attach($probio->id, ['role' => 'gift', 'quantity' => 1]);
+
+        $res = $this->postJson('/api/cart/calculate', [
+            'items' => [
+                ['type' => 'bundle', 'campaign_id' => $campaign->id, 'quantity' => 1],
+                ['product_id' => $other->id, 'quantity' => 1],
+            ],
+        ]);
+
+        $res->assertOk()
+            ->assertJsonPath('tier', 'vip')
+            ->assertJsonPath('campaign_vip', true)
+            ->assertJsonPath('total', 2800)  // bundle 2400 + other at VIP 400
+            ->assertJsonCount(1, 'bundles')
+            ->assertJsonCount(1, 'items');
+    }
+
+    public function test_cart_rejects_expired_bundle(): void
+    {
+        $probio = $this->activeProduct(['price' => 1000, 'vip_price' => 800]);
+        $campaign = Campaign::create([
+            'name' => 'Done', 'slug' => 'done', 'is_active' => true,
+            'start_at' => now()->subDays(5), 'end_at' => now()->subHour(),
+        ]);
+        $campaign->products()->attach($probio->id, ['role' => 'buy', 'quantity' => 3]);
+
+        $res = $this->postJson('/api/cart/calculate', [
+            'items' => [['type' => 'bundle', 'campaign_id' => $campaign->id, 'quantity' => 1]],
+        ]);
+
+        $res->assertOk()
+            ->assertJsonPath('unavailable.0.reason', 'bundle_expired')
+            ->assertJsonCount(0, 'bundles');
+    }
+
     public function test_campaign_show_404_when_not_running(): void
     {
         Campaign::create([

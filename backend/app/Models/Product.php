@@ -51,7 +51,7 @@ class Product extends Model
     public function campaigns()
     {
         return $this->belongsToMany(Campaign::class, 'campaign_product')
-            ->withPivot('campaign_price', 'sort_order');
+            ->withPivot('role', 'quantity', 'sort_order');
     }
 
     /**
@@ -65,30 +65,4 @@ class Product extends Model
         return $query->where('is_active', true);
     }
 
-    /**
-     * Currently-running campaign this product belongs to.
-     * Only returns during active period (start_at <= now < end_at).
-     */
-    public function getActiveCampaignAttribute(): ?Campaign
-    {
-        if ($this->relationLoaded('campaigns')) {
-            return $this->campaigns->first(fn ($c) => $c->isRunning());
-        }
-        return $this->campaigns()->active()->first();
-    }
-
-    /**
-     * Whether this product is part of a currently-running campaign.
-     * Appended to every API response so the frontend cart can apply
-     * the campaign VIP override rule.
-     */
-    public function getIsCampaignAttribute(): bool
-    {
-        if ($this->relationLoaded('campaigns')) {
-            return $this->campaigns->contains(fn ($c) => $c->isRunning());
-        }
-        return $this->campaigns()->active()->exists();
-    }
-
-    protected $appends = ['is_campaign'];
 }

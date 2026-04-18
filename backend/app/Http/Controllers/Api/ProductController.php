@@ -39,7 +39,7 @@ class ProductController extends Controller
             // Visible = active AND (no campaigns OR at least one running campaign).
             // Products whose campaigns are all past/future are hidden.
             $query = Product::visible()
-                ->with(['categories', 'seoMeta', 'campaigns']);
+                ->with(['categories', 'seoMeta']);
 
             if ($request->filled('q')) {
                 $keyword = $request->q;
@@ -73,7 +73,7 @@ class ProductController extends Controller
                 ->where(function ($q) use ($slug) {
                     $q->where('slug', $slug)->orWhere('slug_legacy', $slug);
                 })
-                ->with(['categories', 'seoMeta', 'campaigns'])
+                ->with(['categories', 'seoMeta'])
                 ->firstOrFail();
 
             return $this->serializeProduct($product);
@@ -94,28 +94,14 @@ class ProductController extends Controller
     }
 
     /**
-     * Serialize a product with campaign info attached if currently running.
+     * Serialize a product. Campaigns are bundle promotions surfaced via
+     * /campaigns/{slug} — the product response stays clean and doesn't
+     * carry per-campaign pricing.
      */
     private function serializeProduct(Product $product): array
     {
         $this->normalizeProduct($product);
-        $data = $product->toArray();
-
-        $campaign = $product->active_campaign;
-        if ($campaign) {
-            $data['active_campaign'] = [
-                'id' => $campaign->id,
-                'name' => $campaign->name,
-                'slug' => $campaign->slug,
-                'description' => $campaign->description,
-                'start_at' => $campaign->start_at->toIso8601String(),
-                'end_at' => $campaign->end_at->toIso8601String(),
-                'is_running' => $campaign->isRunning(),
-                'campaign_price' => (float) ($campaign->pivot->campaign_price ?? $product->sale_price ?? $product->price),
-            ];
-        }
-
-        return $data;
+        return $product->toArray();
     }
 
     /**

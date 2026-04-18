@@ -1,85 +1,73 @@
 import { notFound } from 'next/navigation';
-import { imageUrl } from '@/lib/api';
+import { imageUrl, getCampaign } from '@/lib/api';
 import ImageWithFallback from '@/components/ImageWithFallback';
-import ProductCardGrid from '@/components/ProductCardGrid';
 import FloatingShapes from '@/components/FloatingShapes';
 import ScrollReveal from '@/components/ScrollReveal';
 import SiteIcon from '@/components/SiteIcon';
+import CampaignBundleCard from '@/components/CampaignBundleCard';
 import { jsonLdScript } from '@/lib/jsonld';
-import { API_URL, type Product } from '@/lib/api';
-
-interface Campaign {
-  id: number;
-  name: string;
-  slug: string;
-  description: string;
-  image: string | null;
-  start_at: string;
-  end_at: string;
-  is_running: boolean;
-  products: Product[];
-}
+import { formatPrice } from '@/lib/format';
 
 export const revalidate = 60;
 
-async function getCampaign(slug: string): Promise<Campaign | null> {
-  const res = await fetch(`${API_URL}/campaigns/${slug}`, {
-    next: { revalidate: 60, tags: ['campaigns'] },
-  });
-  if (!res.ok) return null;
-  return res.json();
-}
-
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const campaign = await getCampaign(slug);
-  if (!campaign) return { title: '活動不存在' };
-  const ogImage = campaign.image ? imageUrl(campaign.image) : undefined;
-  return {
-    title: campaign.name,
-    description: campaign.description || `${campaign.name} — 限時活動，整車享 VIP 價`,
-    alternates: { canonical: `/campaigns/${slug}` },
-    openGraph: {
-      title: campaign.name,
-      description: campaign.description || `${campaign.name} — 限時活動`,
-      ...(ogImage ? { images: [ogImage] } : {}),
-    },
-  };
+  try {
+    const c = await getCampaign(slug);
+    const ogImage = c.image ? imageUrl(c.image) : undefined;
+    return {
+      title: c.name,
+      description: c.description || `${c.name} — 限時套組，整車享 VIP 價`,
+      alternates: { canonical: `/campaigns/${slug}` },
+      openGraph: {
+        title: c.name,
+        description: c.description || `${c.name} — 限時套組`,
+        ...(ogImage ? { images: [ogImage] } : {}),
+      },
+    };
+  } catch {
+    return { title: '活動不存在' };
+  }
 }
 
 export default async function CampaignPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const campaign = await getCampaign(slug);
+
+  let campaign;
+  try {
+    campaign = await getCampaign(slug);
+  } catch {
+    notFound();
+  }
   if (!campaign) notFound();
 
   const endDate = new Date(campaign.end_at);
-  const isEnded = endDate <= new Date();
-
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://pandora.js-store.com.tw';
+  const siteUrl = 'https://pandora.js-store.com.tw';
   const eventSchema = {
     '@type': 'Event',
     name: campaign.name,
-    description: campaign.description || `${campaign.name} — 限時活動`,
+    description: campaign.description || `${campaign.name} — 限時套組`,
     startDate: campaign.start_at,
     endDate: campaign.end_at,
-    eventStatus: isEnded ? 'https://schema.org/EventCancelled' : 'https://schema.org/EventScheduled',
+    eventStatus: 'https://schema.org/EventScheduled',
     eventAttendanceMode: 'https://schema.org/OnlineEventAttendanceMode',
     location: { '@type': 'VirtualLocation', url: `${siteUrl}/campaigns/${slug}` },
     organizer: { '@type': 'Organization', name: '婕樂纖仙女館', url: siteUrl },
     ...(campaign.image ? { image: imageUrl(campaign.image) } : {}),
-    offers: campaign.products.length > 0 ? {
-      '@type': 'AggregateOffer',
-      lowPrice: Math.min(...campaign.products.map(p => p.vip_price ?? p.price)),
-      highPrice: Math.max(...campaign.products.map(p => p.price)),
+    offers: {
+      '@type': 'Offer',
+      price: campaign.bundle_price,
       priceCurrency: 'TWD',
-      offerCount: campaign.products.length,
-      availability: isEnded ? 'https://schema.org/SoldOut' : 'https://schema.org/InStock',
-    } : undefined,
+      availability: 'https://schema.org/InStock',
+      validThrough: campaign.end_at,
+      url: `${siteUrl}/campaigns/${slug}`,
+    },
   };
 
   return (
     <div className="min-h-screen">
       {jsonLdScript(eventSchema)}
+
       {/* Hero */}
       <section className="relative bg-gradient-to-br from-[#9F6B3E] via-[#c9935a] to-[#85572F] text-white overflow-hidden">
         <FloatingShapes />
@@ -98,24 +86,25 @@ export default async function CampaignPage({ params }: { params: Promise<{ slug:
                   />
                 </div>
               )}
-              <div className="text-[10px] font-black tracking-[0.3em] text-white/70">
-                {isEnded ? 'EVENT ENDED' : 'LIMITED EVENT'}
-              </div>
+              <div className="text-[10px] font-black tracking-[0.3em] text-white/70">LIMITED BUNDLE</div>
               <h1 className="text-3xl sm:text-4xl font-black mt-2">{campaign.name}</h1>
               {campaign.description && (
-                <p className="text-sm sm:text-base text-white/80 mt-3 leading-relaxed">
-                  {campaign.description}
-                </p>
+                <p className="text-sm sm:text-base text-white/80 mt-3 leading-relaxed">{campaign.description}</p>
               )}
               <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/15 backdrop-blur text-xs font-bold">
                 <SiteIcon name="fire" size={14} />
-                {isEnded ? (
-                  <span>活動已結束</span>
-                ) : (
-                  <span>
-                    活動至 {endDate.toLocaleDateString('zh-TW', { month: 'long', day: 'numeric' })}
-                    {' '}· 購物車含活動商品即享 VIP 價
-                  </span>
+                <span>
+                  活動至 {endDate.toLocaleDateString('zh-TW', { month: 'long', day: 'numeric' })} ·
+                  套組加入購物車即享 VIP 價
+                </span>
+              </div>
+              <div className="mt-3 text-[11px] text-white/70 font-mono">
+                套組價 {formatPrice(campaign.bundle_price)}
+                {campaign.bundle_original_price > campaign.bundle_price && (
+                  <>
+                    {' '}
+                    <span className="line-through">{formatPrice(campaign.bundle_original_price)}</span>
+                  </>
                 )}
               </div>
             </div>
@@ -123,26 +112,10 @@ export default async function CampaignPage({ params }: { params: Promise<{ slug:
         </div>
       </section>
 
-      {/* Products grid */}
-      {!isEnded && campaign.products.length > 0 && (
-        <section className="max-w-[1290px] mx-auto px-5 sm:px-6 lg:px-8 py-12">
-          <h2 className="text-xl font-black text-slate-800 mb-6">
-            活動商品（{campaign.products.length} 組）
-          </h2>
-          <ProductCardGrid products={campaign.products} />
-        </section>
-      )}
-
-      {isEnded && (
-        <section className="max-w-2xl mx-auto px-5 py-20 text-center">
-          <div className="mb-4"><SiteIcon name="target" size={48} className="text-[#9F6B3E]/30" /></div>
-          <h2 className="text-2xl font-black text-slate-800">此活動已結束</h2>
-          <p className="text-sm text-slate-500 mt-2">感謝您的參與，期待下次活動！</p>
-          <a href="/products" className="inline-flex items-center gap-2 mt-6 px-6 py-3 bg-[#9F6B3E] text-white font-black rounded-full hover:bg-[#85572F] transition-colors">
-            瀏覽所有商品 →
-          </a>
-        </section>
-      )}
+      {/* Bundle card */}
+      <section className="max-w-2xl mx-auto px-5 sm:px-6 py-10 sm:py-14">
+        <CampaignBundleCard bundle={campaign} />
+      </section>
     </div>
   );
 }

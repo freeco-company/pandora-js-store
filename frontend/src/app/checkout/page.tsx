@@ -207,17 +207,27 @@ export default function CheckoutPage() {
 
     setSubmitting(true);
 
+    const productItems = items.filter((i): i is Extract<typeof items[number], { product: unknown }> =>
+      i.type !== 'bundle' && 'product' in i
+    );
+    const bundleItems = items.filter((i): i is Extract<typeof items[number], { bundle: unknown }> =>
+      i.type === 'bundle' && 'bundle' in i
+    );
+
     trackBeginCheckout(
       finalTotal,
-      items.map((i) => {
-        const p = itemPrices.find((ip) => ip.productId === i.product.id);
+      productItems.map((i) => {
+        const p = itemPrices.find((ip) => ip.key === `p:${i.product.id}`);
         return { id: i.product.id, name: i.product.name, price: p?.unitPrice ?? i.product.price, qty: i.quantity };
       }),
     );
 
     try {
       const payload = {
-        items: items.map((i) => ({ product_id: i.product.id, quantity: i.quantity })),
+        items: [
+          ...productItems.map((i) => ({ product_id: i.product.id, quantity: i.quantity, type: 'product' as const })),
+          ...bundleItems.map((i) => ({ campaign_id: i.bundle.id, quantity: i.quantity, type: 'bundle' as const })),
+        ],
         customer: {
           name: form.name,
           email: form.email.trim().toLowerCase(),
@@ -245,8 +255,8 @@ export default function CheckoutPage() {
       trackPurchase(
         order.order_number,
         finalTotal,
-        items.map((i) => {
-          const p = itemPrices.find((ip) => ip.productId === i.product.id);
+        productItems.map((i) => {
+          const p = itemPrices.find((ip) => ip.key === `p:${i.product.id}`);
           return { id: i.product.id, name: i.product.name, price: p?.unitPrice ?? i.product.price, qty: i.quantity };
         }),
         form.payment_method,
@@ -724,21 +734,37 @@ export default function CheckoutPage() {
             {/* Items */}
             <div className="space-y-3 mb-6 max-h-64 overflow-y-auto">
               {items.map((item) => {
-                const priceInfo = itemPrices.find((p) => p.productId === item.product.id);
+                if (item.type === 'bundle' && 'bundle' in item) {
+                  const b = item.bundle;
+                  const priceInfo = itemPrices.find((p) => p.key === `b:${b.id}`);
+                  const unitPrice = priceInfo?.unitPrice ?? b.bundle_price;
+                  const subtotal = priceInfo?.subtotal ?? b.bundle_price * item.quantity;
+                  return (
+                    <div key={`b-${b.id}`} className="flex gap-3">
+                      <div className="relative w-14 h-14 bg-white rounded-lg overflow-hidden shrink-0 border border-gray-100">
+                        {b.image ? (
+                          <ImageWithFallback src={imageUrl(b.image)!} alt={b.name} fill sizes="56px" className="object-cover" />
+                        ) : (
+                          <LogoPlaceholder />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-900 line-clamp-1">【套組】{b.name}</p>
+                        <p className="text-xs text-gray-500">{formatPrice(unitPrice)} x {item.quantity}</p>
+                      </div>
+                      <span className="text-sm font-medium text-gray-900 shrink-0">{formatPrice(subtotal)}</span>
+                    </div>
+                  );
+                }
+                if (!('product' in item)) return null;
+                const priceInfo = itemPrices.find((p) => p.key === `p:${item.product.id}`);
                 const unitPrice = priceInfo?.unitPrice ?? item.product.price;
                 const subtotal = priceInfo?.subtotal ?? item.product.price * item.quantity;
-
                 return (
-                  <div key={item.product.id} className="flex gap-3">
+                  <div key={`p-${item.product.id}`} className="flex gap-3">
                     <div className="relative w-14 h-14 bg-white rounded-lg overflow-hidden shrink-0 border border-gray-100">
                       {item.product.image ? (
-                        <ImageWithFallback
-                          src={imageUrl(item.product.image)!}
-                          alt={item.product.name}
-                          fill
-                          sizes="56px"
-                          className="object-cover"
-                        />
+                        <ImageWithFallback src={imageUrl(item.product.image)!} alt={item.product.name} fill sizes="56px" className="object-cover" />
                       ) : (
                         <LogoPlaceholder />
                       )}

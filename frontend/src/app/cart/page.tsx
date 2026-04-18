@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Icons from '@/components/SvgIcons';
 import { useCart } from '@/components/CartProvider';
-import { tierLabel, getPrice } from '@/lib/pricing';
+import { tierLabel, getPrice, isBundleItem, isProductItem } from '@/lib/pricing';
 import { formatPrice } from '@/lib/format';
 import { imageUrl, getProducts, calculateCart, type Product, type CartUnavailableItem } from '@/lib/api';
 import ImageWithFallback, { LogoPlaceholder } from '@/components/ImageWithFallback';
@@ -17,48 +17,73 @@ const UNAVAILABLE_LABELS: Record<string, string> = {
   inactive: '商品已下架',
   out_of_stock: '已售完',
   insufficient_stock: '庫存不足',
+  bundle_not_found: '活動已下架',
+  bundle_expired: '活動已結束',
 };
 
 export default function CartPage() {
-  const { items, tier, total, itemPrices, itemCount, addToCart, updateQuantity, removeFromCart, clearCart } = useCart();
+  const {
+    items,
+    tier,
+    total,
+    itemPrices,
+    itemCount,
+    addToCart,
+    updateQuantity,
+    updateBundleQuantity,
+    removeFromCart,
+    removeBundle,
+    clearCart,
+  } = useCart();
   const [showClearConfirm, setShowClearConfirm] = useState(false);
-  const [removeConfirmId, setRemoveConfirmId] = useState<number | null>(null);
+  const [removeConfirmId, setRemoveConfirmId] = useState<
+    | { type: 'product'; id: number }
+    | { type: 'bundle'; id: number }
+    | null
+  >(null);
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
   const [unavailable, setUnavailable] = useState<CartUnavailableItem[]>([]);
 
+  const productItems = items.filter(isProductItem);
+  const bundleItems = items.filter(isBundleItem);
   const totalQuantity = items.reduce((sum, i) => sum + i.quantity, 0);
+  const productQty = productItems.reduce((sum, i) => sum + i.quantity, 0);
 
-  // Calculate upgrade hints
-  const comboTotal = items.reduce(
+  // Upgrade hints (based on product items only — bundles already VIP)
+  const comboTotal = productItems.reduce(
     (sum, i) => sum + getPrice(i.product, 'combo') * i.quantity,
-    0
+    0,
   );
   const amountToVip = VIP_THRESHOLD - comboTotal;
   const vipProgress = Math.min((comboTotal / VIP_THRESHOLD) * 100, 100);
 
-  // Calculate savings vs regular price
-  const regularTotal = items.reduce(
-    (sum, i) => sum + i.product.price * i.quantity,
-    0
-  );
+  const regularTotal =
+    productItems.reduce((sum, i) => sum + i.product.price * i.quantity, 0) +
+    bundleItems.reduce((sum, i) => sum + i.bundle.bundle_original_price * i.quantity, 0);
   const savings = regularTotal - total;
 
-  // Validate cart items against backend (check stock, active status)
   useEffect(() => {
     if (items.length === 0) { setUnavailable([]); return; }
-    calculateCart(items.map((i) => ({ product_id: i.product.id, quantity: i.quantity })))
+    const payload = [
+      ...productItems.map((i) => ({ product_id: i.product.id, quantity: i.quantity, type: 'product' as const })),
+      ...bundleItems.map((i) => ({ campaign_id: i.bundle.id, quantity: i.quantity, type: 'bundle' as const })),
+    ];
+    calculateCart(payload)
       .then((res) => setUnavailable(res.unavailable ?? []))
       .catch(() => {});
+    // productItems / bundleItems derived from items — depending on items covers both.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [items]);
 
-  const unavailableIds = new Set(unavailable.map((u) => u.product_id));
+  const unavailableProductIds = new Set(unavailable.filter((u) => u.product_id).map((u) => u.product_id!));
+  const unavailableBundleIds = new Set(unavailable.filter((u) => u.campaign_id).map((u) => u.campaign_id!));
 
-  // Fetch related products (exclude those already in cart)
   useEffect(() => {
-    const cartIds = new Set(items.map((i) => i.product.id));
+    const cartIds = new Set(productItems.map((i) => i.product.id));
     getProducts()
       .then((all) => setRelatedProducts(all.filter((p) => !cartIds.has(p.id)).slice(0, 4)))
       .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [items]);
 
   if (items.length === 0) {
@@ -93,7 +118,6 @@ export default function CartPage() {
         </button>
       </div>
 
-      {/* 自用加盟 upsell — shown when cart non-empty and not VIP */}
       {tier !== 'vip' && total >= 500 && (
         <Link
           href="/join"
@@ -110,7 +134,7 @@ export default function CartPage() {
         </Link>
       )}
 
-      {/* Current Tier Badge */}
+      {/* Tier Summary */}
       <div className="bg-gradient-to-r from-[#9F6B3E]/10 to-[#9F6B3E]/5 rounded-[10px] p-4 mb-6">
         <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
           <span className="text-sm font-medium text-gray-700">目前價格方案</span>
@@ -124,33 +148,30 @@ export default function CartPage() {
           </div>
         </div>
 
-        {/* Upgrade hints */}
-        {tier === 'regular' && totalQuantity === 1 && (
-          <p className="text-sm text-gray-600">
-            再加 <strong>1 件</strong>即享 1+1 搭配價！
+        {bundleItems.length > 0 && (
+          <p className="text-sm text-green-700 font-medium">
+            套組啟動 VIP 價 — 整車直接享最高優惠！
           </p>
         )}
 
-        {tier === 'combo' && amountToVip > 0 && (() => {
-          // Estimate additional savings if upgraded to VIP tier
-          const vipTotalEstimate = items.reduce(
+        {bundleItems.length === 0 && tier === 'regular' && productQty === 1 && (
+          <p className="text-sm text-gray-600">再加 <strong>1 件</strong>即享 1+1 搭配價！</p>
+        )}
+
+        {bundleItems.length === 0 && tier === 'combo' && amountToVip > 0 && (() => {
+          const vipTotalEstimate = productItems.reduce(
             (sum, i) => sum + getPrice(i.product, 'vip') * i.quantity,
-            0
+            0,
           );
           const extraSavings = Math.max(0, comboTotal - vipTotalEstimate);
           return (
             <div>
               <p className="text-sm text-gray-600 mb-2">
                 再加 <strong className="text-[#9F6B3E]">{formatPrice(Math.ceil(amountToVip))}</strong> 即可升級 VIP 優惠價
-                {extraSavings > 0 && (
-                  <span className="text-red-500 font-bold"> · 再省 {formatPrice(extraSavings)}！</span>
-                )}
+                {extraSavings > 0 && <span className="text-red-500 font-bold"> · 再省 {formatPrice(extraSavings)}！</span>}
               </p>
               <div className="w-full bg-gray-200 rounded-full h-2">
-                <div
-                  className="bg-[#9F6B3E] h-2 rounded-full transition-all duration-500"
-                  style={{ width: `${vipProgress}%` }}
-                />
+                <div className="bg-[#9F6B3E] h-2 rounded-full transition-all duration-500" style={{ width: `${vipProgress}%` }} />
               </div>
               <div className="flex justify-between text-xs text-gray-500 mt-1">
                 <span>{formatPrice(comboTotal)}</span>
@@ -160,27 +181,124 @@ export default function CartPage() {
           );
         })()}
 
-        {tier === 'vip' && (
-          <p className="text-sm text-green-700 font-medium">
-            已享有最高等級 VIP 優惠價！
-          </p>
+        {tier === 'vip' && bundleItems.length === 0 && (
+          <p className="text-sm text-green-700 font-medium">已享有最高等級 VIP 優惠價！</p>
         )}
       </div>
 
-      {/* Cart Items */}
+      {/* Bundle lines */}
+      {bundleItems.length > 0 && (
+        <div className="space-y-4 mb-6">
+          {bundleItems.map((item) => {
+            const b = item.bundle;
+            const priceInfo = itemPrices.find((p) => p.key === `b:${b.id}`);
+            const unitPrice = priceInfo?.unitPrice ?? b.bundle_price;
+            const subtotal = priceInfo?.subtotal ?? b.bundle_price * item.quantity;
+            const hasDiscount = unitPrice < b.bundle_original_price;
+            const isUnavailable = unavailableBundleIds.has(b.id);
+            const unavailableInfo = unavailable.find((u) => u.campaign_id === b.id);
+
+            return (
+              <div
+                key={`bundle-${b.id}`}
+                className={`relative rounded-[10px] bg-gradient-to-br from-[#fdf7ef] to-[#f7eee3] border border-[#e7d9cb] p-4 ${isUnavailable ? 'opacity-60 ring-2 ring-red-200' : ''}`}
+              >
+                {isUnavailable && unavailableInfo && (
+                  <div className="absolute -top-2 left-4 bg-red-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full z-10">
+                    {UNAVAILABLE_LABELS[unavailableInfo.reason] || '無法購買'}
+                  </div>
+                )}
+
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#c0392b] text-white text-[10px] font-black">
+                    套組
+                  </span>
+                  <span className="font-black text-gray-900">{b.name}</span>
+                  <button
+                    onClick={() => setRemoveConfirmId({ type: 'bundle', id: b.id })}
+                    className="ml-auto text-xs text-gray-400 hover:text-red-500 transition-colors"
+                  >
+                    移除
+                  </button>
+                </div>
+
+                {/* Buy items */}
+                <div className="space-y-1 mb-2">
+                  <div className="text-[10px] font-black text-[#9F6B3E] tracking-wider">購買內容</div>
+                  {b.buy_items.map((bi, idx) => (
+                    <div key={`buy-${idx}`} className="flex items-center gap-2 text-sm text-gray-700">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#9F6B3E] shrink-0" />
+                      <span>{bi.product.name}</span>
+                      <span className="text-gray-500">× {bi.quantity}</span>
+                    </div>
+                  ))}
+                </div>
+                {b.gift_items.length > 0 && (
+                  <div className="space-y-1 mb-3">
+                    <div className="text-[10px] font-black text-[#e74c3c] tracking-wider">加贈</div>
+                    {b.gift_items.map((gi, idx) => (
+                      <div key={`gift-${idx}`} className="flex items-center gap-2 text-sm text-gray-700">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#e74c3c] shrink-0" />
+                        <span>{gi.product.name}</span>
+                        <span className="text-gray-500">× {gi.quantity}</span>
+                        <span className="ml-auto text-[10px] font-black text-[#e74c3c] bg-[#e74c3c]/10 px-1.5 py-0.5 rounded-full">FREE</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Qty + price */}
+                <div className="flex items-center justify-between pt-2 border-t border-[#e7d9cb]">
+                  <div className="flex items-center border border-gray-200 rounded-full bg-white">
+                    <button
+                      onClick={() => {
+                        if (item.quantity <= 1) setRemoveConfirmId({ type: 'bundle', id: b.id });
+                        else updateBundleQuantity(b.id, item.quantity - 1);
+                      }}
+                      className="w-10 h-10 flex items-center justify-center text-gray-600"
+                      aria-label="減少"
+                    >
+                      −
+                    </button>
+                    <span className="w-8 text-center text-sm font-bold tabular-nums">{item.quantity}</span>
+                    <button
+                      onClick={() => updateBundleQuantity(b.id, item.quantity + 1)}
+                      className="w-10 h-10 flex items-center justify-center text-gray-600"
+                      aria-label="增加"
+                    >
+                      +
+                    </button>
+                  </div>
+                  <div className="text-right">
+                    <div className="flex items-baseline gap-2">
+                      <span className="font-bold text-[#c0392b]">{formatPrice(unitPrice)}</span>
+                      {hasDiscount && (
+                        <span className="text-xs text-gray-400 line-through">{formatPrice(b.bundle_original_price)}</span>
+                      )}
+                    </div>
+                    <div className="text-xs text-gray-500">小計 {formatPrice(subtotal)}</div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Product lines */}
       <div className="space-y-4 mb-8">
-        {items.map((item) => {
-          const priceInfo = itemPrices.find((p) => p.productId === item.product.id);
+        {productItems.map((item) => {
+          const priceInfo = itemPrices.find((p) => p.key === `p:${item.product.id}`);
           const unitPrice = priceInfo?.unitPrice ?? item.product.price;
           const subtotal = priceInfo?.subtotal ?? item.product.price * item.quantity;
           const hasDiscount = unitPrice < item.product.price;
 
-          const isUnavailable = unavailableIds.has(item.product.id);
+          const isUnavailable = unavailableProductIds.has(item.product.id);
           const unavailableInfo = unavailable.find((u) => u.product_id === item.product.id);
 
           return (
             <div
-              key={item.product.id}
+              key={`p-${item.product.id}`}
               className={`relative flex gap-4 p-4 bg-white rounded-[10px] ${isUnavailable ? 'opacity-60 ring-2 ring-red-200' : ''}`}
               style={{
                 border: isUnavailable ? undefined : '1px solid rgba(0, 0, 0, 0.05)',
@@ -193,57 +311,36 @@ export default function CartPage() {
                   {unavailableInfo.reason === 'insufficient_stock' && ` (剩 ${unavailableInfo.available})`}
                 </div>
               )}
-              {/* Image */}
               <div className="relative w-20 h-20 sm:w-24 sm:h-24 bg-gray-50 rounded-lg overflow-hidden shrink-0">
                 {item.product.image ? (
-                  <ImageWithFallback
-                    src={imageUrl(item.product.image)!}
-                    alt={item.product.name}
-                    fill
-                    sizes="96px"
-                    className="object-cover"
-                  />
+                  <ImageWithFallback src={imageUrl(item.product.image)!} alt={item.product.name} fill sizes="96px" className="object-cover" />
                 ) : (
                   <LogoPlaceholder />
                 )}
               </div>
 
-              {/* Info */}
               <div className="flex-1 min-w-0">
-                <Link
-                  href={`/products/${item.product.slug}`}
-                  className="font-semibold text-gray-900 hover:text-[#9F6B3E] transition-colors line-clamp-1"
-                >
+                <Link href={`/products/${item.product.slug}`} className="font-semibold text-gray-900 hover:text-[#9F6B3E] transition-colors line-clamp-1">
                   {item.product.name}
                 </Link>
-
                 <div className="mt-1 flex items-baseline gap-2">
                   <span className="font-semibold text-[#9F6B3E]">{formatPrice(unitPrice)}</span>
-                  {hasDiscount && (
-                    <span className="text-sm text-gray-400 line-through">{formatPrice(item.product.price)}</span>
-                  )}
+                  {hasDiscount && <span className="text-sm text-gray-400 line-through">{formatPrice(item.product.price)}</span>}
                 </div>
 
-                {/* Quantity Controls — 44px min tap targets */}
                 <div className="flex items-center gap-3 mt-2">
                   <div className="flex items-center border border-gray-200 rounded-full">
                     <button
                       onClick={() => {
-                        // 減到 0 = 移除 → 先跳確認 modal，避免誤刪
-                        if (item.quantity <= 1) {
-                          setRemoveConfirmId(item.product.id);
-                        } else {
-                          updateQuantity(item.product.id, item.quantity - 1);
-                        }
+                        if (item.quantity <= 1) setRemoveConfirmId({ type: 'product', id: item.product.id });
+                        else updateQuantity(item.product.id, item.quantity - 1);
                       }}
                       className="w-11 h-11 flex items-center justify-center text-gray-600 hover:text-gray-900 active:scale-95 transition"
                       aria-label="減少"
                     >
                       −
                     </button>
-                    <span className="w-10 text-center text-sm font-bold tabular-nums">
-                      {item.quantity}
-                    </span>
+                    <span className="w-10 text-center text-sm font-bold tabular-nums">{item.quantity}</span>
                     <button
                       onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
                       className="w-11 h-11 flex items-center justify-center text-gray-600 hover:text-gray-900 active:scale-95 transition"
@@ -253,7 +350,7 @@ export default function CartPage() {
                     </button>
                   </div>
                   <button
-                    onClick={() => setRemoveConfirmId(item.product.id)}
+                    onClick={() => setRemoveConfirmId({ type: 'product', id: item.product.id })}
                     className="text-xs text-gray-400 hover:text-red-500 transition-colors min-h-[44px] px-3"
                   >
                     移除
@@ -261,7 +358,6 @@ export default function CartPage() {
                 </div>
               </div>
 
-              {/* Subtotal */}
               <div className="text-right shrink-0">
                 <span className="font-bold text-gray-900">{formatPrice(subtotal)}</span>
               </div>
@@ -270,10 +366,9 @@ export default function CartPage() {
         })}
       </div>
 
-      {/* Summary — breakdown always, CTA button only on desktop (mobile uses sticky) */}
+      {/* Summary */}
       <div className="bg-gray-50 rounded-[10px] p-6">
-        {/* 營養師陪伴 / 陪跑班 progress — only when slimming items in cart */}
-        <SlimmingProgress items={items} itemPrices={itemPrices} />
+        <SlimmingProgress items={productItems} itemPrices={itemPrices} />
 
         <div className="space-y-3">
           <div className="flex justify-between text-sm">
@@ -282,7 +377,7 @@ export default function CartPage() {
           </div>
           {savings > 0 && (
             <div className="flex justify-between text-sm">
-              <span className="text-gray-600">搭配優惠折抵</span>
+              <span className="text-gray-600">優惠折抵</span>
               <span className="text-red-500 font-medium">-{formatPrice(savings)}</span>
             </div>
           )}
@@ -299,13 +394,10 @@ export default function CartPage() {
             <span className="text-lg font-bold text-[#9F6B3E]">{formatPrice(total)}</span>
           </div>
           {savings > 0 && (
-            <p className="text-sm text-red-500 text-right font-medium">
-              已省下 {formatPrice(savings)}！
-            </p>
+            <p className="text-sm text-red-500 text-right font-medium">已省下 {formatPrice(savings)}！</p>
           )}
         </div>
 
-        {/* Desktop CTA — mobile has sticky bottom bar */}
         {unavailable.length > 0 ? (
           <div className="mt-6 text-center">
             <p className="text-sm text-red-500 font-bold mb-2">
@@ -316,16 +408,12 @@ export default function CartPage() {
             </span>
           </div>
         ) : (
-          <Link
-            href="/checkout"
-            className="hidden md:block mt-6 w-full py-3 bg-[#9F6B3E] text-white text-center font-semibold rounded-full hover:bg-[#85572F] transition-colors"
-          >
+          <Link href="/checkout" className="hidden md:block mt-6 w-full py-3 bg-[#9F6B3E] text-white text-center font-semibold rounded-full hover:bg-[#85572F] transition-colors">
             前往結帳
           </Link>
         )}
       </div>
 
-      {/* Related Products */}
       {relatedProducts.length > 0 && (
         <div className="mt-10">
           <h2 className="text-xl font-bold text-gray-900 mb-4">加購其他商品</h2>
@@ -336,30 +424,19 @@ export default function CartPage() {
                 <div
                   key={product.id}
                   className="bg-white rounded-[10px] overflow-hidden"
-                  style={{
-                    border: '1px solid rgba(0, 0, 0, 0.05)',
-                    boxShadow: '0px 12px 18px -6px rgba(34, 56, 101, 0.04)',
-                  }}
+                  style={{ border: '1px solid rgba(0, 0, 0, 0.05)', boxShadow: '0px 12px 18px -6px rgba(34, 56, 101, 0.04)' }}
                 >
                   <Link href={`/products/${product.slug}`} className="block">
                     <div className="relative aspect-square bg-gray-50 overflow-hidden">
                       {product.image ? (
-                        <ImageWithFallback
-                          src={imageUrl(product.image)!}
-                          alt={product.name}
-                          fill
-                          sizes="(max-width: 640px) 50vw, 25vw"
-                          className="object-cover"
-                        />
+                        <ImageWithFallback src={imageUrl(product.image)!} alt={product.name} fill sizes="(max-width: 640px) 50vw, 25vw" className="object-cover" />
                       ) : (
                         <LogoPlaceholder />
                       )}
                     </div>
                   </Link>
                   <div className="p-2.5">
-                    <h3 className="text-xs font-semibold text-gray-900 line-clamp-2 mb-1">
-                      {product.name}
-                    </h3>
+                    <h3 className="text-xs font-semibold text-gray-900 line-clamp-2 mb-1">{product.name}</h3>
                     <div className="flex items-baseline gap-1 mb-2">
                       {showCombo ? (
                         <>
@@ -370,10 +447,7 @@ export default function CartPage() {
                         <span className="text-sm font-bold text-[#9F6B3E]">{formatPrice(product.price)}</span>
                       )}
                     </div>
-                    <button
-                      onClick={() => addToCart(product)}
-                      className="w-full py-1.5 text-xs font-semibold rounded-full bg-[#9F6B3E] text-white hover:bg-[#85572F] transition-colors"
-                    >
+                    <button onClick={() => addToCart(product)} className="w-full py-1.5 text-xs font-semibold rounded-full bg-[#9F6B3E] text-white hover:bg-[#85572F] transition-colors">
                       加入購物車
                     </button>
                   </div>
@@ -384,32 +458,26 @@ export default function CartPage() {
         </div>
       )}
 
-      {/* Remove Item Confirmation Dialog */}
+      {/* Remove Confirm */}
       {removeConfirmId !== null && (() => {
-        const item = items.find((i) => i.product.id === removeConfirmId);
+        const name = removeConfirmId.type === 'product'
+          ? productItems.find((i) => i.product.id === removeConfirmId.id)?.product.name
+          : bundleItems.find((i) => i.bundle.id === removeConfirmId.id)?.bundle.name;
         return (
-          <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 modal-overlay-in"
-            onClick={() => setRemoveConfirmId(null)}
-          >
-            <div
-              className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl modal-content-pop"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <h3 className="text-lg font-bold text-gray-900 mb-2">移除商品</h3>
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 modal-overlay-in" onClick={() => setRemoveConfirmId(null)}>
+            <div className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl modal-content-pop" onClick={(e) => e.stopPropagation()}>
+              <h3 className="text-lg font-bold text-gray-900 mb-2">
+                {removeConfirmId.type === 'bundle' ? '移除套組' : '移除商品'}
+              </h3>
               <p className="text-gray-600 mb-6">
-                確定要從購物車移除「<strong className="text-gray-900">{item?.product.name}</strong>」嗎？
+                確定要從購物車移除「<strong className="text-gray-900">{name}</strong>」嗎？
               </p>
               <div className="flex gap-3">
-                <button
-                  onClick={() => setRemoveConfirmId(null)}
-                  className="flex-1 py-2.5 border border-gray-300 text-gray-700 font-medium rounded-full hover:bg-gray-50 transition-colors min-h-[44px]"
-                >
-                  取消
-                </button>
+                <button onClick={() => setRemoveConfirmId(null)} className="flex-1 py-2.5 border border-gray-300 text-gray-700 font-medium rounded-full hover:bg-gray-50 transition-colors min-h-[44px]">取消</button>
                 <button
                   onClick={() => {
-                    removeFromCart(removeConfirmId);
+                    if (removeConfirmId.type === 'product') removeFromCart(removeConfirmId.id);
+                    else removeBundle(removeConfirmId.id);
                     setRemoveConfirmId(null);
                   }}
                   className="flex-1 py-2.5 bg-red-500 text-white font-medium rounded-full hover:bg-red-600 transition-colors min-h-[44px]"
@@ -422,34 +490,19 @@ export default function CartPage() {
         );
       })()}
 
-      {/* Clear Cart Confirmation Dialog */}
       {showClearConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 modal-overlay-in" onClick={() => setShowClearConfirm(false)}>
           <div className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl modal-content-pop" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-lg font-bold text-gray-900 mb-2">清空購物車</h3>
             <p className="text-gray-600 mb-6">確定要清空購物車嗎？</p>
             <div className="flex gap-3">
-              <button
-                onClick={() => setShowClearConfirm(false)}
-                className="flex-1 py-2.5 border border-gray-300 text-gray-700 font-medium rounded-full hover:bg-gray-50 transition-colors"
-              >
-                取消
-              </button>
-              <button
-                onClick={() => {
-                  clearCart();
-                  setShowClearConfirm(false);
-                }}
-                className="flex-1 py-2.5 bg-red-500 text-white font-medium rounded-full hover:bg-red-600 transition-colors"
-              >
-                確定
-              </button>
+              <button onClick={() => setShowClearConfirm(false)} className="flex-1 py-2.5 border border-gray-300 text-gray-700 font-medium rounded-full hover:bg-gray-50 transition-colors">取消</button>
+              <button onClick={() => { clearCart(); setShowClearConfirm(false); }} className="flex-1 py-2.5 bg-red-500 text-white font-medium rounded-full hover:bg-red-600 transition-colors">確定</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Mobile sticky CTA — bottom-fixed, shows total/savings/checkout */}
       <CartStickyCTA hasUnavailable={unavailable.length > 0} />
     </div>
   );
@@ -465,7 +518,7 @@ function SlimmingProgress({
   itemPrices,
 }: {
   items: { product: { id: number; price: number; categories?: { slug: string }[] }; quantity: number }[];
-  itemPrices: { productId: number; subtotal: number }[];
+  itemPrices: { key: string; subtotal: number }[];
 }) {
   const [showDiff, setShowDiff] = useState(false);
   const TIER1 = 3840;
@@ -474,7 +527,7 @@ function SlimmingProgress({
   const slimmingTotal = items
     .filter((it) => it.product.categories?.some((c) => c.slug === 'slimming'))
     .reduce((sum, it) => {
-      const pi = itemPrices.find((p) => p.productId === it.product.id);
+      const pi = itemPrices.find((p) => p.key === `p:${it.product.id}`);
       return sum + (pi ? pi.subtotal : it.product.price * it.quantity);
     }, 0);
 
@@ -483,7 +536,6 @@ function SlimmingProgress({
   const reachedTier1 = slimmingTotal >= TIER1;
   const reachedTier2 = slimmingTotal >= TIER2;
 
-  // Status message
   const statusMsg = reachedTier2
     ? { icon: <Icons.Party className="w-6 h-6 text-[#2e7d32]" />, bg: 'bg-[#e8f5e9]', color: 'text-[#2e7d32]', bold: '已達陪跑班門檻！', rest: '完成訂單即可免費加入「客製化纖體陪跑班」，私訊截圖即啟動。' }
     : reachedTier1
@@ -492,7 +544,6 @@ function SlimmingProgress({
 
   return (
     <div className="mb-5 pb-4 border-b border-gray-200">
-      {/* Status card */}
       <div className={`flex items-center gap-3 p-3.5 rounded-xl ${statusMsg.bg}`}>
         <span className="shrink-0">{statusMsg.icon}</span>
         <div className={`flex-1 min-w-0 text-sm leading-snug ${statusMsg.color}`}>
@@ -501,9 +552,7 @@ function SlimmingProgress({
         </div>
       </div>
 
-      {/* Progress bar + 2-tier step indicator */}
       <div className="mt-3 space-y-2">
-        {/* Bar */}
         <div className="flex items-center justify-between text-xs font-bold text-gray-400 mb-0.5">
           <span>纖體 ${slimmingTotal.toLocaleString()}</span>
           <span>${TIER2.toLocaleString()}</span>
@@ -522,9 +571,7 @@ function SlimmingProgress({
           />
         </div>
 
-        {/* Step dots under bar */}
         <div className="flex items-center">
-          {/* Tier 1 */}
           <div className="flex-1 flex items-center gap-2">
             <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-black shrink-0 ${reachedTier1 ? 'bg-[#9F6B3E] text-white' : 'bg-gray-200 text-gray-400'}`}>
               {reachedTier1 ? '✓' : '1'}
@@ -534,9 +581,7 @@ function SlimmingProgress({
               <div className="text-xs text-gray-400 leading-tight">滿 $3,840 免費</div>
             </div>
           </div>
-          {/* Connector */}
           <div className={`w-8 h-px shrink-0 ${reachedTier1 ? 'bg-[#9F6B3E]' : 'bg-gray-200'}`} />
-          {/* Tier 2 */}
           <div className="flex-1 flex items-center gap-2">
             <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-black shrink-0 ${reachedTier2 ? 'bg-[#2e7d32] text-white' : 'bg-gray-200 text-gray-400'}`}>
               {reachedTier2 ? '✓' : '2'}
@@ -549,12 +594,7 @@ function SlimmingProgress({
         </div>
       </div>
 
-      {/* Diff toggle */}
-      <button
-        type="button"
-        onClick={() => setShowDiff(!showDiff)}
-        className="mt-3 text-sm font-bold text-[#9F6B3E] underline underline-offset-2 active:opacity-70"
-      >
+      <button type="button" onClick={() => setShowDiff(!showDiff)} className="mt-3 text-sm font-bold text-[#9F6B3E] underline underline-offset-2 active:opacity-70">
         {showDiff ? '收合差異說明' : '兩種班別有什麼差別？'}
       </button>
 
@@ -570,9 +610,7 @@ function SlimmingProgress({
               <li>✓ 互動小遊戲</li>
               <li>✓ 定時 QA 回覆</li>
             </ul>
-            <div className="mt-2 pt-2 border-t border-[#e7d9cb] text-xs text-gray-500">
-              遊戲化・趣味學習・輕鬆入門
-            </div>
+            <div className="mt-2 pt-2 border-t border-[#e7d9cb] text-xs text-gray-500">遊戲化・趣味學習・輕鬆入門</div>
           </div>
           <div className="p-3 bg-[#e8f5e9] rounded-lg border border-[#c8e6c9]">
             <div className="font-black text-[#2e7d32] text-base mb-2">客製化陪跑班</div>
@@ -584,9 +622,7 @@ function SlimmingProgress({
               <li>✓ CBT 飲食引導法</li>
               <li>✓ 即時 QA（全程在線）</li>
             </ul>
-            <div className="mt-2 pt-2 border-t border-[#c8e6c9] text-xs text-gray-500">
-              高強度・密集點評・進階挑戰
-            </div>
+            <div className="mt-2 pt-2 border-t border-[#c8e6c9] text-xs text-gray-500">高強度・密集點評・進階挑戰</div>
           </div>
         </div>
       )}

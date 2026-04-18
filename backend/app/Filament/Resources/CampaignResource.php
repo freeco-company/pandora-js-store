@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\CampaignResource\Pages;
 use App\Models\Campaign;
+use App\Models\Product;
 use Filament\Forms;
 use Filament\Schemas\Schema;
 use Filament\Resources\Resource;
@@ -27,19 +28,19 @@ class CampaignResource extends Resource
     {
         return $form
             ->schema([
-                // Left column: main info
+                // Left column: main info + bundle builder
                 \Filament\Schemas\Components\Group::make()->schema([
                     \Filament\Schemas\Components\Section::make('活動資訊')->schema([
                         Forms\Components\TextInput::make('name')
                             ->required()
                             ->label('活動名稱')
-                            ->placeholder('例：2026 夏季感恩祭')
+                            ->placeholder('例：母親節套組')
                             ->columnSpanFull(),
                         Forms\Components\TextInput::make('slug')
                             ->required()
                             ->unique(ignoreRecord: true)
                             ->label('網址代稱')
-                            ->placeholder('summer-2026')
+                            ->placeholder('mothers-day-2026')
                             ->helperText('活動頁網址：/campaigns/{slug}'),
                         Forms\Components\Textarea::make('description')
                             ->label('活動說明')
@@ -57,16 +58,54 @@ class CampaignResource extends Resource
                             ->label('結束時間'),
                     ])->columns(2),
 
-                    \Filament\Schemas\Components\Section::make('活動商品')->schema([
-                        Forms\Components\Select::make('products')
-                            ->relationship('products', 'name')
-                            ->multiple()
-                            ->preload()
-                            ->searchable()
-                            ->label('選擇商品（可多選）')
-                            ->helperText('加入的商品在活動期間會出現在活動頁，結束後自動隱藏。購物車含活動商品 → 整車 VIP 價。')
-                            ->columnSpanFull(),
-                    ]),
+                    \Filament\Schemas\Components\Section::make('購買商品（計價）')
+                        ->description('套組價 = 這區商品 VIP 價 × 數量。例如：3 × 益生菌。')
+                        ->schema([
+                            Forms\Components\Repeater::make('buy_items_ui')
+                                ->hiddenLabel()
+                                ->schema([
+                                    Forms\Components\Select::make('product_id')
+                                        ->label('商品')
+                                        ->options(fn () => Product::where('is_active', true)->orderBy('name')->pluck('name', 'id'))
+                                        ->searchable()
+                                        ->required(),
+                                    Forms\Components\TextInput::make('quantity')
+                                        ->label('數量')
+                                        ->numeric()
+                                        ->minValue(1)
+                                        ->default(1)
+                                        ->required(),
+                                ])
+                                ->columns(2)
+                                ->addActionLabel('+ 加入購買商品')
+                                ->dehydrated()
+                                ->reorderable(false)
+                                ->minItems(1),
+                        ]),
+
+                    \Filament\Schemas\Components\Section::make('贈送商品（免費）')
+                        ->description('送給顧客的贈品，不計入套組價。可以跟購買商品是同一個 SKU，例如買 3 送 1。')
+                        ->schema([
+                            Forms\Components\Repeater::make('gift_items_ui')
+                                ->hiddenLabel()
+                                ->schema([
+                                    Forms\Components\Select::make('product_id')
+                                        ->label('商品')
+                                        ->options(fn () => Product::where('is_active', true)->orderBy('name')->pluck('name', 'id'))
+                                        ->searchable()
+                                        ->required(),
+                                    Forms\Components\TextInput::make('quantity')
+                                        ->label('數量')
+                                        ->numeric()
+                                        ->minValue(1)
+                                        ->default(1)
+                                        ->required(),
+                                ])
+                                ->columns(2)
+                                ->addActionLabel('+ 加入贈送商品')
+                                ->dehydrated()
+                                ->reorderable(false),
+                        ]),
                 ])->columnSpan(2),
 
                 // Right column: settings + images

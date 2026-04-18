@@ -9,9 +9,11 @@ import {
   useMemo,
   type ReactNode,
 } from 'react';
-import type { Product } from '@/lib/api';
+import type { Product, CampaignBundle } from '@/lib/api';
 import {
   calculateCartLocally,
+  isBundleItem,
+  isProductItem,
   type LocalCartItem,
   type PricingTier,
 } from '@/lib/pricing';
@@ -23,21 +25,19 @@ interface CartContextValue {
   tier: PricingTier;
   total: number;
   itemCount: number;
-  itemPrices: { productId: number; unitPrice: number; subtotal: number }[];
+  itemPrices: { key: string; unitPrice: number; subtotal: number }[];
   addToCart: (product: Product, quantity?: number) => void;
+  addBundle: (bundle: CampaignBundle, quantity?: number) => void;
   removeFromCart: (productId: number) => void;
+  removeBundle: (campaignId: number) => void;
   updateQuantity: (productId: number, quantity: number) => void;
+  updateBundleQuantity: (campaignId: number, quantity: number) => void;
   clearCart: () => void;
 }
 
 const CartContext = createContext<CartContextValue | null>(null);
 
 const CART_STORAGE_KEY = 'pandora-cart';
-
-interface StoredCartItem {
-  product: Product;
-  quantity: number;
-}
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<LocalCartItem[]>([]);
@@ -48,8 +48,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
     try {
       const stored = localStorage.getItem(CART_STORAGE_KEY);
       if (stored) {
-        const parsed: StoredCartItem[] = JSON.parse(stored);
-        setItems(parsed);
+        const parsed: LocalCartItem[] = JSON.parse(stored);
+        // Filter out any item missing either product or bundle payload
+        // (older cart shapes with partial fields would otherwise crash pricing)
+        const valid = parsed.filter(
+          (i) => (isBundleItem(i) && i.bundle) || (isProductItem(i) && i.product),
+        );
+        setItems(valid);
       }
     } catch {
       // Ignore parse errors
@@ -66,20 +71,44 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const addToCart = useCallback((product: Product, quantity = 1) => {
     setItems((prev) => {
-      const existing = prev.find((i) => i.product.id === product.id);
+      const existing = prev.find(
+        (i) => isProductItem(i) && i.product.id === product.id,
+      );
       if (existing) {
         return prev.map((i) =>
-          i.product.id === product.id
+          isProductItem(i) && i.product.id === product.id
             ? { ...i, quantity: i.quantity + quantity }
-            : i
+            : i,
         );
       }
-      return [...prev, { product, quantity }];
+      return [...prev, { type: 'product', product, quantity }];
     });
 
     trackAddToCart(product.name, product.price, product.id, quantity);
 
-    // Fire-and-forget activation marker for logged-in users
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('pandora-auth-token') : null;
+      if (token) markActivation(token, 'first_cart').catch(() => {});
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const addBundle = useCallback((bundle: CampaignBundle, quantity = 1) => {
+    setItems((prev) => {
+      const existing = prev.find(
+        (i) => isBundleItem(i) && i.bundle.id === bundle.id,
+      );
+      if (existing) {
+        return prev.map((i) =>
+          isBundleItem(i) && i.bundle.id === bundle.id
+            ? { ...i, quantity: i.quantity + quantity }
+            : i,
+        );
+      }
+      return [...prev, { type: 'bundle', bundle, quantity }];
+    });
+
     try {
       const token = typeof window !== 'undefined' ? localStorage.getItem('pandora-auth-token') : null;
       if (token) markActivation(token, 'first_cart').catch(() => {});
@@ -89,18 +118,30 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const removeFromCart = useCallback((productId: number) => {
-    setItems((prev) => prev.filter((i) => i.product.id !== productId));
+    setItems((prev) => prev.filter((i) => !(isProductItem(i) && i.product.id === productId)));
+  }, []);
+
+  const removeBundle = useCallback((campaignId: number) => {
+    setItems((prev) => prev.filter((i) => !(isBundleItem(i) && i.bundle.id === campaignId)));
   }, []);
 
   const updateQuantity = useCallback((productId: number, quantity: number) => {
     if (quantity <= 0) {
-      setItems((prev) => prev.filter((i) => i.product.id !== productId));
+      setItems((prev) => prev.filter((i) => !(isProductItem(i) && i.product.id === productId)));
       return;
     }
     setItems((prev) =>
-      prev.map((i) =>
-        i.product.id === productId ? { ...i, quantity } : i
-      )
+      prev.map((i) => (isProductItem(i) && i.product.id === productId ? { ...i, quantity } : i)),
+    );
+  }, []);
+
+  const updateBundleQuantity = useCallback((campaignId: number, quantity: number) => {
+    if (quantity <= 0) {
+      setItems((prev) => prev.filter((i) => !(isBundleItem(i) && i.bundle.id === campaignId)));
+      return;
+    }
+    setItems((prev) =>
+      prev.map((i) => (isBundleItem(i) && i.bundle.id === campaignId ? { ...i, quantity } : i)),
     );
   }, []);
 
@@ -111,17 +152,34 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const pricing = useMemo(() => calculateCartLocally(items), [items]);
   const itemCount = useMemo(() => items.reduce((sum, i) => sum + i.quantity, 0), [items]);
 
-  const value = useMemo<CartContextValue>(() => ({
-    items,
-    tier: pricing.tier,
-    total: pricing.total,
-    itemCount,
-    itemPrices: pricing.itemPrices,
-    addToCart,
-    removeFromCart,
-    updateQuantity,
-    clearCart,
-  }), [items, pricing, itemCount, addToCart, removeFromCart, updateQuantity, clearCart]);
+  const value = useMemo<CartContextValue>(
+    () => ({
+      items,
+      tier: pricing.tier,
+      total: pricing.total,
+      itemCount,
+      itemPrices: pricing.itemPrices,
+      addToCart,
+      addBundle,
+      removeFromCart,
+      removeBundle,
+      updateQuantity,
+      updateBundleQuantity,
+      clearCart,
+    }),
+    [
+      items,
+      pricing,
+      itemCount,
+      addToCart,
+      addBundle,
+      removeFromCart,
+      removeBundle,
+      updateQuantity,
+      updateBundleQuantity,
+      clearCart,
+    ],
+  );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }

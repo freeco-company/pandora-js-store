@@ -11,21 +11,32 @@ class CartPricingService
     const VIP_THRESHOLD = 4000;
 
     /**
-     * Calculate cart pricing based on 3-tier logic:
-     * 1. Regular price (total quantity = 1)
-     * 2. Combo price (total quantity >= 2, same or different products)
-     * 3. VIP price (combo total >= 4000)
+     * Calculate cart pricing with bundle promotion support.
      *
-     * Campaign override: if ANY item in the cart belongs to an active
-     * campaign, the entire cart jumps to VIP tier regardless of total.
+     * Incoming items are a mix of:
+     *   - product items: ['product_id' => N, 'quantity' => N]
+     *   - bundle items:  ['campaign_id' => N, 'quantity' => N, 'type' => 'bundle']
+     *
+     * Pricing rules:
+     *   1. Product items — 3-tier ladder (regular / combo ≥2 / VIP ≥4000)
+     *   2. Bundle in cart → every product item also upgrades to VIP tier
+     *   3. Bundle price = sum(buy items VIP × qty) × bundle_qty, fixed
+     *
+     * A bundle whose campaign is no longer running is returned in
+     * `unavailable` with reason `bundle_expired` (cart UI should remove).
      */
     public function calculate(array $cartItems): array
     {
-        $productIds = collect($cartItems)->pluck('product_id')->unique()->values();
-        $products = Product::with('campaigns')->whereIn('id', $productIds)->get()->keyBy('id');
+        $productInputs = collect($cartItems)->filter(fn ($i) => ($i['type'] ?? 'product') !== 'bundle');
+        $bundleInputs = collect($cartItems)->filter(fn ($i) => ($i['type'] ?? null) === 'bundle');
 
         $unavailable = [];
-        $items = collect($cartItems)->map(function ($item) use ($products, &$unavailable) {
+
+        // ── Resolve product items ───────────────────────────────────
+        $productIds = $productInputs->pluck('product_id')->filter()->unique()->values();
+        $products = Product::whereIn('id', $productIds)->get()->keyBy('id');
+
+        $items = $productInputs->map(function ($item) use ($products, &$unavailable) {
             $product = $products->get($item['product_id']);
             if (!$product) {
                 $unavailable[] = ['product_id' => $item['product_id'], 'reason' => 'not_found', 'name' => '未知商品'];
@@ -57,54 +68,67 @@ class CartPricingService
             ];
         })->filter()->values();
 
-        // If all items are unavailable, return early
-        if ($items->isEmpty()) {
+        // ── Resolve bundle items ────────────────────────────────────
+        $bundleIds = $bundleInputs->pluck('campaign_id')->filter()->unique()->values();
+        $campaigns = $bundleIds->isNotEmpty()
+            ? Campaign::with(['buyItems', 'giftItems'])->whereIn('id', $bundleIds)->get()->keyBy('id')
+            : collect();
+
+        $bundles = $bundleInputs->map(function ($item) use ($campaigns, &$unavailable) {
+            $campaign = $campaigns->get($item['campaign_id']);
+            if (!$campaign) {
+                $unavailable[] = ['campaign_id' => $item['campaign_id'], 'reason' => 'bundle_not_found', 'name' => '未知套組'];
+                return null;
+            }
+            if (!$campaign->isRunning()) {
+                $unavailable[] = ['campaign_id' => $campaign->id, 'reason' => 'bundle_expired', 'name' => $campaign->name];
+                return null;
+            }
+            $qty = max(1, (int) ($item['quantity'] ?? 1));
+            return [
+                'campaign_id' => $campaign->id,
+                'campaign' => $campaign,
+                'quantity' => $qty,
+                'unit_price' => $campaign->bundlePrice(),
+            ];
+        })->filter()->values();
+
+        // Nothing purchasable
+        if ($items->isEmpty() && $bundles->isEmpty()) {
             return [
                 'tier' => 'regular',
                 'total' => 0,
                 'campaign_vip' => false,
                 'items' => [],
+                'bundles' => [],
                 'unavailable' => $unavailable,
             ];
         }
 
-        // Campaign VIP override: any cart item in an active campaign → VIP
-        $hasCampaignItem = $this->hasActiveCampaignItem($productIds);
-        if ($hasCampaignItem && $items->sum('quantity') >= 2) {
-            $vipTotal = $this->calculateTotal($items, 'vip');
-            return $this->buildResult('vip', $items, $vipTotal, true, $unavailable);
-        }
+        // ── Tier resolution ─────────────────────────────────────────
+        $hasBundle = $bundles->isNotEmpty();
+        $productQty = $items->sum('quantity');
 
-        $totalQuantity = $items->sum('quantity');
-
-        if ($totalQuantity >= 2) {
-            $comboTotal = $this->calculateTotal($items, 'combo');
-
+        $tier = 'regular';
+        if ($hasBundle) {
+            $tier = 'vip';
+        } elseif ($productQty >= 2) {
+            $tier = 'combo';
+            $comboTotal = $this->calculateProductTotal($items, 'combo');
             if ($comboTotal >= self::VIP_THRESHOLD) {
-                $vipTotal = $this->calculateTotal($items, 'vip');
-                return $this->buildResult('vip', $items, $vipTotal, false, $unavailable);
+                $tier = 'vip';
             }
-
-            return $this->buildResult('combo', $items, $comboTotal, false, $unavailable);
         }
 
-        $regularTotal = $this->calculateTotal($items, 'regular');
-        return $this->buildResult('regular', $items, $regularTotal, false, $unavailable);
+        $productTotal = $this->calculateProductTotal($items, $tier);
+        $bundleTotal = $bundles->sum(fn ($b) => $b['unit_price'] * $b['quantity']);
+
+        return $this->buildResult($tier, $items, $bundles, $productTotal + $bundleTotal, $hasBundle, $unavailable);
     }
 
-    /** Check if any of the given product IDs belong to a currently-running campaign. */
-    private function hasActiveCampaignItem(Collection $productIds): bool
+    private function calculateProductTotal(Collection $items, string $tier): float
     {
-        return Campaign::active()
-            ->whereHas('products', fn ($q) => $q->whereIn('products.id', $productIds))
-            ->exists();
-    }
-
-    private function calculateTotal(Collection $items, string $tier): float
-    {
-        return $items->sum(function ($item) use ($tier) {
-            return $this->getPrice($item['product'], $tier) * $item['quantity'];
-        });
+        return $items->sum(fn ($item) => $this->getPrice($item['product'], $tier) * $item['quantity']);
     }
 
     public function getPrice(Product $product, string $tier): float
@@ -116,8 +140,14 @@ class CartPricingService
         };
     }
 
-    private function buildResult(string $tier, Collection $items, float $total, bool $campaignVip = false, array $unavailable = []): array
-    {
+    private function buildResult(
+        string $tier,
+        Collection $items,
+        Collection $bundles,
+        float $total,
+        bool $campaignVip,
+        array $unavailable,
+    ): array {
         return [
             'tier' => $tier,
             'total' => $total,
@@ -133,6 +163,30 @@ class CartPricingService
                     'unit_price' => $unitPrice,
                     'subtotal' => $unitPrice * $item['quantity'],
                     'image' => $item['product']->image,
+                ];
+            })->values()->toArray(),
+            'bundles' => $bundles->map(function ($b) {
+                $campaign = $b['campaign'];
+                return [
+                    'campaign_id' => $b['campaign_id'],
+                    'name' => $campaign->name,
+                    'slug' => $campaign->slug,
+                    'image' => $campaign->image,
+                    'quantity' => $b['quantity'],
+                    'unit_price' => $b['unit_price'],
+                    'subtotal' => $b['unit_price'] * $b['quantity'],
+                    'buy_items' => $campaign->buyItems->map(fn ($p) => [
+                        'product_id' => $p->id,
+                        'name' => $p->name,
+                        'image' => $p->image,
+                        'quantity' => (int) $p->pivot->quantity,
+                    ])->values()->toArray(),
+                    'gift_items' => $campaign->giftItems->map(fn ($p) => [
+                        'product_id' => $p->id,
+                        'name' => $p->name,
+                        'image' => $p->image,
+                        'quantity' => (int) $p->pivot->quantity,
+                    ])->values()->toArray(),
                 ];
             })->values()->toArray(),
         ];

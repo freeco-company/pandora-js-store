@@ -20,6 +20,11 @@ export const metadata: Metadata = {
     title: '全館商品｜婕樂纖仙女館',
     description:
       'JEROSSE 婕樂纖全系列商品一覽：保健食品、美容保養、體重管理、葉黃素、益生菌、口服玻尿酸。任選兩件享搭配價，滿額再享 VIP 優惠。',
+    images: ['/opengraph-image'],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    images: ['/opengraph-image'],
   },
 };
 
