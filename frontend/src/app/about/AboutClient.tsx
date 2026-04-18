@@ -28,7 +28,7 @@ export default function AboutPage() {
       <GsapScrollInit />
       {/* Zen Maru Gothic — 日系圓角字體 + Outfit — 英文幾何圓角 */}
       {/* eslint-disable-next-line @next/next/no-page-custom-font */}
-      <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Zen+Maru+Gothic:wght@300;400;500;700;900&family=Outfit:wght@300;400;600;700;800;900&display=swap" rel="stylesheet" />
+      <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,700;1,400;1,500;1,600&family=Zen+Maru+Gothic:wght@300;400;500;700;900&family=Outfit:wght@300;400;600;700;800;900&display=swap" rel="stylesheet" />
 
       <style jsx global>{`
         .about-warm {
@@ -62,33 +62,30 @@ export default function AboutPage() {
         }
         .about-warm section { overflow: hidden; position: relative; }
 
-        /* ── Hero script title — Great Vibes 手寫體 ── */
-        .fp-script {
-          font-family: 'Great Vibes', 'Playfair Display', cursive, serif;
+        /* ── Hero wordmark — Playfair Display italic，編輯式襯線 ── */
+        .fp-serif {
+          font-family: 'Playfair Display', 'Cormorant Garamond', Georgia, serif;
           font-weight: 400;
+          font-style: italic;
           color: #2a1a10;
-          line-height: 0.9;
-          letter-spacing: 0;
-        }
-
-        /* ── Hero FP watermark — 巨大背景浮水印 ── */
-        .fp-watermark {
-          position: absolute;
-          inset: 0;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-family: 'Outfit', sans-serif;
-          font-weight: 900;
-          font-size: clamp(18rem, 62vw, 38rem);
-          letter-spacing: -0.04em;
-          color: var(--gold);
-          opacity: 0.07;
-          pointer-events: none;
-          z-index: 0;
           line-height: 1;
-          user-select: none;
-          white-space: nowrap;
+          letter-spacing: -0.01em;
+        }
+        /* 小型裝飾星芒（編輯式分隔符） */
+        .fp-ornament {
+          display: inline-flex;
+          align-items: center;
+          gap: 14px;
+          color: var(--gold);
+          font-size: 10px;
+          letter-spacing: 0.5em;
+        }
+        .fp-ornament::before,
+        .fp-ornament::after {
+          content: '';
+          width: 40px;
+          height: 1px;
+          background: linear-gradient(90deg, transparent, var(--gold), transparent);
         }
 
         /* ── Section headings ── */
@@ -235,7 +232,6 @@ export default function AboutPage() {
           1. HERO — FP 團隊
       ═══════════════════════════════════════════ */}
       <section ref={heroRef} className="relative min-h-screen flex items-center justify-center">
-        <div className="fp-watermark" aria-hidden>FP</div>
         <FloatingPetals density={6} />
         <RippleBackground opacity={0.08} />
         <MouseParallax className="absolute inset-0 flex items-center justify-center pointer-events-none" factor={0.02}>
@@ -247,16 +243,18 @@ export default function AboutPage() {
         <div className="relative max-w-4xl mx-auto px-6 text-center z-10">
           <div className="hero-enter">
             <div className="w-px h-16 mx-auto mb-6" style={{ background: 'linear-gradient(to bottom, transparent, var(--gold), transparent)' }} />
-            <span className="text-[11px] font-medium tracking-[0.6em] text-[var(--gold)] uppercase">FP TEAM · Est. 2019</span>
+            <span className="fp-en text-[11px] font-medium tracking-[0.6em] text-[var(--gold)] uppercase">FP TEAM · Est. 2019</span>
           </div>
-          <div className="hero-enter mt-8 sm:mt-10">
-            <h1 className="fp-script fp-glow text-[clamp(5rem,17vw,10rem)]">
-              <span className="block">Fairy</span>
-              <span className="block -mt-2 sm:-mt-4">Pandora</span>
+          <div className="hero-enter mt-10 sm:mt-12">
+            <h1 className="fp-serif fp-glow text-[clamp(3.25rem,11vw,7rem)]">
+              Fairy Pandora
             </h1>
           </div>
+          <div className="hero-enter mt-8">
+            <span className="fp-ornament fp-en uppercase">Since 2019</span>
+          </div>
           <div className="hero-enter mt-10">
-            <p className="text-base sm:text-lg text-[var(--ink-soft)] max-w-lg mx-auto leading-relaxed font-light">
+            <p className="text-base sm:text-lg text-[var(--ink-soft)] max-w-xl mx-auto leading-relaxed font-light">
               每個推薦的背後，都是一段真實的故事。<br />
               我們不是一間普通的電商 — 我們是一群親身體驗過改變的人。
             </p>

@@ -173,101 +173,130 @@ class OrderResource extends Resource
             'cod_no_pickup' => '未取件',
         ];
 
+        // Mobile-first card layout via Split + Stack. On < md, each "row"
+        // renders as a stacked card (top-to-bottom). On md+, Filament
+        // renders the same columns as a normal table row.
+        //
+        // Keep the SelectColumn('status') outside Split — it's interactive
+        // (inline editor) and renders better as its own column even on
+        // mobile.
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('order_number')
-                    ->searchable()
-                    ->sortable()
-                    ->copyable()
-                    ->weight('bold')
-                    ->label('訂單編號'),
+                Tables\Columns\Layout\Split::make([
+                    Tables\Columns\Layout\Stack::make([
+                        Tables\Columns\TextColumn::make('order_number')
+                            ->searchable()
+                            ->sortable()
+                            ->copyable()
+                            ->weight('bold')
+                            ->label('訂單編號'),
+                        Tables\Columns\TextColumn::make('created_at')
+                            ->dateTime('m/d H:i')
+                            ->sortable()
+                            ->color('gray')
+                            ->size('sm')
+                            ->label('建立時間'),
+                    ])->space(1),
 
-                Tables\Columns\TextColumn::make('created_at')
-                    ->dateTime('m/d H:i')
-                    ->sortable()
-                    ->tooltip(fn ($record) => $record->created_at?->format('Y-m-d H:i:s'))
-                    ->label('建立時間'),
+                    Tables\Columns\Layout\Stack::make([
+                        Tables\Columns\TextColumn::make('shipping_name')
+                            ->searchable()
+                            ->weight('medium')
+                            ->icon('heroicon-m-user')
+                            ->label('收件人'),
+                        Tables\Columns\TextColumn::make('shipping_phone')
+                            ->color('gray')
+                            ->size('sm')
+                            ->icon('heroicon-m-phone')
+                            ->label('電話'),
+                    ])->space(1),
 
-                Tables\Columns\TextColumn::make('shipping_name')
-                    ->searchable()
-                    ->description(fn ($record) => $record->shipping_phone)
-                    ->label('收件人'),
+                    Tables\Columns\Layout\Stack::make([
+                        Tables\Columns\TextColumn::make('shipping_method')
+                            ->badge()
+                            ->formatStateUsing(fn (?string $state) => match ($state) {
+                                'home_delivery' => '宅配',
+                                'cvs_711' => '7-11',
+                                'cvs_family' => '全家',
+                                default => $state ?? '-',
+                            })
+                            ->color(fn (?string $state) => match ($state) {
+                                'home_delivery' => 'info',
+                                'cvs_711', 'cvs_family' => 'warning',
+                                default => 'gray',
+                            })
+                            ->label('配送'),
+                        Tables\Columns\TextColumn::make('payment_method')
+                            ->badge()
+                            ->formatStateUsing(fn (?string $state) => match ($state) {
+                                'ecpay_credit' => '信用卡',
+                                'bank_transfer' => 'ATM',
+                                'cod' => '貨到付款',
+                                'Wooecpay_Gateway_Credit' => '信用卡（舊）',
+                                'ry_newebpay_credit' => '藍新信用卡（舊）',
+                                'ry_newebpay_credit_installment' => '藍新分期（舊）',
+                                'bacs' => 'ATM（舊）',
+                                default => $state ?? '—',
+                            })
+                            ->color(fn (?string $state) => match ($state) {
+                                'ecpay_credit', 'Wooecpay_Gateway_Credit', 'ry_newebpay_credit', 'ry_newebpay_credit_installment' => 'primary',
+                                'bank_transfer', 'bacs' => 'info',
+                                'cod' => 'warning',
+                                default => 'gray',
+                            })
+                            ->label('付款方式'),
+                        Tables\Columns\TextColumn::make('payment_status')
+                            ->badge()
+                            ->formatStateUsing(fn (?string $state) => match ($state) {
+                                'paid' => '已付款',
+                                'unpaid', 'pending' => '未付款',
+                                'refunded' => '已退款',
+                                'failed' => '付款失敗',
+                                default => $state ?? '—',
+                            })
+                            ->color(fn (?string $state) => match ($state) {
+                                'paid' => 'success',
+                                'unpaid', 'pending' => 'warning',
+                                'failed' => 'danger',
+                                'refunded' => 'gray',
+                                default => 'gray',
+                            })
+                            ->label('付款狀態'),
+                    ])->space(1),
 
-                Tables\Columns\TextColumn::make('shipping_method')
-                    ->badge()
-                    ->formatStateUsing(fn (?string $state) => match ($state) {
-                        'home_delivery' => '宅配',
-                        'cvs_711' => '7-11',
-                        'cvs_family' => '全家',
-                        default => $state ?? '-',
-                    })
-                    ->color(fn (?string $state) => match ($state) {
-                        'home_delivery' => 'info',
-                        'cvs_711', 'cvs_family' => 'warning',
-                        default => 'gray',
-                    })
-                    ->label('配送方式'),
+                    Tables\Columns\TextColumn::make('total')
+                        ->money('TWD', 0)
+                        ->sortable()
+                        ->alignEnd()
+                        ->weight('bold')
+                        ->size('lg')
+                        ->color('primary')
+                        ->label('金額'),
+                ])->from('md'),
 
-                Tables\Columns\TextColumn::make('ecpay_logistics_id')
-                    ->label('物流編號')
-                    ->placeholder('—')
-                    ->copyable()
-                    ->description(fn ($record) => $record->booking_note ? "寄件 {$record->booking_note}" : null)
-                    ->toggleable(),
-
-                Tables\Columns\TextColumn::make('payment_method')
-                    ->badge()
-                    ->formatStateUsing(fn (?string $state) => match ($state) {
-                        // Current system values
-                        'ecpay_credit' => '信用卡',
-                        'bank_transfer' => 'ATM',
-                        'cod' => '貨到付款',
-                        // Legacy values carried over from the WP / WooCommerce import
-                        'Wooecpay_Gateway_Credit' => '信用卡（舊）',
-                        'ry_newebpay_credit' => '藍新信用卡（舊）',
-                        'ry_newebpay_credit_installment' => '藍新分期（舊）',
-                        'bacs' => 'ATM（舊）',
-                        default => $state ?? '—',
-                    })
-                    ->color(fn (?string $state) => match ($state) {
-                        'ecpay_credit', 'Wooecpay_Gateway_Credit', 'ry_newebpay_credit', 'ry_newebpay_credit_installment' => 'primary',
-                        'bank_transfer', 'bacs' => 'info',
-                        'cod' => 'warning',
-                        default => 'gray',
-                    })
-                    ->label('付款方式'),
-
-                Tables\Columns\TextColumn::make('payment_status')
-                    ->badge()
-                    ->formatStateUsing(fn (?string $state) => match ($state) {
-                        'paid' => '已付款',
-                        'unpaid', 'pending' => '未付款', // 'pending' from WP imports
-                        'refunded' => '已退款',
-                        'failed' => '付款失敗',
-                        default => $state ?? '—',
-                    })
-                    ->color(fn (?string $state) => match ($state) {
-                        'paid' => 'success',
-                        'unpaid', 'pending' => 'warning',
-                        'failed' => 'danger',
-                        'refunded' => 'gray',
-                        default => 'gray',
-                    })
-                    ->label('付款狀態'),
-
-                Tables\Columns\TextColumn::make('total')
-                    ->money('TWD', 0)
-                    ->sortable()
-                    ->alignEnd()
-                    ->weight('bold')
-                    ->color('primary')
-                    ->label('金額'),
-
-                Tables\Columns\SelectColumn::make('status')
-                    ->options($statusOptions)
-                    ->selectablePlaceholder(false)
-                    ->rules(['required'])
-                    ->label('狀態'),
+                // Expandable section on each card — mobile shows logistics
+                // detail + status selector collapsed under the main row.
+                Tables\Columns\Layout\Panel::make([
+                    Tables\Columns\Layout\Split::make([
+                        Tables\Columns\TextColumn::make('ecpay_logistics_id')
+                            ->label('物流編號')
+                            ->placeholder('—')
+                            ->copyable()
+                            ->icon('heroicon-m-truck'),
+                        Tables\Columns\TextColumn::make('booking_note')
+                            ->label('寄件編號')
+                            ->placeholder('—')
+                            ->color('gray'),
+                        Tables\Columns\SelectColumn::make('status')
+                            ->options($statusOptions)
+                            ->selectablePlaceholder(false)
+                            ->rules(['required']),
+                    ]),
+                ])->collapsible(),
+            ])
+            ->contentGrid([
+                'default' => 1,  // mobile = 1-column card grid
+                'md' => null,    // md+ = normal table
             ])
             ->paginated([25, 50, 100, 200])
             ->defaultPaginationPageOption(25)
