@@ -445,8 +445,8 @@ function CountdownSection({ campaign }: { campaign: Campaign }) {
         {campaign.bundles.length > 0 && (
           <div className="grid grid-cols-2 sm:flex sm:justify-center gap-3 sm:gap-4">
             {campaign.bundles.slice(0, 4).map((b: CampaignBundle, i: number) => {
-              const saved = b.bundle_original_price - b.bundle_price;
-              const pct = saved > 0 ? Math.round((saved / b.bundle_original_price) * 100) : 0;
+              const saved = b.bundle_value_price - b.bundle_price;
+              const pct = saved > 0 ? Math.round((saved / b.bundle_value_price) * 100) : 0;
               return (
                 <Link
                   key={b.id}
@@ -495,14 +495,15 @@ function CountdownSection({ campaign }: { campaign: Campaign }) {
                         ${b.bundle_price.toLocaleString()}
                       </span>
                       {saved > 0 && (
-                        <span className="text-[11px] text-gray-400 line-through">
-                          ${b.bundle_original_price.toLocaleString()}
+                        <span className="inline-flex items-baseline gap-0.5 text-[11px] text-gray-400">
+                          <span className="text-[9px] font-bold">價值</span>
+                          <span className="line-through">${b.bundle_value_price.toLocaleString()}</span>
                         </span>
                       )}
                     </div>
                     {saved > 0 && (
                       <div className="mt-1.5 text-[11px] font-black text-[#c0392b]/70">
-                        現省 ${saved.toLocaleString()}
+                        現省 ${saved.toLocaleString()}・{pct}% OFF
                       </div>
                     )}
                   </div>

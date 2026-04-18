@@ -22,7 +22,7 @@ export default function CartStickyCTA({ hasUnavailable = false }: { hasUnavailab
       0,
     ) +
     items.filter(isBundleItem).reduce(
-      (sum, i) => sum + i.bundle.bundle_original_price * i.quantity,
+      (sum, i) => sum + i.bundle.bundle_value_price * i.quantity,
       0,
     );
   const savings = Math.max(0, regularTotal - total);

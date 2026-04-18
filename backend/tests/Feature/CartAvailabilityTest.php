@@ -205,7 +205,7 @@ class CartAvailabilityTest extends TestCase
             ->assertJsonCount(1, 'bundles')
             ->assertJsonPath('bundles.0.name', '益生菌買3送1')
             ->assertJsonPath('bundles.0.bundle_price', 2400)
-            ->assertJsonPath('bundles.0.bundle_original_price', 3000)
+            ->assertJsonPath('bundles.0.bundle_value_price', 3000)
             ->assertJsonCount(1, 'bundles.0.buy_items')
             ->assertJsonCount(1, 'bundles.0.gift_items');
     }

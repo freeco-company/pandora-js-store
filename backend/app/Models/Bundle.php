@@ -11,7 +11,8 @@ use Illuminate\Database\Eloquent\Model;
 class Bundle extends Model
 {
     protected $fillable = [
-        'campaign_id', 'name', 'slug', 'description', 'image', 'sort_order',
+        'campaign_id', 'name', 'slug', 'description', 'image',
+        'value_price', 'sort_order',
     ];
 
     // ─── Relations ───────────────────────────────────────────
@@ -60,6 +61,19 @@ class Bundle extends Model
         return (float) $this->buyItems->sum(
             fn ($p) => (float) $p->price * (int) $p->pivot->quantity,
         );
+    }
+
+    /**
+     * 「價值」 — strikethrough anchor shown alongside 套組價.
+     * Admin-entered value_price wins; otherwise fall back to computed retail
+     * sum so bundles without an explicit value still display sensibly.
+     */
+    public function valuePrice(): float
+    {
+        if ($this->value_price !== null && (float) $this->value_price > 0) {
+            return (float) $this->value_price;
+        }
+        return $this->bundleOriginalPrice();
     }
 
     // ─── Helpers ─────────────────────────────────────────────

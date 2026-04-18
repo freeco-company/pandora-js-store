@@ -51,7 +51,7 @@ class BundleController extends Controller
             'description' => $bundle->description,
             'image' => $bundle->image,
             'bundle_price' => $bundle->bundlePrice(),
-            'bundle_original_price' => $bundle->bundleOriginalPrice(),
+            'bundle_value_price' => $bundle->valuePrice(),
             'buy_items' => $bundle->buyItems->map($mapItem)->values(),
             'gift_items' => $bundle->giftItems->map($mapItem)->values(),
             'campaign' => $campaign ? [

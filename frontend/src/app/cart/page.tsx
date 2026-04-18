@@ -59,7 +59,7 @@ export default function CartPage() {
 
   const regularTotal =
     productItems.reduce((sum, i) => sum + i.product.price * i.quantity, 0) +
-    bundleItems.reduce((sum, i) => sum + i.bundle.bundle_original_price * i.quantity, 0);
+    bundleItems.reduce((sum, i) => sum + i.bundle.bundle_value_price * i.quantity, 0);
   const savings = regularTotal - total;
 
   useEffect(() => {
@@ -194,7 +194,7 @@ export default function CartPage() {
             const priceInfo = itemPrices.find((p) => p.key === `b:${b.id}`);
             const unitPrice = priceInfo?.unitPrice ?? b.bundle_price;
             const subtotal = priceInfo?.subtotal ?? b.bundle_price * item.quantity;
-            const hasDiscount = unitPrice < b.bundle_original_price;
+            const hasDiscount = unitPrice < b.bundle_value_price;
             const isUnavailable = unavailableBundleIds.has(b.id);
             const unavailableInfo = unavailable.find((u) => u.bundle_id === b.id);
 
@@ -273,7 +273,7 @@ export default function CartPage() {
                     <div className="flex items-baseline gap-2">
                       <span className="font-bold text-[#c0392b]">{formatPrice(unitPrice)}</span>
                       {hasDiscount && (
-                        <span className="text-xs text-gray-400 line-through">{formatPrice(b.bundle_original_price)}</span>
+                        <span className="text-xs text-gray-400 line-through">{formatPrice(b.bundle_value_price)}</span>
                       )}
                     </div>
                     <div className="text-xs text-gray-500">小計 {formatPrice(subtotal)}</div>

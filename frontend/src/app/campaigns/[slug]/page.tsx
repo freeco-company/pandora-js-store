@@ -110,8 +110,8 @@ export default async function CampaignPage({ params }: { params: Promise<{ slug:
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {campaign.bundles.map((b) => {
-                const savings = b.bundle_original_price - b.bundle_price;
-                const pct = savings > 0 ? Math.round((savings / b.bundle_original_price) * 100) : 0;
+                const savings = b.bundle_value_price - b.bundle_price;
+                const pct = savings > 0 ? Math.round((savings / b.bundle_value_price) * 100) : 0;
                 return (
                   <Link
                     key={b.id}
@@ -143,13 +143,14 @@ export default async function CampaignPage({ params }: { params: Promise<{ slug:
                       {b.description && (
                         <p className="text-xs text-[#7a5836]/70 line-clamp-2 mb-3">{b.description}</p>
                       )}
-                      <div className="flex items-baseline gap-2 mt-3">
+                      <div className="flex items-baseline gap-2 mt-3 flex-wrap">
                         <span className="text-2xl font-black text-[#c0392b]">
                           {formatPrice(b.bundle_price)}
                         </span>
                         {savings > 0 && (
-                          <span className="text-sm text-gray-400 line-through">
-                            {formatPrice(b.bundle_original_price)}
+                          <span className="inline-flex items-baseline gap-1 text-sm text-gray-400">
+                            <span className="text-[10px] font-bold">價值</span>
+                            <span className="line-through">{formatPrice(b.bundle_value_price)}</span>
                           </span>
                         )}
                       </div>

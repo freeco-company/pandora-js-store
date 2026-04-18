@@ -46,6 +46,12 @@ class BundlesRelationManager extends RelationManager
                         ->label('套組主圖')
                         ->helperText('活動頁卡片 + 套組詳情頁 hero')
                         ->columnSpanFull(),
+                    Forms\Components\TextInput::make('value_price')
+                        ->numeric()
+                        ->prefix('NT$')
+                        ->minValue(0)
+                        ->label('價值')
+                        ->helperText('套組價旁邊的劃線錨點；留空則自動用購買商品的原價加總。'),
                     Forms\Components\TextInput::make('sort_order')
                         ->numeric()
                         ->default(0)
@@ -120,9 +126,8 @@ class BundlesRelationManager extends RelationManager
                     ->weight('bold')
                     ->description(fn ($record) => $record->slug)
                     ->label('套組名稱'),
-                // Live prices — 套組價 (VIP total) is what frontend charges;
-                // 原價 (retail total) is the strikethrough anchor. Both computed
-                // per-row from Bundle pricing helpers.
+                // 套組價 = buy items' VIP × qty (what frontend charges)
+                // 價值   = admin-entered anchor, falls back to retail sum when empty
                 Tables\Columns\TextColumn::make('bundle_price')
                     ->state(fn ($record) => $record->bundlePrice())
                     ->money('TWD', 0)
@@ -130,15 +135,15 @@ class BundlesRelationManager extends RelationManager
                     ->color('primary')
                     ->alignEnd()
                     ->label('套組價'),
-                Tables\Columns\TextColumn::make('bundle_original_price')
-                    ->state(fn ($record) => $record->bundleOriginalPrice())
+                Tables\Columns\TextColumn::make('value_price')
+                    ->state(fn ($record) => $record->valuePrice())
                     ->money('TWD', 0)
                     ->alignEnd()
                     ->color('gray')
-                    ->description(fn ($record) => $record->bundleOriginalPrice() > 0
-                        ? '省 $' . number_format($record->bundleOriginalPrice() - $record->bundlePrice(), 0)
+                    ->description(fn ($record) => $record->valuePrice() > $record->bundlePrice()
+                        ? '省 $' . number_format($record->valuePrice() - $record->bundlePrice(), 0)
                         : null)
-                    ->label('原價'),
+                    ->label('價值'),
                 Tables\Columns\TextColumn::make('buy_items_count')
                     ->counts('buyItems')
                     ->alignEnd()

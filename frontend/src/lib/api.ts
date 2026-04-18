@@ -124,8 +124,8 @@ export interface CampaignBundle {
   slug: string;
   description: string | null;
   image: string | null;
-  bundle_price: number;           // sum of buy items' VIP × qty
-  bundle_original_price: number;  // sum of buy items' retail × qty
+  bundle_price: number;       // 套組價 — sum of buy items' VIP × qty
+  bundle_value_price: number; // 價值 — admin-entered anchor, falls back to retail sum
   buy_items: CampaignBundleItem[];
   gift_items: CampaignBundleItem[];
   /** Present on /api/bundles/{slug} responses */

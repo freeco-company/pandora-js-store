@@ -49,8 +49,8 @@ export default function CampaignBundleCard({ bundle }: { bundle: CampaignBundle 
   const { total, days, hours, minutes, seconds } = useCountdown(endAt);
   const [adding, setAdding] = useState(false);
 
-  const savings = bundle.bundle_original_price - bundle.bundle_price;
-  const pct = savings > 0 ? Math.round((savings / bundle.bundle_original_price) * 100) : 0;
+  const savings = bundle.bundle_value_price - bundle.bundle_price;
+  const pct = savings > 0 ? Math.round((savings / bundle.bundle_value_price) * 100) : 0;
 
   const handleAdd = () => {
     setAdding(true);
@@ -152,14 +152,15 @@ export default function CampaignBundleCard({ bundle }: { bundle: CampaignBundle 
                   {formatPrice(bundle.bundle_price)}
                 </span>
                 {savings > 0 && (
-                  <span className="text-sm text-gray-400 line-through">
-                    {formatPrice(bundle.bundle_original_price)}
+                  <span className="inline-flex items-baseline gap-1 text-sm text-gray-400">
+                    <span className="text-[10px] font-bold">價值</span>
+                    <span className="line-through">{formatPrice(bundle.bundle_value_price)}</span>
                   </span>
                 )}
               </div>
               {savings > 0 && (
                 <div className="mt-1.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#c0392b]/10 border border-[#c0392b]/15">
-                  <span className="text-[11px] font-black text-[#c0392b]">現省 {formatPrice(savings)}</span>
+                  <span className="text-[11px] font-black text-[#c0392b]">現省 {formatPrice(savings)}・{pct}% OFF</span>
                 </div>
               )}
             </div>

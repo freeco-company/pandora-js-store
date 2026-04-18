@@ -70,7 +70,7 @@ class CampaignController extends Controller
             'description' => $b->description,
             'image' => $b->image,
             'bundle_price' => $b->bundlePrice(),
-            'bundle_original_price' => $b->bundleOriginalPrice(),
+            'bundle_value_price' => $b->valuePrice(),
             'buy_items' => $b->buyItems->map($mapItem)->values(),
             'gift_items' => $b->giftItems->map($mapItem)->values(),
         ];
