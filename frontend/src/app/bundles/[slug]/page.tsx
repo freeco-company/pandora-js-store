@@ -115,30 +115,58 @@ export default async function BundlePage({ params }: { params: Promise<{ slug: s
 
               {/* Info */}
               <div className="text-center md:text-left">
-                {/* Campaign chip — 移到資訊區頂端、靠近標題。更大火焰 + 搖曳動畫 */}
+                {/* Campaign chip — 火焰直接坐在紅色 chip 上，不再包白圓，視覺更一體 */}
                 {campaign && (
                   <a
                     href={`/campaigns/${campaign.slug}`}
-                    className="inline-flex items-center gap-2 pl-1.5 pr-4 py-1.5 rounded-full bg-gradient-to-r from-[#c0392b] to-[#e74c3c] shadow-lg shadow-[#c0392b]/30 hover:scale-105 transition-transform mb-5"
+                    className="inline-flex items-center gap-2 pl-3 pr-4 py-2 rounded-full bg-gradient-to-r from-[#c0392b] to-[#e74c3c] shadow-lg shadow-[#c0392b]/30 hover:scale-105 transition-transform mb-5"
                   >
-                    <span className="w-9 h-9 rounded-full bg-white/95 flex items-center justify-center shadow-inner">
-                      {/* 彩色火焰 SVG — 大一點 + flicker 動畫 */}
-                      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" className="animate-[flame-flicker_1.2s_ease-in-out_infinite]" style={{ transformOrigin: '50% 100%' }}>
-                        <defs>
-                          <linearGradient id="flame-bundle" x1="0" y1="1" x2="0" y2="0">
-                            <stop offset="0%" stopColor="#ff4757"/>
-                            <stop offset="50%" stopColor="#ff9f43"/>
-                            <stop offset="100%" stopColor="#ffd93d"/>
-                          </linearGradient>
-                          <linearGradient id="flame-bundle-inner" x1="0" y1="1" x2="0" y2="0">
-                            <stop offset="0%" stopColor="#ff9f43"/>
-                            <stop offset="100%" stopColor="#ffffff"/>
-                          </linearGradient>
-                        </defs>
-                        <path d="M12 2s4 4 4 8a4 4 0 11-8 0c0-1.5.5-2.5.5-2.5S6 10 6 14a6 6 0 1012 0c0-5-6-12-6-12z" fill="url(#flame-bundle)"/>
-                        <path d="M12 9c1.5 1.5 2 3 2 4.5a2 2 0 11-4 0c0-1 .5-2 1-2.5z" fill="url(#flame-bundle-inner)" opacity="0.9"/>
-                      </svg>
-                    </span>
+                    {/* 重繪火焰：雙層火舌，外層飽和、內層亮芯，直接落在紅 chip 上 */}
+                    <svg
+                      width="28"
+                      height="32"
+                      viewBox="0 0 24 28"
+                      fill="none"
+                      className="animate-[flame-flicker_1.1s_ease-in-out_infinite] drop-shadow-[0_0_6px_rgba(255,217,61,0.55)] shrink-0"
+                      style={{ transformOrigin: '50% 100%' }}
+                    >
+                      <defs>
+                        <linearGradient id="flame-outer" x1="0.5" y1="1" x2="0.5" y2="0">
+                          <stop offset="0%" stopColor="#ff9f43"/>
+                          <stop offset="55%" stopColor="#ffd93d"/>
+                          <stop offset="100%" stopColor="#fff5b5"/>
+                        </linearGradient>
+                        <linearGradient id="flame-inner" x1="0.5" y1="1" x2="0.5" y2="0">
+                          <stop offset="0%" stopColor="#fff5b5"/>
+                          <stop offset="100%" stopColor="#ffffff"/>
+                        </linearGradient>
+                      </defs>
+                      {/* 外火舌 — 不對稱波浪邊給「搖曳感」，底部收窄像 flame 從芯噴出 */}
+                      <path
+                        d="M12 1
+                           C 14.2 4.6 16.4 6.8 16.4 10.2
+                           C 16.4 11.8 15.7 12.6 15.3 13.4
+                           C 16.8 13.6 18.8 12 19 10.2
+                           C 20.4 13.6 20.6 16.4 19.2 19
+                           C 17.6 22.2 14.4 24.2 12 24.2
+                           C 9.6 24.2 6.4 22.2 4.8 19
+                           C 3.4 16.4 3.6 13.6 5 10.2
+                           C 5.2 12 7.2 13.6 8.7 13.4
+                           C 8.3 12.6 7.6 11.8 7.6 10.2
+                           C 7.6 6.8 9.8 4.6 12 1 Z"
+                        fill="url(#flame-outer)"
+                      />
+                      {/* 內芯 — 較瘦，拉高亮度層次 */}
+                      <path
+                        d="M12 8.5
+                           C 13.4 10.8 14 12.6 14 14.6
+                           C 14 17 12.8 18.4 12 20.4
+                           C 11.2 18.4 10 17 10 14.6
+                           C 10 12.6 10.6 10.8 12 8.5 Z"
+                        fill="url(#flame-inner)"
+                        opacity="0.95"
+                      />
+                    </svg>
                     <span className="text-sm font-black tracking-wide text-white">{campaign.name}</span>
                     <span className="text-white/70 text-xs font-bold">查看活動 →</span>
                   </a>
