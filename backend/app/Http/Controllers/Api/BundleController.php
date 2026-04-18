@@ -52,6 +52,10 @@ class BundleController extends Controller
             'image' => $bundle->image,
             'bundle_price' => $bundle->bundlePrice(),
             'bundle_value_price' => $bundle->valuePrice(),
+            'custom_gifts' => array_values(array_filter(
+                (array) ($bundle->custom_gifts ?? []),
+                fn ($g) => filled($g['name'] ?? null),
+            )),
             'buy_items' => $bundle->buyItems->map($mapItem)->values(),
             'gift_items' => $bundle->giftItems->map($mapItem)->values(),
             'campaign' => $campaign ? [

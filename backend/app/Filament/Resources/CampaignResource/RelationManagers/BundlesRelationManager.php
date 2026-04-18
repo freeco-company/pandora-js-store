@@ -106,6 +106,30 @@ class BundlesRelationManager extends RelationManager
                             ->reorderable(false)
                             ->dehydrated(),
                     ]),
+
+                \Filament\Schemas\Components\Section::make('自訂加贈（非商品）')
+                    ->description('像「營養師課程」、「纖體陪伴班」這類服務型贈品 — 不在商品表、不走庫存、純前台展示用。留空即可忽略。')
+                    ->schema([
+                        Forms\Components\Repeater::make('custom_gifts')
+                            ->hiddenLabel()
+                            ->schema([
+                                Forms\Components\TextInput::make('name')
+                                    ->label('品項名稱')
+                                    ->placeholder('例：營養師14天份纖體專班')
+                                    ->required()
+                                    ->maxLength(120),
+                                Forms\Components\TextInput::make('quantity')
+                                    ->label('數量')
+                                    ->numeric()
+                                    ->minValue(1)
+                                    ->default(1)
+                                    ->required(),
+                            ])
+                            ->columns(2)
+                            ->addActionLabel('+ 加入自訂加贈')
+                            ->reorderable()
+                            ->collapsible(),
+                    ]),
             ])
             ->columns(1);
     }

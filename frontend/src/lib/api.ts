@@ -128,6 +128,8 @@ export interface CampaignBundle {
   bundle_value_price: number; // 價值 — admin-entered anchor, falls back to retail sum
   buy_items: CampaignBundleItem[];
   gift_items: CampaignBundleItem[];
+  /** 自訂加贈（非商品）— 服務型贈品，只用於前台顯示 */
+  custom_gifts: { name: string; quantity: number }[];
   /** Present on /api/bundles/{slug} responses */
   campaign?: {
     id: number;

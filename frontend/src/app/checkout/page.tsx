@@ -755,7 +755,7 @@ export default function CheckoutPage() {
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 line-clamp-1">【套組】{b.name}</p>
+                        <p className="text-sm font-medium text-gray-900 line-clamp-1">【活動限時優惠】{b.name}</p>
                         <p className="text-xs text-gray-500">{formatPrice(unitPrice)} x {item.quantity}</p>
                       </div>
                       <span className="text-sm font-medium text-gray-900 shrink-0">{formatPrice(subtotal)}</span>

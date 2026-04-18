@@ -150,7 +150,7 @@ export default function CartPage() {
 
         {bundleItems.length > 0 && (
           <p className="text-sm text-green-700 font-medium">
-            套組啟動 VIP 價 — 整車直接享最高優惠！
+            活動限時優惠啟動 VIP 價 — 整車直接享最高優惠！
           </p>
         )}
 
@@ -210,24 +210,30 @@ export default function CartPage() {
                 )}
 
                 <div className="flex items-start gap-3 mb-3">
-                  <div className="relative w-24 h-24 sm:w-28 sm:h-28 bg-white rounded-xl overflow-hidden shrink-0 border border-[#e7d9cb] shadow-sm">
+                  {/* object-contain + 淡色底 — 避免活動宣傳圖（寬橫幅）被 cover 裁切 */}
+                  <Link href={`/bundles/${b.slug}`} className="relative w-24 h-24 sm:w-28 sm:h-28 bg-white rounded-xl overflow-hidden shrink-0 border border-[#e7d9cb] shadow-sm hover:ring-2 hover:ring-[#9F6B3E]/30 transition">
                     {b.image ? (
                       <ImageWithFallback
                         src={imageUrl(b.image)!}
                         alt={b.name}
                         fill
                         sizes="(max-width: 640px) 96px, 112px"
-                        className="object-cover"
+                        className="object-contain"
                       />
                     ) : (
                       <LogoPlaceholder />
                     )}
-                  </div>
+                  </Link>
                   <div className="flex-1 min-w-0 flex flex-col gap-1.5">
                     <span className="inline-flex self-start items-center gap-1 px-2 py-0.5 rounded-full bg-[#c0392b] text-white text-[10px] font-black">
-                      套組
+                      活動限時優惠
                     </span>
-                    <span className="font-black text-gray-900 line-clamp-2 leading-tight">{b.name}</span>
+                    <Link
+                      href={`/bundles/${b.slug}`}
+                      className="font-black text-gray-900 line-clamp-2 leading-tight hover:text-[#9F6B3E] transition-colors"
+                    >
+                      {b.name}
+                    </Link>
                   </div>
                   <button
                     onClick={() => setRemoveConfirmId({ type: 'bundle', id: b.id })}
@@ -248,7 +254,7 @@ export default function CartPage() {
                     </div>
                   ))}
                 </div>
-                {b.gift_items.length > 0 && (
+                {(b.gift_items.length > 0 || b.custom_gifts.length > 0) && (
                   <div className="space-y-1 mb-3">
                     <div className="text-[10px] font-black text-[#e74c3c] tracking-wider">加贈</div>
                     {b.gift_items.map((gi, idx) => (
@@ -256,6 +262,14 @@ export default function CartPage() {
                         <span className="w-1.5 h-1.5 rounded-full bg-[#e74c3c] shrink-0" />
                         <span>{gi.product.name}</span>
                         <span className="text-gray-500">× {gi.quantity}</span>
+                        <span className="ml-auto text-[10px] font-black text-[#e74c3c] bg-[#e74c3c]/10 px-1.5 py-0.5 rounded-full">FREE</span>
+                      </div>
+                    ))}
+                    {b.custom_gifts.map((cg, idx) => (
+                      <div key={`cg-${idx}`} className="flex items-center gap-2 text-sm text-gray-700">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#e74c3c] shrink-0" />
+                        <span>{cg.name}</span>
+                        <span className="text-gray-500">× {cg.quantity}</span>
                         <span className="ml-auto text-[10px] font-black text-[#e74c3c] bg-[#e74c3c]/10 px-1.5 py-0.5 rounded-full">FREE</span>
                       </div>
                     ))}
@@ -482,7 +496,7 @@ export default function CartPage() {
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 modal-overlay-in" onClick={() => setRemoveConfirmId(null)}>
             <div className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl modal-content-pop" onClick={(e) => e.stopPropagation()}>
               <h3 className="text-lg font-bold text-gray-900 mb-2">
-                {removeConfirmId.type === 'bundle' ? '移除套組' : '移除商品'}
+                {removeConfirmId.type === 'bundle' ? '移除活動限時優惠' : '移除商品'}
               </h3>
               <p className="text-gray-600 mb-6">
                 確定要從購物車移除「<strong className="text-gray-900">{name}</strong>」嗎？

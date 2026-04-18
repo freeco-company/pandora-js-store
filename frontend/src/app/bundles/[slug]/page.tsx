@@ -17,16 +17,16 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     const ogImage = b.image ? imageUrl(b.image) : undefined;
     return {
       title: b.name,
-      description: b.description || `${b.name} — 限時套組，加入購物車即享整車 VIP 價`,
+      description: b.description || `${b.name} — 活動限時優惠，加入購物車即享整車 VIP 價`,
       alternates: { canonical: `/bundles/${slug}` },
       openGraph: {
         title: b.name,
-        description: b.description || `${b.name} — 限時套組`,
+        description: b.description || `${b.name} — 活動限時優惠`,
         ...(ogImage ? { images: [ogImage] } : {}),
       },
     };
   } catch {
-    return { title: '套組不存在' };
+    return { title: '活動限時優惠不存在' };
   }
 }
 

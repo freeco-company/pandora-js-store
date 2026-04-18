@@ -71,6 +71,10 @@ class CampaignController extends Controller
             'image' => $b->image,
             'bundle_price' => $b->bundlePrice(),
             'bundle_value_price' => $b->valuePrice(),
+            'custom_gifts' => array_values(array_filter(
+                (array) ($b->custom_gifts ?? []),
+                fn ($g) => filled($g['name'] ?? null),
+            )),
             'buy_items' => $b->buyItems->map($mapItem)->values(),
             'gift_items' => $b->giftItems->map($mapItem)->values(),
         ];

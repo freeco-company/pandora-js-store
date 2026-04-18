@@ -12,7 +12,11 @@ class Bundle extends Model
 {
     protected $fillable = [
         'campaign_id', 'name', 'slug', 'description', 'image',
-        'value_price', 'sort_order',
+        'value_price', 'custom_gifts', 'sort_order',
+    ];
+
+    protected $casts = [
+        'custom_gifts' => 'array',
     ];
 
     // ─── Relations ───────────────────────────────────────────

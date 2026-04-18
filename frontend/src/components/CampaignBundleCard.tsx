@@ -68,7 +68,7 @@ export default function CampaignBundleCard({ bundle }: { bundle: CampaignBundle 
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
             <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
           </span>
-          <span className="text-xs font-black tracking-wider">限時套組</span>
+          <span className="text-xs font-black tracking-wider">活動限時優惠</span>
         </div>
         {pct > 0 && (
           <span className="px-2 py-0.5 rounded-full bg-red-500 text-white text-[10px] font-black">
@@ -112,8 +112,8 @@ export default function CampaignBundleCard({ bundle }: { bundle: CampaignBundle 
           </ul>
         </section>
 
-        {/* Gift block */}
-        {bundle.gift_items.length > 0 && (
+        {/* Gift block — 商品 gift + 自訂 gift 合併顯示 */}
+        {(bundle.gift_items.length > 0 || bundle.custom_gifts.length > 0) && (
           <section className="mb-4">
             <div className="flex items-center gap-2 text-xs font-black text-[#e74c3c] mb-3">
               <span className="w-6 h-6 rounded-md bg-[#e74c3c] text-white flex items-center justify-center text-[11px]">送</span>
@@ -135,6 +135,23 @@ export default function CampaignBundleCard({ bundle }: { bundle: CampaignBundle 
                   </div>
                   <span className="text-[10px] font-black text-white bg-[#e74c3c] px-2 py-0.5 rounded-full">
                     × {item.quantity} FREE
+                  </span>
+                </li>
+              ))}
+              {/* 自訂加贈（服務型，無商品圖）— 用淡色禮物 icon 佔位 */}
+              {bundle.custom_gifts.map((cg, idx) => (
+                <li key={`cg-${idx}`} className="flex items-center gap-3 p-3 rounded-xl bg-[#fef5f3] border border-[#e74c3c]/10">
+                  <div className="relative w-12 h-12 rounded-lg bg-[#e74c3c]/10 shrink-0 flex items-center justify-center">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-[#e74c3c]">
+                      <path d="M20 12v10H4V12M2 7h20v5H2V7zM12 22V7M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-black text-[#3d2e22] line-clamp-1">{cg.name}</div>
+                    <div className="text-[11px] text-[#e74c3c]/70">限時加贈</div>
+                  </div>
+                  <span className="text-[10px] font-black text-white bg-[#e74c3c] px-2 py-0.5 rounded-full">
+                    × {cg.quantity} FREE
                   </span>
                 </li>
               ))}
@@ -198,7 +215,7 @@ export default function CampaignBundleCard({ bundle }: { bundle: CampaignBundle 
           </button>
 
           <p className="mt-3 text-[11px] text-center text-[#7a5836]/70">
-            套組加入購物車後，其他商品將自動以 VIP 價計算。
+            活動限時優惠加入購物車後，其他商品將自動以 VIP 價計算。
             <Link href="/cart" className="text-[#9F6B3E] underline ml-1">前往購物車 →</Link>
           </p>
         </div>

@@ -58,7 +58,10 @@ export default async function CampaignPage({ params }: { params: Promise<{ slug:
 
   return (
     <div className="min-h-screen">
-      {jsonLdScript(eventSchema)}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: jsonLdScript(eventSchema) }}
+      />
 
       {/* Hero */}
       <section className="relative bg-gradient-to-br from-[#9F6B3E] via-[#c9935a] to-[#85572F] text-white overflow-hidden">
@@ -89,7 +92,7 @@ export default async function CampaignPage({ params }: { params: Promise<{ slug:
                 <SiteIcon name="fire" size={14} />
                 <span>
                   活動至 {endDate.toLocaleDateString('zh-TW', { month: 'long', day: 'numeric' })} ·
-                  任一套組加入購物車即享整車 VIP 價
+                  任一活動限時優惠加入購物車即享整車 VIP 價
                 </span>
               </div>
             </div>
@@ -101,12 +104,12 @@ export default async function CampaignPage({ params }: { params: Promise<{ slug:
       <section className="max-w-[1290px] mx-auto px-5 sm:px-6 lg:px-8 py-10 sm:py-14">
         {campaign.bundles.length === 0 ? (
           <div className="text-center py-16 text-gray-500">
-            活動正在準備中，套組即將上架
+            活動正在準備中，活動限時優惠即將上架
           </div>
         ) : (
           <>
             <h2 className="text-xl sm:text-2xl font-black text-[#3d2e22] mb-6">
-              活動套組（{campaign.bundles.length} 組）
+              活動限時優惠（{campaign.bundles.length} 組）
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {campaign.bundles.map((b) => {
@@ -116,26 +119,35 @@ export default async function CampaignPage({ params }: { params: Promise<{ slug:
                   <Link
                     key={b.id}
                     href={`/bundles/${b.slug}`}
-                    className="group relative block rounded-3xl overflow-hidden bg-white border border-[#e7d9cb] shadow-md shadow-[#9F6B3E]/5 hover:shadow-xl hover:-translate-y-1 transition-all"
+                    className="group relative block rounded-3xl bg-white border border-[#e7d9cb]/60 shadow-md shadow-[#9F6B3E]/[0.04] hover:shadow-xl hover:shadow-[#9F6B3E]/[0.12] hover:-translate-y-1 transition-all duration-500"
                   >
-                    <div className="relative aspect-[4/3] bg-gradient-to-br from-[#fdf7ef] to-[#f7eee3]">
+                    <div className="relative aspect-[4/3] bg-gradient-to-br from-[#fdf7ef] to-[#f7eee3] rounded-t-3xl overflow-hidden">
                       {b.image ? (
                         <ImageWithFallback
                           src={imageUrl(b.image)!}
                           alt={b.name}
                           fill
                           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                          className="object-cover transition-transform duration-500 group-hover:scale-105"
+                          className="object-contain transition-transform duration-500 group-hover:scale-105"
                         />
                       ) : (
                         <LogoPlaceholder />
                       )}
-                      {pct > 0 && (
-                        <div className="absolute top-3 right-3 px-2.5 py-1 rounded-full bg-[#c0392b] text-white text-xs font-black shadow-md">
-                          省 {pct}%
-                        </div>
-                      )}
                     </div>
+                    {/* Blob discount badge — matches homepage CampaignCountdown style */}
+                    {pct > 0 && (
+                      <div className="absolute -top-5 -right-4 z-20">
+                        <div className="relative w-[84px] h-[64px] flex items-center justify-center">
+                          <svg className="absolute inset-0 w-full h-full drop-shadow-lg" viewBox="0 0 120 90" fill="none">
+                            <path d="M30 70 C10 70 0 58 4 46 C0 36 8 24 22 22 C24 10 36 2 50 4 C58 -2 72 -2 82 6 C90 2 104 8 108 20 C118 26 120 42 112 52 C118 62 112 74 98 76 C94 84 82 90 70 86 C62 92 48 90 42 82 C34 86 20 80 30 70Z" fill="#c0392b" />
+                          </svg>
+                          <div className="relative text-center leading-none -mt-0.5">
+                            <div className="text-white font-black text-2xl" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.15)' }}>{pct}</div>
+                            <div className="text-white/80 font-black text-[8px] tracking-wider -mt-0.5">%OFF</div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                     <div className="p-5">
                       <h3 className="text-base sm:text-lg font-black text-[#3d2e22] line-clamp-2 mb-1">
                         {b.name}
@@ -154,11 +166,19 @@ export default async function CampaignPage({ params }: { params: Promise<{ slug:
                           </span>
                         )}
                       </div>
-                      <div className="mt-3 flex items-center justify-between text-xs">
-                        <span className="text-[#9F6B3E] font-bold">
-                          買 {b.buy_items.length} {b.gift_items.length > 0 && `・送 ${b.gift_items.length}`}
-                        </span>
-                        <span className="text-[#9F6B3E] font-black group-hover:translate-x-1 transition-transform">
+                      {/* 買 N · 送 M 改成 pill — 視覺對稱 + 突出贈品數 */}
+                      <div className="mt-4 flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#9F6B3E]/10 text-[#9F6B3E] text-[11px] font-black">
+                            買 {b.buy_items.length}
+                          </span>
+                          {(b.gift_items.length + b.custom_gifts.length) > 0 && (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#e74c3c]/10 text-[#c0392b] text-[11px] font-black">
+                              送 {b.gift_items.length + b.custom_gifts.length}
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-xs text-[#9F6B3E] font-black group-hover:translate-x-1 transition-transform">
                           查看 →
                         </span>
                       </div>
