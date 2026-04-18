@@ -50,7 +50,11 @@ class PaymentController extends Controller
             return '0|CheckMacValue Error';
         }
 
-        $order = Order::where('order_number', $data['MerchantTradeNo'])->first();
+        // MerchantTradeNo may have a retry suffix (e.g. PD260418XYZ + R1).
+        // Strip the Rn suffix to find the original order_number.
+        $tradeNo = $data['MerchantTradeNo'];
+        $orderNumber = preg_replace('/R[0-9A-Z]$/', '', $tradeNo);
+        $order = Order::where('order_number', $orderNumber)->first();
 
         if (!$order) {
             return '0|Order Not Found';

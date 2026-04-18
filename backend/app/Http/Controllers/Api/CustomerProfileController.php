@@ -52,11 +52,21 @@ class CustomerProfileController extends Controller
 
     public function update(Request $request): JsonResponse
     {
-        $data = $request->validate([
+        $c = $request->user();
+        $needsEmail = ! $c->email || str_ends_with($c->email, '@line.user');
+
+        $rules = [
             'name'  => ['required', 'string', 'max:100'],
             'phone' => ['nullable', 'string', 'max:30'],
-        ]);
-        $c = $request->user();
+        ];
+        if ($needsEmail) {
+            $rules['email'] = ['nullable', 'email', 'max:255', 'unique:customers,email,' . $c->id];
+        }
+        $data = $request->validate($rules);
+
+        if (! $needsEmail) {
+            unset($data['email']);
+        }
         $c->fill($data)->save();
 
         return $this->show($request);

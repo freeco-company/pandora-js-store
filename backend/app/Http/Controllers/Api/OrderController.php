@@ -47,6 +47,7 @@ class OrderController extends Controller
             'shipping_method' => 'required|in:cvs_711,cvs_family,home_delivery',
             'shipping_name' => 'required|string|max:100',
             'shipping_phone' => 'required|string',
+            'shipping_address' => 'required_if:shipping_method,home_delivery|nullable|string|max:500',
             'shipping_store_id' => 'required_if:shipping_method,cvs_711,cvs_family|nullable|string',
             'shipping_store_name' => 'required_if:shipping_method,cvs_711,cvs_family|nullable|string',
             'coupon_code' => 'nullable|string',

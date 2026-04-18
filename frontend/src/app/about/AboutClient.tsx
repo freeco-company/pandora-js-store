@@ -326,9 +326,6 @@ export default function AboutPage() {
                     兩年前，朵朵是一個 36 歲的二寶媽。每天在家庭和孩子之間忙碌，漸漸忘了自己也可以有夢想。直到體驗了婕樂纖帶來的改變 — 不只是外在的變化，更是<strong className="text-white/90">找回了對自己的信心</strong>。
                   </p>
                   <p className="gs-line">
-                    身邊的朋友開始問：「你最近怎麼了？整個人都不一樣了。」一個問、兩個問、十個問⋯⋯朵朵發現，好東西真的會自己說話。更重要的是，她發現<strong className="text-white/90">幫助別人改變的成就感，比自己改變還要大</strong>。
-                  </p>
-                  <p className="gs-line">
                     從一個人分享，到帶領一個團隊。兩年時間，從零開始，<strong className="text-[var(--gold-light)]">一路升到最高階 — 皇家團隊長</strong>。不靠背景、不靠資源，靠的是真心分享和不放棄的堅持。
                   </p>
                   <p className="gs-line">

@@ -9,7 +9,9 @@ import LogoLoader from '@/components/LogoLoader';
 export default function CompleteProfilePage() {
   const router = useRouter();
   const { token, customer, isLoggedIn, loading: authLoading, setAuth } = useAuth();
+  const needsEmail = !customer?.email || customer.email.endsWith('@line.user');
   const [name, setName] = useState(customer?.name || '');
+  const [email, setEmail] = useState(needsEmail ? '' : (customer?.email || ''));
   const [phone, setPhone] = useState('');
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
@@ -27,8 +29,8 @@ export default function CompleteProfilePage() {
     return null;
   }
 
-  // Already has phone — redirect away
-  if (customer?.phone) {
+  // Already complete — redirect away
+  if (customer?.phone && customer?.email && !customer.email.endsWith('@line.user')) {
     router.replace('/account');
     return null;
   }
@@ -37,21 +39,27 @@ export default function CompleteProfilePage() {
     e.preventDefault();
     setError('');
 
-    if (!/^09\d{8}$/.test(phone)) {
-      setError('請輸入有效手機號碼（09 開頭，共 10 碼）');
-      return;
-    }
-
     if (!name.trim()) {
       setError('請輸入姓名');
       return;
     }
 
+    if (needsEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setError('請輸入有效的 Email');
+      return;
+    }
+
+    if (!/^09\d{8}$/.test(phone)) {
+      setError('請輸入有效手機號碼（09 開頭，共 10 碼）');
+      return;
+    }
+
     setSaving(true);
     try {
-      const updated = await updateProfile(token, { name: name.trim(), phone });
-      // Update local auth state with new phone
-      setAuth(token, { ...customer!, name: updated.name, phone: updated.phone });
+      const payload: { name: string; phone: string; email?: string } = { name: name.trim(), phone };
+      if (needsEmail) payload.email = email.trim().toLowerCase();
+      const updated = await updateProfile(token, payload);
+      setAuth(token, { ...customer!, name: updated.name, phone: updated.phone, email: updated.email });
 
       const redirect = sessionStorage.getItem('pandora-login-redirect');
       sessionStorage.removeItem('pandora-login-redirect');
@@ -89,6 +97,23 @@ export default function CompleteProfilePage() {
             className="w-full px-4 py-3 rounded-xl border border-[#e7d9cb] bg-white focus:border-[#9F6B3E] focus:outline-none text-sm"
           />
         </div>
+
+        {needsEmail && (
+          <div>
+            <label className="block text-[11px] font-black text-slate-500 tracking-wider mb-1">Email *</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="your@email.com"
+              required
+              maxLength={255}
+              autoComplete="email"
+              className="w-full px-4 py-3 rounded-xl border border-[#e7d9cb] bg-white focus:border-[#9F6B3E] focus:outline-none text-sm"
+            />
+            <p className="text-[10px] text-slate-400 mt-1">LINE 登入未提供 Email，請填寫以接收訂單通知</p>
+          </div>
+        )}
 
         <div>
           <label className="block text-[11px] font-black text-slate-500 tracking-wider mb-1">手機號碼 *</label>

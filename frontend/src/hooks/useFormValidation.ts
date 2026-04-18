@@ -5,6 +5,7 @@ import { useState, useCallback } from 'react';
 interface ValidationRule {
   required?: boolean;
   pattern?: RegExp;
+  validator?: () => boolean; // custom check; returns true if valid
   message: string;
   when?: () => boolean; // conditional validation
 }
@@ -31,6 +32,11 @@ export function useFormValidation() {
           }
 
           if (rule.pattern && value && !rule.pattern.test(String(value))) {
+            newErrors[field] = rule.message;
+            break;
+          }
+
+          if (rule.validator && !rule.validator()) {
             newErrors[field] = rule.message;
             break;
           }

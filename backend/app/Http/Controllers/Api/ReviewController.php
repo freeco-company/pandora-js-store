@@ -18,8 +18,7 @@ class ReviewController extends Controller
      */
     public function index(string $slug): JsonResponse
     {
-        $product = Product::where('is_active', true)
-            ->whereDoesntHave('campaigns')
+        $product = Product::visible()
             ->where(function ($q) use ($slug) {
                 $q->where('slug', $slug)->orWhere('slug_legacy', $slug);
             })
@@ -66,9 +65,9 @@ class ReviewController extends Controller
     public function aggregate(): JsonResponse
     {
         $data = Cache::remember('reviews:aggregate', 600, function () {
-            // Only include reviews for active, non-campaign products
+            // Only include reviews for currently-visible products
             $reviews = Review::where('is_visible', true)
-                ->whereHas('product', fn ($q) => $q->where('is_active', true)->whereDoesntHave('campaigns'))
+                ->whereHas('product', fn ($q) => $q->visible())
                 ->with('product:id,name,slug,image')
                 ->orderByDesc('created_at')
                 ->get();

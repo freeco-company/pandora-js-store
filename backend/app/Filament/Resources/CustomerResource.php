@@ -47,59 +47,60 @@ class CustomerResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\Layout\Stack::make([
-                    Tables\Columns\Layout\Split::make([
-                        Tables\Columns\TextColumn::make('name')
-                            ->searchable()
-                            ->sortable()
-                            ->weight('bold')
-                            ->size(\Filament\Support\Enums\TextSize::Large)
-                            ->label('姓名'),
-                        Tables\Columns\IconColumn::make('is_vip')
-                            ->boolean()
-                            ->grow(false)
-                            ->label('VIP'),
-                    ]),
-                    Tables\Columns\TextColumn::make('email')
-                        ->searchable()
-                        ->sortable()
-                        ->icon('heroicon-m-envelope')
-                        ->copyable()
-                        ->label('Email'),
-                    Tables\Columns\Layout\Split::make([
-                        Tables\Columns\TextColumn::make('phone')
-                            ->icon('heroicon-m-phone')
-                            ->placeholder('—')
-                            ->label('電話'),
-                        Tables\Columns\TextColumn::make('orders_count')
-                            ->counts('orders')
-                            ->sortable()
-                            ->icon('heroicon-m-shopping-bag')
-                            ->formatStateUsing(fn ($state) => "訂單 {$state}")
-                            ->color(fn ($state) => $state >= 3 ? 'success' : 'gray')
-                            ->grow(false)
-                            ->label(''),
-                    ]),
-                    Tables\Columns\TextColumn::make('created_at')
-                        ->since()
-                        ->tooltip(fn ($record) => $record->created_at?->format('Y-m-d H:i'))
-                        ->icon('heroicon-m-calendar')
-                        ->color('gray')
-                        ->label('註冊'),
-                ])->space(1),
+                Tables\Columns\TextColumn::make('name')
+                    ->searchable()
+                    ->sortable()
+                    ->weight('bold')
+                    ->placeholder('—')
+                    ->label('姓名'),
+
+                Tables\Columns\TextColumn::make('email')
+                    ->searchable()
+                    ->sortable()
+                    ->copyable()
+                    ->label('Email'),
+
+                Tables\Columns\TextColumn::make('phone')
+                    ->searchable()
+                    ->placeholder('—')
+                    ->label('電話'),
+
+                Tables\Columns\IconColumn::make('is_vip')
+                    ->boolean()
+                    ->sortable()
+                    ->label('VIP'),
+
+                Tables\Columns\TextColumn::make('orders_count')
+                    ->counts('orders')
+                    ->sortable()
+                    ->alignEnd()
+                    ->color(fn ($state) => $state >= 3 ? 'success' : 'gray')
+                    ->label('訂單數'),
+
+                Tables\Columns\TextColumn::make('address_city')
+                    ->placeholder('—')
+                    ->description(fn ($record) => $record->address_district ?: null)
+                    ->toggleable()
+                    ->label('縣市'),
+
+                Tables\Columns\TextColumn::make('created_at')
+                    ->dateTime('Y-m-d')
+                    ->sortable()
+                    ->label('註冊'),
             ])
-            ->contentGrid([
-                'default' => 1,
-                'md' => 2,
-                'xl' => 3,
-            ])
-            ->paginated([12, 24, 48])
-            ->defaultPaginationPageOption(24)
+            ->paginated([25, 50, 100, 200])
+            ->defaultPaginationPageOption(25)
             ->defaultSort('created_at', 'desc')
             ->filters([
                 Tables\Filters\TernaryFilter::make('is_vip')->label('VIP'),
+                Tables\Filters\Filter::make('has_orders')
+                    ->label('有下過單')
+                    ->query(fn ($q) => $q->has('orders')),
             ])
-            ->recordUrl(fn ($record) => Pages\EditCustomer::getUrl(['record' => $record]));
+            ->recordUrl(fn ($record) => Pages\EditCustomer::getUrl(['record' => $record]))
+            ->actions([
+                \Filament\Actions\EditAction::make()->iconButton(),
+            ]);
     }
 
     public static function getPages(): array

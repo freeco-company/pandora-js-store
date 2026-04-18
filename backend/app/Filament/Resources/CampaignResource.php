@@ -101,65 +101,78 @@ class CampaignResource extends Resource
 
     public static function table(Table $table): Table
     {
+        $statusOf = fn ($record): string => match (true) {
+            $record->isRunning() => 'active',
+            $record->hasEnded() => 'ended',
+            $record->start_at > now() => 'upcoming',
+            default => 'inactive',
+        };
+        $statusLabel = fn (string $s): string => match ($s) {
+            'active' => '進行中',
+            'upcoming' => '即將開始',
+            'ended' => '已結束',
+            default => '未啟用',
+        };
+        $statusColor = fn (string $s): string => match ($s) {
+            'active' => 'success',
+            'upcoming' => 'warning',
+            'ended' => 'danger',
+            default => 'gray',
+        };
+
         return $table
             ->columns([
-                Tables\Columns\Layout\Stack::make([
-                    Tables\Columns\Layout\Split::make([
-                        Tables\Columns\TextColumn::make('name')
-                            ->weight('bold')
-                            ->size(\Filament\Support\Enums\TextSize::Large)
-                            ->searchable()
-                            ->label('名稱'),
-                        Tables\Columns\BadgeColumn::make('status')
-                            ->getStateUsing(fn ($record) => match (true) {
-                                $record->isRunning() => 'active',
-                                $record->hasEnded() => 'ended',
-                                $record->start_at > now() => 'upcoming',
-                                default => 'inactive',
-                            })
-                            ->colors([
-                                'success' => 'active',
-                                'warning' => 'upcoming',
-                                'danger' => 'ended',
-                                'gray' => 'inactive',
-                            ])
-                            ->formatStateUsing(fn ($state) => match ($state) {
-                                'active' => '進行中',
-                                'upcoming' => '即將開始',
-                                'ended' => '已結束',
-                                default => '未啟用',
-                            })
-                            ->grow(false)
-                            ->label('狀態'),
-                    ]),
-                    Tables\Columns\Layout\Split::make([
-                        Tables\Columns\TextColumn::make('start_at')
-                            ->dateTime('m/d H:i')
-                            ->icon('heroicon-m-play')
-                            ->label('開始'),
-                        Tables\Columns\TextColumn::make('end_at')
-                            ->dateTime('m/d H:i')
-                            ->icon('heroicon-m-stop')
-                            ->label('結束'),
-                    ]),
-                    Tables\Columns\TextColumn::make('products_count')
-                        ->counts('products')
-                        ->icon('heroicon-m-cube')
-                        ->formatStateUsing(fn ($state) => "{$state} 組商品")
-                        ->label('商品'),
-                ])->space(1),
+                Tables\Columns\ImageColumn::make('image')
+                    ->square()
+                    ->size(56)
+                    ->disk('public')
+                    ->label('主圖'),
+
+                Tables\Columns\TextColumn::make('name')
+                    ->weight('bold')
+                    ->searchable()
+                    ->sortable()
+                    ->description(fn ($record) => $record->slug)
+                    ->label('活動名稱'),
+
+                Tables\Columns\TextColumn::make('status')
+                    ->badge()
+                    ->getStateUsing($statusOf)
+                    ->color($statusColor)
+                    ->formatStateUsing($statusLabel)
+                    ->label('狀態'),
+
+                Tables\Columns\TextColumn::make('start_at')
+                    ->dateTime('Y-m-d H:i')
+                    ->sortable()
+                    ->label('開始'),
+
+                Tables\Columns\TextColumn::make('end_at')
+                    ->dateTime('Y-m-d H:i')
+                    ->sortable()
+                    ->label('結束'),
+
+                Tables\Columns\TextColumn::make('products_count')
+                    ->counts('products')
+                    ->alignEnd()
+                    ->label('商品數'),
+
+                Tables\Columns\ToggleColumn::make('is_active')
+                    ->label('啟用'),
             ])
-            ->contentGrid([
-                'default' => 1,
-                'md' => 2,
-            ])
+            ->paginated([25, 50, 100])
+            ->defaultPaginationPageOption(25)
             ->defaultSort('start_at', 'desc')
             ->filters([
                 Tables\Filters\Filter::make('active')
                     ->label('進行中')
                     ->query(fn ($q) => $q->active()),
+                Tables\Filters\TernaryFilter::make('is_active')->label('啟用狀態'),
             ])
-            ->recordUrl(fn ($record) => Pages\EditCampaign::getUrl(['record' => $record]));
+            ->recordUrl(fn ($record) => Pages\EditCampaign::getUrl(['record' => $record]))
+            ->actions([
+                \Filament\Actions\EditAction::make()->iconButton(),
+            ]);
     }
 
     public static function getRelations(): array

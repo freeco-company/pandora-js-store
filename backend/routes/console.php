@@ -51,3 +51,12 @@ Schedule::command('cart:abandoned-mail')
     ->everyThreeHours()
     ->withoutOverlapping(20)
     ->appendOutputTo(storage_path('logs/abandoned-cart.log'));
+
+// ── 本機開發專用：每天 03:00 從正式站 pull DB 覆蓋本地 ──
+// 指令內建 PHP_OS_FAMILY === 'Darwin' 守門，Linux 正式機跑 schedule:run
+// 也會被 guard 拒絕執行，不會循環同步自己。
+Schedule::command('db:sync-prod', ['--force'])
+    ->dailyAt('03:00')
+    ->timezone('Asia/Taipei')
+    ->withoutOverlapping(60)
+    ->appendOutputTo(storage_path('logs/sync-prod-db.log'));

@@ -8,11 +8,10 @@ use Illuminate\Http\JsonResponse;
 
 class CampaignController extends Controller
 {
-    /** Active + upcoming campaigns with their product IDs. */
+    /** Currently running campaigns only (upcoming and ended both hidden). */
     public function index(): JsonResponse
     {
-        $campaigns = Campaign::where('is_active', true)
-            ->where('end_at', '>', now())
+        $campaigns = Campaign::active()
             ->with('products:id,name,slug,image,price,combo_price,vip_price')
             ->orderBy('start_at')
             ->get()
@@ -41,17 +40,13 @@ class CampaignController extends Controller
         return response()->json($campaigns);
     }
 
-    /** Single campaign by slug. */
+    /** Single campaign by slug — only accessible during running period. */
     public function show(string $slug): JsonResponse
     {
-        $campaign = Campaign::where('slug', $slug)
-            ->where('is_active', true)
+        $campaign = Campaign::active()
+            ->where('slug', $slug)
             ->with('products:id,name,slug,image,price,combo_price,vip_price,short_description')
             ->firstOrFail();
-
-        if ($campaign->hasEnded()) {
-            return response()->json(['message' => '此活動已結束'], 410);
-        }
 
         return response()->json([
             'id' => $campaign->id,

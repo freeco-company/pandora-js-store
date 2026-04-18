@@ -81,10 +81,13 @@ export default async function CategoryPage({ params }: Props) {
   const meta = categoryMeta[slug];
   if (!meta) notFound();
 
-  let products: Product[] = [];
-  let categories: Awaited<ReturnType<typeof getProductCategories>> = [];
-  try { products = await getProducts(slug); } catch {}
-  try { categories = await getProductCategories(); } catch {}
+  const [productsRes, categoriesRes] = await Promise.allSettled([
+    getProducts(slug),
+    getProductCategories(),
+  ]);
+  const products: Product[] = productsRes.status === 'fulfilled' ? productsRes.value : [];
+  const categories: Awaited<ReturnType<typeof getProductCategories>> =
+    categoriesRes.status === 'fulfilled' ? categoriesRes.value : [];
 
   const breadcrumbs = breadcrumbSchema([
     { name: '首頁', url: '/' },

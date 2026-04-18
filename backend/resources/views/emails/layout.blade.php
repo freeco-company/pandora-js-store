@@ -14,8 +14,8 @@
                     {{-- Logo Header --}}
                     <tr>
                         <td style="padding: 32px 32px 0; text-align: center;">
-                            <a href="{{ config('services.frontend.url', config('app.url')) }}" style="text-decoration: none;">
-                                <img src="{{ config('services.frontend.url', config('app.url')) }}/logo.png"
+                            <a href="{{ config('services.ecpay.frontend_url', config('app.url')) }}" style="text-decoration: none;">
+                                <img src="{{ config('services.ecpay.frontend_url', config('app.url')) }}/logo.png"
                                      alt="婕樂纖仙女館"
                                      width="64" height="64"
                                      style="display: block; margin: 0 auto 12px; border-radius: 50%; border: 2px solid #e7d9cb;" />
@@ -72,7 +72,7 @@
                                         <table cellpadding="0" cellspacing="0"><tr>
                                         <td style="padding: 0 6px;">
                                         <![endif]-->
-                                        <a href="{{ config('services.frontend.url', config('app.url')) }}/order-lookup"
+                                        <a href="{{ config('services.ecpay.frontend_url', config('app.url')) }}/order-lookup"
                                            style="display: inline-block; padding: 10px 20px; background-color: #9F6B3E; color: #ffffff; text-decoration: none; border-radius: 999px; font-size: 13px; font-weight: bold; margin: 4px;">
                                             訂單查詢
                                         </a>

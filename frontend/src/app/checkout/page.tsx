@@ -164,7 +164,11 @@ export default function CheckoutPage() {
       { pattern: /^09\d{8}$/, message: '請輸入有效手機號碼 (09xxxxxxxx)' },
     ],
     shipping_address: [
-      { required: true, message: '請輸入配送地址', when: () => !isCvs },
+      { required: true, message: '請輸入完整地址（縣市、區、路段門牌）', when: () => !isCvs },
+      {
+        validator: () => !isCvs ? !!(shipCity && shipDistrict && shipStreet.trim()) : true,
+        message: '請完整填寫縣市、區、路段門牌',
+      },
     ],
     // shipping_store_name / shipping_store_id are intentionally NOT in the
     // base rules: when CVS is selected without a store picked we don't want

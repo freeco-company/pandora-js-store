@@ -22,7 +22,7 @@ class CartPricingService
     public function calculate(array $cartItems): array
     {
         $productIds = collect($cartItems)->pluck('product_id')->unique()->values();
-        $products = Product::whereIn('id', $productIds)->get()->keyBy('id');
+        $products = Product::with('campaigns')->whereIn('id', $productIds)->get()->keyBy('id');
 
         $unavailable = [];
         $items = collect($cartItems)->map(function ($item) use ($products, &$unavailable) {
@@ -33,6 +33,11 @@ class CartPricingService
             }
             if (!$product->is_active) {
                 $unavailable[] = ['product_id' => $product->id, 'reason' => 'inactive', 'name' => $product->name];
+                return null;
+            }
+            // Campaign product whose campaign period is over (ended or not yet started)
+            if ($product->campaigns->isNotEmpty() && !$product->is_campaign) {
+                $unavailable[] = ['product_id' => $product->id, 'reason' => 'campaign_ended', 'name' => $product->name];
                 return null;
             }
             if ($product->stock_status === 'outofstock') {

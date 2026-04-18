@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useMemo, type ReactNode } from 'react';
 import { API_URL, type Customer } from '@/lib/api';
 
 interface AuthState {
@@ -36,48 +36,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Verify token on mount
-  useEffect(() => {
+  const verify = useCallback(async () => {
     const stored = localStorage.getItem(TOKEN_KEY);
     if (!stored) {
+      setToken(null);
+      setCustomer(null);
       setLoading(false);
       return;
     }
 
     setToken(stored);
 
-    fetch(`${API_URL}/auth/me`, {
-      headers: {
-        Authorization: `Bearer ${stored}`,
-        Accept: 'application/json',
-      },
-    })
-      .then(async (res) => {
-        if (res.status === 401 || res.status === 403) {
-          // Token genuinely revoked or expired — clear it
-          localStorage.removeItem(TOKEN_KEY);
-          setToken(null);
-          setCustomer(null);
-          return;
-        }
-        if (!res.ok) {
-          // Network error, server down (e.g. during deploy) — keep token,
-          // don't log the user out. They'll re-verify next page load.
-          return;
-        }
+    try {
+      const res = await fetch(`${API_URL}/auth/me`, {
+        headers: {
+          Authorization: `Bearer ${stored}`,
+          Accept: 'application/json',
+        },
+      });
+      if (res.status === 401 || res.status === 403) {
+        localStorage.removeItem(TOKEN_KEY);
+        setToken(null);
+        setCustomer(null);
+      } else if (res.ok) {
         const data: Customer = await res.json();
         setCustomer(data);
-      })
-      .catch(() => {
-        // Fetch itself failed (offline, DNS, etc.) — keep token intact.
-        // User stays "logged in" with stale customer data until next
-        // successful verification. Much better UX than force-logout on
-        // every deploy or network hiccup.
-      })
-      .finally(() => {
-        setLoading(false);
-      });
+      }
+    } catch {
+      // network error — keep stale token, don't log out
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  // Verify on mount + when page restored from bfcache (cancel-OAuth-and-back loop)
+  useEffect(() => {
+    verify();
+    const onShow = (e: PageTransitionEvent) => {
+      if (e.persisted) {
+        setLoading(true);
+        verify();
+      }
+    };
+    window.addEventListener('pageshow', onShow);
+    return () => window.removeEventListener('pageshow', onShow);
+  }, [verify]);
 
   const login = useCallback(() => {
     if (typeof window !== 'undefined') {
@@ -107,20 +110,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setCustomer(newCustomer);
   }, []);
 
-  return (
-    <AuthContext.Provider
-      value={{
-        customer,
-        token,
-        loading,
-        isLoggedIn: !!customer,
-        login,
-        loginWithLine,
-        logout,
-        setAuth,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
-  );
+  const value = useMemo<AuthState>(() => ({
+    customer,
+    token,
+    loading,
+    isLoggedIn: !!customer,
+    login,
+    loginWithLine,
+    logout,
+    setAuth,
+  }), [customer, token, loading, login, loginWithLine, logout, setAuth]);
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

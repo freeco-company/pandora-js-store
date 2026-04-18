@@ -35,7 +35,8 @@ export default function LineCallbackPage() {
         sessionStorage.removeItem('pandora-login-redirect');
 
         setTimeout(() => {
-          if (!customer.phone) {
+          const needsProfile = !customer.phone || (customer.email && customer.email.endsWith('@line.user'));
+          if (needsProfile) {
             window.location.href = '/account/complete-profile';
           } else {
             window.location.href = redirect || '/';

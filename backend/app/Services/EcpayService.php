@@ -31,9 +31,21 @@ class EcpayService
         // the whole string once. Pre-encoding TradeDesc would double-encode
         // it for the hash while the form posts the single-encoded form,
         // which trips ECPay's 10200073 "CheckMacValue Error".
+
+        // ECPay requires unique MerchantTradeNo per request. On retry payment,
+        // append a short suffix to avoid "訂單編號重覆" (10300028) error.
+        // Max 20 chars: order_number is ~16, suffix is 2 chars (R1–R9, RA–RZ).
+        $tradeNo = $order->order_number;
+        $retryCount = (int) $order->payment_retry_count;
+        if ($retryCount > 0) {
+            $suffix = 'R' . ($retryCount <= 9 ? $retryCount : chr(55 + $retryCount)); // R1..R9, RA..RZ
+            $tradeNo = substr($order->order_number, 0, 20 - strlen($suffix)) . $suffix;
+        }
+        $order->increment('payment_retry_count');
+
         $params = [
             'MerchantID' => $this->merchantId,
-            'MerchantTradeNo' => $order->order_number,
+            'MerchantTradeNo' => $tradeNo,
             'MerchantTradeDate' => now()->format('Y/m/d H:i:s'),
             'PaymentType' => 'aio',
             'TotalAmount' => (int) $order->total,

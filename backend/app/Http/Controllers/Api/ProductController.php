@@ -36,11 +36,10 @@ class ProductController extends Controller
         ]));
 
         $payload = Cache::remember($cacheKey, self::CACHE_TTL, function () use ($request) {
-            // Campaign products belong on their campaign page only —
-            // never show them in the regular product listing.
-            $query = Product::where('is_active', true)
-                ->with(['categories', 'seoMeta'])
-                ->whereDoesntHave('campaigns');
+            // Visible = active AND (no campaigns OR at least one running campaign).
+            // Products whose campaigns are all past/future are hidden.
+            $query = Product::visible()
+                ->with(['categories', 'seoMeta', 'campaigns']);
 
             if ($request->filled('q')) {
                 $keyword = $request->q;
@@ -57,8 +56,7 @@ class ProductController extends Controller
             }
 
             $products = $query->orderBy('sort_order')->get();
-            $products->transform(fn ($p) => $this->normalizeProduct($p));
-            return $products->toArray();
+            return $products->map(fn ($p) => $this->serializeProduct($p))->values()->toArray();
         });
 
         return response()->json($payload)
@@ -70,32 +68,15 @@ class ProductController extends Controller
         $payload = Cache::remember("products:show:v{$this->version()}:{$slug}", self::CACHE_TTL, function () use ($slug) {
             // Try current slug first, then fall back to legacy slug.
             // If matched via legacy, frontend will permanentRedirect to canonical.
-            // Campaign products are only accessible through their campaign page.
-            $product = Product::where('is_active', true)
-                ->whereDoesntHave('campaigns')
+            // Campaign products are only accessible during their active period.
+            $product = Product::visible()
                 ->where(function ($q) use ($slug) {
                     $q->where('slug', $slug)->orWhere('slug_legacy', $slug);
                 })
-                ->with(['categories', 'seoMeta'])
+                ->with(['categories', 'seoMeta', 'campaigns'])
                 ->firstOrFail();
-            $data = $this->normalizeProduct($product)->toArray();
 
-            // Append campaign info if product belongs to an active (running or upcoming) campaign
-            $campaign = $product->active_campaign;
-            if ($campaign) {
-                $data['active_campaign'] = [
-                    'id' => $campaign->id,
-                    'name' => $campaign->name,
-                    'slug' => $campaign->slug,
-                    'description' => $campaign->description,
-                    'start_at' => $campaign->start_at->toISOString(),
-                    'end_at' => $campaign->end_at->toISOString(),
-                    'is_running' => $campaign->isRunning(),
-                    'campaign_price' => (float) ($campaign->pivot->campaign_price ?? $product->sale_price ?? $product->price),
-                ];
-            }
-
-            return $data;
+            return $this->serializeProduct($product);
         });
 
         return response()->json($payload)
@@ -110,6 +91,31 @@ class ProductController extends Controller
 
         return response()->json($payload)
             ->header('Cache-Control', 'public, max-age=60, s-maxage=600, stale-while-revalidate=300');
+    }
+
+    /**
+     * Serialize a product with campaign info attached if currently running.
+     */
+    private function serializeProduct(Product $product): array
+    {
+        $this->normalizeProduct($product);
+        $data = $product->toArray();
+
+        $campaign = $product->active_campaign;
+        if ($campaign) {
+            $data['active_campaign'] = [
+                'id' => $campaign->id,
+                'name' => $campaign->name,
+                'slug' => $campaign->slug,
+                'description' => $campaign->description,
+                'start_at' => $campaign->start_at->toIso8601String(),
+                'end_at' => $campaign->end_at->toIso8601String(),
+                'is_running' => $campaign->isRunning(),
+                'campaign_price' => (float) ($campaign->pivot->campaign_price ?? $product->sale_price ?? $product->price),
+            ];
+        }
+
+        return $data;
     }
 
     /**

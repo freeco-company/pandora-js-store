@@ -55,11 +55,31 @@ class Product extends Model
     }
 
     /**
+     * Products visible to customers right now:
+     *   - is_active = true
+     *   - AND (no campaign associations OR at least one active campaign)
+     *
+     * Products whose campaigns are all past/future are hidden — they only
+     * surface during the campaign's running window.
+     */
+    public function scopeVisible($query)
+    {
+        return $query->where('is_active', true)
+            ->where(function ($q) {
+                $q->whereDoesntHave('campaigns')
+                  ->orWhereHas('campaigns', fn ($qq) => $qq->active());
+            });
+    }
+
+    /**
      * Currently-running campaign this product belongs to.
      * Only returns during active period (start_at <= now < end_at).
      */
     public function getActiveCampaignAttribute(): ?Campaign
     {
+        if ($this->relationLoaded('campaigns')) {
+            return $this->campaigns->first(fn ($c) => $c->isRunning());
+        }
         return $this->campaigns()->active()->first();
     }
 
@@ -70,6 +90,9 @@ class Product extends Model
      */
     public function getIsCampaignAttribute(): bool
     {
+        if ($this->relationLoaded('campaigns')) {
+            return $this->campaigns->contains(fn ($c) => $c->isRunning());
+        }
         return $this->campaigns()->active()->exists();
     }
 

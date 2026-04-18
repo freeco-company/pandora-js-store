@@ -10,6 +10,7 @@ import Mascot from '@/components/Mascot';
 import LogoLoader from '@/components/LogoLoader';
 import ActivationQuest from '@/components/ActivationQuest';
 import SiteIcon from '@/components/SiteIcon';
+import OutfitIcon from '@/components/OutfitIcon';
 import {
   getCustomerDashboard,
   type CustomerDashboard,
@@ -99,7 +100,7 @@ export default function AccountPage() {
                 key={def.code}
                 className="aspect-square rounded-2xl p-2 flex flex-col items-center justify-center text-center bg-slate-100 opacity-60 relative overflow-hidden"
               >
-                <div className="text-3xl mb-1 grayscale"><SiteIcon name={def.emoji} size={32} /></div>
+                <div className="text-3xl mb-1 grayscale opacity-60"><OutfitIcon name={def.emoji} size={32} static /></div>
                 <div className="text-[10px] font-black leading-tight text-slate-400">{def.name}</div>
                 <div className="absolute top-1.5 right-1.5"><Icons.Lock className="w-3.5 h-3.5 text-slate-400" /></div>
               </div>

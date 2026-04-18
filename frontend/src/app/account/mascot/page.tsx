@@ -14,6 +14,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
 import SiteIcon from '@/components/SiteIcon';
+import OutfitIcon from '@/components/OutfitIcon';
 import Mascot from '@/components/Mascot';
 import LogoLoader from '@/components/LogoLoader';
 import {
@@ -275,7 +276,7 @@ export default function MascotHomePage() {
                       earned ? 'bg-white border border-[#e7d9cb] shadow-sm' : 'bg-slate-100 opacity-55'
                     }`}
                   >
-                    <div className={`text-3xl mb-1 ${earned ? '' : 'grayscale'}`}><SiteIcon name={def.emoji} size={32} /></div>
+                    <div className={`text-3xl mb-1 ${earned ? '' : 'grayscale opacity-60'}`}><OutfitIcon name={def.emoji} size={32} static={!earned} /></div>
                     <div className={`text-[10px] font-black leading-tight ${earned ? 'text-slate-800' : 'text-slate-400'}`}>
                       {def.name}
                     </div>
@@ -348,7 +349,9 @@ function PickerGrid({
               </span>
             )}
             <span className={`text-2xl sm:text-3xl ${!item.owned ? 'grayscale opacity-60' : ''}`}>
-              <SiteIcon name={item.owned ? item.meta.emoji : 'lock'} size={24} />
+              {item.owned
+                ? <OutfitIcon name={item.meta.emoji} size={28} static={!item.owned} />
+                : <SiteIcon name="lock" size={24} />}
             </span>
             <span className={`text-[10px] font-black leading-tight ${isCurrent ? 'text-white' : item.owned ? 'text-slate-800' : 'text-slate-400'}`}>
               {item.meta.name}

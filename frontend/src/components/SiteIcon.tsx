@@ -340,6 +340,97 @@ export default function SiteIcon({ name, size = 20, className = '', color }: Pro
           <path d="M3 6l7 4 7-4M10 10v8" stroke="currentColor" strokeWidth="1.2" />
         </svg>
       );
+    // ── Mascot Outfits ─────────────────────────────────────
+    case 'acorn-hat':
+      return (
+        <svg className={cls} style={s} viewBox="0 0 20 20" fill="none" aria-hidden>
+          <ellipse cx="10" cy="14" rx="6" ry="3" fill="currentColor" opacity="0.4" />
+          <circle cx="10" cy="10" r="4.5" fill="currentColor" opacity="0.6" />
+          <rect x="9" y="4" width="2" height="3" rx="1" fill="currentColor" opacity="0.8" />
+        </svg>
+      );
+    case 'ribbon-bow':
+      return (
+        <svg className={cls} style={s} viewBox="0 0 20 20" fill="none" aria-hidden>
+          <path d="M10 10L4 6c-1-1-1-3 1-3s3 1 5 4" fill="currentColor" opacity="0.6" />
+          <path d="M10 10l6-4c1-1 1-3-1-3s-3 1-5 4" fill="currentColor" opacity="0.6" />
+          <path d="M10 10l-3 5c-.5 1 0 2 1 1.5L10 14" fill="currentColor" opacity="0.4" />
+          <path d="M10 10l3 5c.5 1 0 2-1 1.5L10 14" fill="currentColor" opacity="0.4" />
+          <circle cx="10" cy="10" r="1.5" fill="currentColor" />
+        </svg>
+      );
+    case 'beret':
+      return (
+        <svg className={cls} style={s} viewBox="0 0 20 20" fill="none" aria-hidden>
+          <ellipse cx="10" cy="13" rx="7" ry="2.5" fill="currentColor" opacity="0.5" />
+          <ellipse cx="10" cy="11" rx="6" ry="4" fill="currentColor" opacity="0.6" />
+          <circle cx="10" cy="7" r="1.2" fill="currentColor" opacity="0.8" />
+        </svg>
+      );
+    case 'flower-crown':
+      return (
+        <svg className={cls} style={s} viewBox="0 0 20 20" fill="none" aria-hidden>
+          <path d="M3 12Q3 8 10 8Q17 8 17 12" stroke="currentColor" strokeWidth="1.2" fill="none" />
+          {[5, 8, 10, 12, 15].map((x) => (
+            <circle key={x} cx={x} cy={8} r="2" fill="currentColor" opacity="0.5" />
+          ))}
+          {[6.5, 10, 13.5].map((x) => (
+            <circle key={x} cx={x} cy={7} r="1" fill="currentColor" opacity="0.8" />
+          ))}
+        </svg>
+      );
+    case 'star-halo':
+      return (
+        <svg className={cls} style={s} viewBox="0 0 20 20" fill="none" aria-hidden>
+          <ellipse cx="10" cy="10" rx="8" ry="3" stroke="currentColor" strokeWidth="1" opacity="0.3" fill="none" />
+          <path d="M10 4l1 2.5h2.5l-2 1.5.8 2.5L10 9l-2.3 1.5.8-2.5-2-1.5H9z" fill="currentColor" />
+          <path d="M4 9l.5 1h1l-.8.6.3 1L4 11l-.9.6.3-1-.8-.6h1z" fill="currentColor" opacity="0.4" />
+          <path d="M16 9l.5 1h1l-.8.6.3 1-.9-.6-.9.6.3-1-.8-.6h1z" fill="currentColor" opacity="0.4" />
+        </svg>
+      );
+    case 'glasses':
+      return (
+        <svg className={cls} style={s} viewBox="0 0 20 20" fill="none" aria-hidden>
+          <circle cx="6.5" cy="10" r="3.5" stroke="currentColor" strokeWidth="1.3" />
+          <circle cx="13.5" cy="10" r="3.5" stroke="currentColor" strokeWidth="1.3" />
+          <path d="M10 10h0" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+          <path d="M3 10H1M17 10h2" stroke="currentColor" strokeWidth="1" strokeLinecap="round" opacity="0.5" />
+        </svg>
+      );
+    case 'sunglasses':
+      return (
+        <svg className={cls} style={s} viewBox="0 0 20 20" fill="none" aria-hidden>
+          <path d="M2 9h5c1 0 1.5 1 1.5 2S7.5 13 7 13H4c-1 0-2-1-2-2V9z" fill="currentColor" opacity="0.5" stroke="currentColor" strokeWidth="1" />
+          <path d="M18 9h-5c-1 0-1.5 1-1.5 2s.5 2 1 2h3c1 0 2-1 2-2V9z" fill="currentColor" opacity="0.5" stroke="currentColor" strokeWidth="1" />
+          <path d="M9.5 10.5h1" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
+        </svg>
+      );
+    case 'heart-eyes':
+      return (
+        <svg className={cls} style={s} viewBox="0 0 20 20" fill="none" aria-hidden>
+          <path d="M5 8c0-1.5 1-2.5 2-1.5 1-1 2 0 2 1.5 0 2-2 3.5-2 3.5S5 10 5 8z" fill="currentColor" />
+          <path d="M11 8c0-1.5 1-2.5 2-1.5 1-1 2 0 2 1.5 0 2-2 3.5-2 3.5S11 10 11 8z" fill="currentColor" />
+          <path d="M7 14q3 2 6 0" stroke="currentColor" strokeWidth="1" strokeLinecap="round" fill="none" opacity="0.5" />
+        </svg>
+      );
+    case 'scarf':
+      return (
+        <svg className={cls} style={s} viewBox="0 0 20 20" fill="none" aria-hidden>
+          <path d="M4 8c0-1 3-2 6-2s6 1 6 2" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+          <path d="M14 8v7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          <path d="M12 8v6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" opacity="0.6" />
+        </svg>
+      );
+    case 'pearl':
+      return (
+        <svg className={cls} style={s} viewBox="0 0 20 20" fill="none" aria-hidden>
+          <path d="M4 10q2 4 6 4t6-4" stroke="currentColor" strokeWidth="0.8" fill="none" opacity="0.3" />
+          {[5, 8, 11, 14].map((x) => (
+            <circle key={x} cx={x} cy={x < 10 ? 11 : 10.5} r="1.8" fill="currentColor" opacity="0.5" stroke="currentColor" strokeWidth="0.5" />
+          ))}
+        </svg>
+      );
+
     case 'lock':
       return (
         <svg className={cls} style={s} viewBox="0 0 20 20" fill="none" aria-hidden>

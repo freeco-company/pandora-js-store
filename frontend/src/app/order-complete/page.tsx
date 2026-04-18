@@ -9,6 +9,7 @@ import ScrollReveal from '@/components/ScrollReveal';
 import FloatingShapes from '@/components/FloatingShapes';
 import { useAuth } from '@/components/AuthProvider';
 import SiteIcon from '@/components/SiteIcon';
+import OutfitIcon from '@/components/OutfitIcon';
 import { getCustomerDashboard, type CustomerDashboard } from '@/lib/api';
 import { ACHIEVEMENT_CATALOG, stageFromStreak, TIER_GRADIENTS } from '@/lib/achievements';
 
@@ -231,7 +232,7 @@ function OrderCompleteContent() {
                         key={def.code}
                         className={`aspect-square rounded-2xl p-2 flex flex-col items-center justify-center text-center bg-gradient-to-br ${TIER_GRADIENTS[def.tier]} opacity-75 ring-1 ring-white/40`}
                       >
-                        <div className="text-2xl mb-1"><SiteIcon name={def.emoji} size={28} /></div>
+                        <div className="text-2xl mb-1"><OutfitIcon name={def.emoji} size={28} /></div>
                         <div className="text-[10px] font-black leading-tight text-slate-800">
                           {def.name}
                         </div>

@@ -386,7 +386,7 @@ export interface CustomerAddress {
 export const getProfile = (token: string) =>
   authedFetch<CustomerProfile>('/customer/profile', token);
 
-export const updateProfile = (token: string, data: { name: string; phone?: string }) =>
+export const updateProfile = (token: string, data: { name: string; phone?: string; email?: string }) =>
   authedFetch<CustomerProfile>('/customer/profile', token, {
     method: 'PUT',
     body: JSON.stringify(data),

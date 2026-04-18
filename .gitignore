@@ -32,6 +32,7 @@ wp-source/
 !/backend/storage/logs/.gitkeep
 /backend/storage/debugbar/*
 /backend/bootstrap/cache/*.php
+/backend/public/sitemap.xml
 /backend/.env
 /backend/.env.local
 /backend/.env.backup

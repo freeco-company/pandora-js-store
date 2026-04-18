@@ -6,6 +6,7 @@ import {
   useState,
   useEffect,
   useCallback,
+  useMemo,
   type ReactNode,
 } from 'react';
 import type { Product } from '@/lib/api';
@@ -107,26 +108,22 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setItems([]);
   }, []);
 
-  const { tier, total, itemPrices } = calculateCartLocally(items);
-  const itemCount = items.reduce((sum, i) => sum + i.quantity, 0);
+  const pricing = useMemo(() => calculateCartLocally(items), [items]);
+  const itemCount = useMemo(() => items.reduce((sum, i) => sum + i.quantity, 0), [items]);
 
-  return (
-    <CartContext.Provider
-      value={{
-        items,
-        tier,
-        total,
-        itemCount,
-        itemPrices,
-        addToCart,
-        removeFromCart,
-        updateQuantity,
-        clearCart,
-      }}
-    >
-      {children}
-    </CartContext.Provider>
-  );
+  const value = useMemo<CartContextValue>(() => ({
+    items,
+    tier: pricing.tier,
+    total: pricing.total,
+    itemCount,
+    itemPrices: pricing.itemPrices,
+    addToCart,
+    removeFromCart,
+    updateQuantity,
+    clearCart,
+  }), [items, pricing, itemCount, addToCart, removeFromCart, updateQuantity, clearCart]);
+
+  return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }
 
 export function useCart() {

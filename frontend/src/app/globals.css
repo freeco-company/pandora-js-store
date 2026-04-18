@@ -391,6 +391,36 @@ h1, h2, h3, h4, h5, h6 {
   transform: scale(0.97);
 }
 
+/* --- Outfit icon idle animations (芽芽之家) --- */
+.outfit-icon-anim { transform-origin: center; transform-box: fill-box; }
+.outfit-icon-anim[data-anim="bob"]     { animation: outfit-bob 3.2s ease-in-out infinite; }
+.outfit-icon-anim[data-anim="tilt"]    { animation: outfit-tilt 3.6s ease-in-out infinite; }
+.outfit-icon-anim[data-anim="pulse"]   { animation: outfit-pulse 2.4s ease-in-out infinite; }
+.outfit-icon-anim[data-anim="spin-slow"] { animation: outfit-spin 9s linear infinite; }
+.outfit-icon-anim[data-anim="glow"]    { animation: outfit-glow 2.8s ease-in-out infinite; }
+.outfit-icon-anim[data-anim="sway"]    { animation: outfit-sway 3.4s ease-in-out infinite; }
+.outfit-icon-anim[data-anim="beat"]    { animation: outfit-beat 1.4s ease-in-out infinite; }
+.outfit-icon-anim[data-anim="flutter"] { animation: outfit-flutter 2.6s ease-in-out infinite; }
+.outfit-icon-anim[data-anim="shimmer"] { animation: outfit-shimmer 3s ease-in-out infinite; }
+.outfit-icon-anim[data-anim="fall"]    { animation: outfit-fall 4s ease-in-out infinite; }
+.outfit-icon-anim[data-anim="twinkle"] { animation: outfit-twinkle 2s ease-in-out infinite; }
+.outfit-icon-anim[data-anim="wave"]    { animation: outfit-wave 3.5s ease-in-out infinite; }
+.outfit-icon-anim[data-anim="flicker"] { animation: outfit-flicker 1.6s ease-in-out infinite; }
+
+@keyframes outfit-bob     { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6%); } }
+@keyframes outfit-tilt    { 0%,100% { transform: rotate(-3deg); } 50% { transform: rotate(3deg); } }
+@keyframes outfit-pulse   { 0%,100% { transform: scale(1); } 50% { transform: scale(1.07); } }
+@keyframes outfit-spin    { from { transform: rotate(0); } to { transform: rotate(360deg); } }
+@keyframes outfit-glow    { 0%,100% { filter: drop-shadow(0 0 0 rgba(255,213,74,0)); transform: scale(1); } 50% { filter: drop-shadow(0 0 6px rgba(255,213,74,0.6)); transform: scale(1.05); } }
+@keyframes outfit-sway    { 0%,100% { transform: rotate(-4deg); } 50% { transform: rotate(4deg); } }
+@keyframes outfit-beat    { 0%,100% { transform: scale(1); } 20% { transform: scale(1.12); } 40% { transform: scale(0.96); } 60% { transform: scale(1.08); } }
+@keyframes outfit-flutter { 0%,100% { transform: rotate(0) translateX(0); } 33% { transform: rotate(-2deg) translateX(-2%); } 66% { transform: rotate(2deg) translateX(2%); } }
+@keyframes outfit-shimmer { 0%,100% { filter: brightness(1); } 50% { filter: brightness(1.2) drop-shadow(0 0 4px rgba(255,255,255,0.6)); } }
+@keyframes outfit-fall    { 0%,100% { transform: translateY(0) rotate(-3deg); } 50% { transform: translateY(3%) rotate(3deg); } }
+@keyframes outfit-twinkle { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.85; transform: scale(1.08); } }
+@keyframes outfit-wave    { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-3%); } }
+@keyframes outfit-flicker { 0%,100% { transform: scale(1) translateY(0); filter: brightness(1); } 30% { transform: scale(1.05) translateY(-3%); filter: brightness(1.15); } 60% { transform: scale(0.98) translateY(1%); filter: brightness(0.95); } }
+
 /* --- Reduced motion --- */
 @media (prefers-reduced-motion: reduce) {
   .animate-on-scroll {
@@ -400,7 +430,8 @@ h1, h2, h3, h4, h5, h6 {
   }
   .toast-enter, .toast-exit,
   .modal-content-enter, .modal-content-exit,
-  .cart-badge-pulse {
+  .cart-badge-pulse,
+  .outfit-icon-anim {
     animation: none;
   }
   .glass-card { transition: none; }

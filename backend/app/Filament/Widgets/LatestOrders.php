@@ -9,12 +9,12 @@ use Filament\Widgets\TableWidget as BaseWidget;
 
 class LatestOrders extends BaseWidget
 {
-    protected static ?int $sort = 2;
+    protected static ?int $sort = 7;
     protected int|string|array $columnSpan = 'full';
 
     protected ?string $pollingInterval = '60s';
 
-    protected static ?string $heading = '最新訂單';
+    protected static ?string $heading = '最新訂單（即時，不受期間篩選影響）';
 
     public function table(Table $table): Table
     {

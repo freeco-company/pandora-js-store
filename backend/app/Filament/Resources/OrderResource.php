@@ -156,149 +156,97 @@ class OrderResource extends Resource
 
     public static function table(Table $table): Table
     {
+        $statusOptions = [
+            'pending' => '待處理',
+            'processing' => '處理中',
+            'shipped' => '已出貨',
+            'completed' => '已完成',
+            'cancelled' => '已取消',
+            'refunded' => '已退款',
+            'cod_no_pickup' => '未取件',
+        ];
+
         return $table
             ->columns([
-                // Card layout — responsive: 1 col on mobile, 2 on tablet, 3 on
-                // desktop. Ends the painful horizontal-scroll-table UX on phone
-                // and makes order triage possible with one thumb.
-                Tables\Columns\Layout\Stack::make([
-                    Tables\Columns\Layout\Split::make([
-                        Tables\Columns\TextColumn::make('order_number')
-                            ->searchable()
-                            ->sortable()
-                            ->copyable()
-                            ->weight('bold')
-                            ->size(\Filament\Support\Enums\TextSize::Large)
-                            ->label('訂單編號'),
-                        Tables\Columns\BadgeColumn::make('status')
-                            ->colors([
-                                'warning' => 'pending',
-                                'primary' => fn ($state) => in_array($state, ['processing', 'shipped']),
-                                'success' => 'completed',
-                                'danger' => fn ($state) => in_array($state, ['cancelled', 'refunded', 'cod_no_pickup']),
-                            ])
-                            ->formatStateUsing(fn (string $state): string => match ($state) {
-                                'pending' => '待處理',
-                                'processing' => '處理中',
-                                'shipped' => '已出貨',
-                                'completed' => '已完成',
-                                'cancelled' => '已取消',
-                                'refunded' => '已退款',
-                                'cod_no_pickup' => '未取件',
-                                default => $state,
-                            })
-                            ->grow(false)
-                            ->label('狀態'),
-                    ]),
+                Tables\Columns\TextColumn::make('order_number')
+                    ->searchable()
+                    ->sortable()
+                    ->copyable()
+                    ->weight('bold')
+                    ->label('訂單編號'),
 
-                    Tables\Columns\TextColumn::make('shipping_name')
-                        ->searchable()
-                        ->icon('heroicon-m-user')
-                        ->description(fn ($record) => implode(' · ', array_filter([
-                            $record->shipping_phone,
-                            $record->shipping_store_name ?: mb_substr((string) $record->shipping_address, 0, 20),
-                        ])))
-                        ->label('收件人'),
+                Tables\Columns\TextColumn::make('created_at')
+                    ->dateTime('m/d H:i')
+                    ->sortable()
+                    ->tooltip(fn ($record) => $record->created_at?->format('Y-m-d H:i:s'))
+                    ->label('建立時間'),
 
-                    Tables\Columns\Layout\Split::make([
-                        Tables\Columns\TextColumn::make('shipping_method')
-                            ->formatStateUsing(fn (?string $state): string => match ($state) {
-                                'home_delivery' => '🏠 宅配',
-                                'cvs_711' => '🏪 7-11',
-                                'cvs_family' => '🏪 全家',
-                                default => $state ?? '-',
-                            })
-                            ->description(fn ($record) => $record->shipping_store_name ?: $record->shipping_address)
-                            ->label('配送'),
-                        Tables\Columns\TextColumn::make('payment_method')
-                            ->formatStateUsing(fn (?string $state): string => match ($state) {
-                                'ecpay_credit' => '💳 信用卡',
-                                'bank_transfer' => '🏦 ATM',
-                                'cod' => '📦 貨到付款',
-                                default => $state ?? '-',
-                            })
-                            ->description(fn ($record) => match ($record->payment_status) {
-                                'paid' => '✓ 已付款',
-                                'unpaid' => '⏳ 未付款',
-                                'refunded' => '↺ 已退款',
-                                'failed' => '✕ 付款失敗',
-                                default => null,
-                            })
-                            ->grow(false)
-                            ->label('付款'),
-                    ]),
+                Tables\Columns\TextColumn::make('shipping_name')
+                    ->searchable()
+                    ->description(fn ($record) => $record->shipping_phone)
+                    ->label('收件人'),
 
-                    Tables\Columns\Layout\Split::make([
-                        Tables\Columns\TextColumn::make('total')
-                            ->money('TWD')
-                            ->sortable()
-                            ->weight('bold')
-                            ->color('primary')
-                            ->size(\Filament\Support\Enums\TextSize::Large)
-                            ->label('金額'),
-                        Tables\Columns\TextColumn::make('created_at')
-                            ->since()
-                            ->tooltip(fn ($record) => $record->created_at?->format('Y-m-d H:i'))
-                            ->icon('heroicon-m-clock')
-                            ->grow(false)
-                            ->label('建立'),
-                    ]),
+                Tables\Columns\TextColumn::make('shipping_method')
+                    ->badge()
+                    ->formatStateUsing(fn (?string $state) => match ($state) {
+                        'home_delivery' => '宅配',
+                        'cvs_711' => '7-11',
+                        'cvs_family' => '全家',
+                        default => $state ?? '-',
+                    })
+                    ->color(fn (?string $state) => match ($state) {
+                        'home_delivery' => 'info',
+                        'cvs_711', 'cvs_family' => 'warning',
+                        default => 'gray',
+                    })
+                    ->label('配送'),
 
-                    Tables\Columns\TextColumn::make('ecpay_logistics_id')
-                        ->placeholder('— 未建立物流單 —')
-                        ->copyable()
-                        ->description(fn ($record) => $record->booking_note ? "寄件編號 {$record->booking_note}" : null)
-                        ->icon('heroicon-m-building-storefront')
-                        ->label('物流'),
-                ])->space(2),
+                Tables\Columns\TextColumn::make('ecpay_logistics_id')
+                    ->label('物流編號')
+                    ->placeholder('—')
+                    ->copyable()
+                    ->description(fn ($record) => $record->booking_note ? "寄件 {$record->booking_note}" : null)
+                    ->toggleable(),
+
+                Tables\Columns\TextColumn::make('payment_status')
+                    ->badge()
+                    ->formatStateUsing(fn (?string $state) => match ($state) {
+                        'paid' => '已付款',
+                        'unpaid' => '未付款',
+                        'refunded' => '已退款',
+                        'failed' => '付款失敗',
+                        default => $state ?? '-',
+                    })
+                    ->color(fn (?string $state) => match ($state) {
+                        'paid' => 'success',
+                        'unpaid' => 'warning',
+                        'failed' => 'danger',
+                        'refunded' => 'gray',
+                        default => 'gray',
+                    })
+                    ->label('付款'),
+
+                Tables\Columns\TextColumn::make('total')
+                    ->money('TWD', 0)
+                    ->sortable()
+                    ->alignEnd()
+                    ->weight('bold')
+                    ->color('primary')
+                    ->label('金額'),
+
+                Tables\Columns\SelectColumn::make('status')
+                    ->options($statusOptions)
+                    ->selectablePlaceholder(false)
+                    ->rules(['required'])
+                    ->label('狀態'),
             ])
-            ->contentGrid([
-                'default' => 1,
-                'md' => 2,
-                'xl' => 3,
-            ])
-            ->paginated([12, 24, 48, 96])
-            ->defaultPaginationPageOption(24)
+            ->paginated([25, 50, 100, 200])
+            ->defaultPaginationPageOption(25)
             ->defaultSort('created_at', 'desc')
             ->recordUrl(fn ($record) => Pages\EditOrder::getUrl(['record' => $record]))
-            ->actions([
-                \Filament\Actions\Action::make('create_logistics')
-                    ->label('建立物流單')
-                    ->icon('heroicon-o-building-storefront')
-                    ->color('warning')
-                    ->visible(fn ($record) => in_array($record->shipping_method, ['cvs_711', 'cvs_family'])
-                        && ! $record->ecpay_logistics_id)
-                    ->requiresConfirmation()
-                    ->modalHeading('向綠界建立超商物流單？')
-                    ->modalDescription(fn ($record) => "訂單 {$record->order_number}（{$record->total}）將送往綠界 Express/Create，成功後自動回填物流編號與寄件編號。")
-                    ->action(function ($record) {
-                        try {
-                            app(\App\Services\EcpayLogisticsService::class)->createCvsShipment($record);
-                            \Filament\Notifications\Notification::make()
-                                ->title('已建立物流單 ✓')
-                                ->body("物流編號 {$record->fresh()->ecpay_logistics_id}")
-                                ->success()
-                                ->send();
-                        } catch (\Throwable $e) {
-                            \Filament\Notifications\Notification::make()
-                                ->title('建立物流單失敗')
-                                ->body($e->getMessage())
-                                ->danger()
-                                ->send();
-                        }
-                    }),
-            ])
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
-                    ->options([
-                        'pending' => '待處理',
-                        'processing' => '處理中',
-                        'shipped' => '已出貨',
-                        'completed' => '已完成',
-                        'cancelled' => '已取消',
-                        'refunded' => '已退款',
-                        'cod_no_pickup' => '未取件',
-                    ])
+                    ->options($statusOptions)
                     ->label('狀態'),
                 Tables\Filters\SelectFilter::make('payment_method')
                     ->options([
@@ -330,7 +278,32 @@ class OrderResource extends Resource
                         ->where('payment_status', 'paid')),
             ])
             ->actions([
-                \Filament\Actions\EditAction::make(),
+                \Filament\Actions\Action::make('create_logistics')
+                    ->label('建立物流單')
+                    ->icon('heroicon-o-building-storefront')
+                    ->color('warning')
+                    ->visible(fn ($record) => in_array($record->shipping_method, ['cvs_711', 'cvs_family'])
+                        && ! $record->ecpay_logistics_id)
+                    ->requiresConfirmation()
+                    ->modalHeading('向綠界建立超商物流單？')
+                    ->modalDescription(fn ($record) => "訂單 {$record->order_number}（{$record->total}）將送往綠界 Express/Create，成功後自動回填物流編號與寄件編號。")
+                    ->action(function ($record) {
+                        try {
+                            app(\App\Services\EcpayLogisticsService::class)->createCvsShipment($record);
+                            \Filament\Notifications\Notification::make()
+                                ->title('已建立物流單 ✓')
+                                ->body("物流編號 {$record->fresh()->ecpay_logistics_id}")
+                                ->success()
+                                ->send();
+                        } catch (\Throwable $e) {
+                            \Filament\Notifications\Notification::make()
+                                ->title('建立物流單失敗')
+                                ->body($e->getMessage())
+                                ->danger()
+                                ->send();
+                        }
+                    }),
+                \Filament\Actions\EditAction::make()->iconButton(),
             ]);
     }
 

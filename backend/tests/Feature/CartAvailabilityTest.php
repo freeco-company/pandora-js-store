@@ -120,24 +120,57 @@ class CartAvailabilityTest extends TestCase
             ->assertJsonPath('items.0.product_id', $good->id);
     }
 
-    // ── P2: Product detail page hides campaign products ─────────
+    // ── Campaign visibility: only during running period ─────────
 
-    public function test_product_detail_hides_campaign_product(): void
+    public function test_product_detail_visible_during_running_campaign(): void
     {
         $p = $this->activeProduct();
         $campaign = Campaign::create([
-            'name' => 'Test Campaign',
-            'slug' => 'test-camp',
+            'name' => 'Running',
+            'slug' => 'running',
             'is_active' => true,
             'start_at' => now()->subDay(),
             'end_at' => now()->addDay(),
         ]);
         $campaign->products()->attach($p->id);
 
+        $res = $this->getJson("/api/products/{$p->slug}");
+        $res->assertOk()
+            ->assertJsonPath('slug', $p->slug)
+            ->assertJsonPath('active_campaign.slug', 'running');
+    }
+
+    public function test_product_detail_hidden_after_campaign_ended(): void
+    {
+        $p = $this->activeProduct();
+        $campaign = Campaign::create([
+            'name' => 'Ended',
+            'slug' => 'ended',
+            'is_active' => true,
+            'start_at' => now()->subDays(10),
+            'end_at' => now()->subDay(),
+        ]);
+        $campaign->products()->attach($p->id);
+
         $this->getJson("/api/products/{$p->slug}")->assertNotFound();
     }
 
-    public function test_product_listing_excludes_campaign_product(): void
+    public function test_product_detail_hidden_before_campaign_starts(): void
+    {
+        $p = $this->activeProduct();
+        $campaign = Campaign::create([
+            'name' => 'Upcoming',
+            'slug' => 'upcoming',
+            'is_active' => true,
+            'start_at' => now()->addDay(),
+            'end_at' => now()->addDays(7),
+        ]);
+        $campaign->products()->attach($p->id);
+
+        $this->getJson("/api/products/{$p->slug}")->assertNotFound();
+    }
+
+    public function test_product_listing_includes_running_campaign_product(): void
     {
         $normal = $this->activeProduct(['name' => 'Normal']);
         $campaignProd = $this->activeProduct(['name' => 'Campaign Only']);
@@ -155,6 +188,66 @@ class CartAvailabilityTest extends TestCase
         $slugs = collect($res->json())->pluck('slug')->toArray();
 
         $this->assertContains($normal->slug, $slugs);
+        $this->assertContains($campaignProd->slug, $slugs);
+    }
+
+    public function test_product_listing_excludes_ended_campaign_product(): void
+    {
+        $campaignProd = $this->activeProduct(['name' => 'Expired']);
+        $campaign = Campaign::create([
+            'name' => 'Old',
+            'slug' => 'old',
+            'is_active' => true,
+            'start_at' => now()->subDays(10),
+            'end_at' => now()->subDay(),
+        ]);
+        $campaign->products()->attach($campaignProd->id);
+
+        $res = $this->getJson('/api/products');
+        $slugs = collect($res->json())->pluck('slug')->toArray();
+
         $this->assertNotContains($campaignProd->slug, $slugs);
+    }
+
+    public function test_cart_rejects_product_with_ended_campaign(): void
+    {
+        $p = $this->activeProduct();
+        $campaign = Campaign::create([
+            'name' => 'Done',
+            'slug' => 'done',
+            'is_active' => true,
+            'start_at' => now()->subDays(5),
+            'end_at' => now()->subHour(),
+        ]);
+        $campaign->products()->attach($p->id);
+
+        $res = $this->postJson('/api/cart/calculate', [
+            'items' => [['product_id' => $p->id, 'quantity' => 1]],
+        ]);
+
+        $res->assertOk()
+            ->assertJsonPath('unavailable.0.reason', 'campaign_ended')
+            ->assertJsonCount(0, 'items');
+    }
+
+    public function test_campaign_show_404_when_not_running(): void
+    {
+        Campaign::create([
+            'name' => 'Past',
+            'slug' => 'past',
+            'is_active' => true,
+            'start_at' => now()->subDays(5),
+            'end_at' => now()->subDay(),
+        ]);
+        $this->getJson('/api/campaigns/past')->assertNotFound();
+
+        Campaign::create([
+            'name' => 'Future',
+            'slug' => 'future',
+            'is_active' => true,
+            'start_at' => now()->addDay(),
+            'end_at' => now()->addDays(7),
+        ]);
+        $this->getJson('/api/campaigns/future')->assertNotFound();
     }
 }

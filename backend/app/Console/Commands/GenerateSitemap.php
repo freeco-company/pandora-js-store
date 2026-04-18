@@ -64,9 +64,10 @@ class GenerateSitemap extends Command
                 }
             });
 
-        // Products — include image:image entries for Google image search
+        // Products — include image:image entries for Google image search.
+        // visible() excludes products whose campaigns are all past/future.
         $productCount = 0;
-        Product::where('is_active', true)
+        Product::visible()
             ->orderBy('updated_at', 'desc')
             ->chunk(100, function ($products) use (&$xml, $baseUrl, &$productCount) {
                 foreach ($products as $product) {
