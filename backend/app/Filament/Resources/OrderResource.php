@@ -199,7 +199,7 @@ class OrderResource extends Resource
                         'cvs_711', 'cvs_family' => 'warning',
                         default => 'gray',
                     })
-                    ->label('配送'),
+                    ->label('配送方式'),
 
                 Tables\Columns\TextColumn::make('ecpay_logistics_id')
                     ->label('物流編號')
@@ -207,6 +207,22 @@ class OrderResource extends Resource
                     ->copyable()
                     ->description(fn ($record) => $record->booking_note ? "寄件 {$record->booking_note}" : null)
                     ->toggleable(),
+
+                Tables\Columns\TextColumn::make('payment_method')
+                    ->badge()
+                    ->formatStateUsing(fn (?string $state) => match ($state) {
+                        'ecpay_credit' => '信用卡',
+                        'bank_transfer' => 'ATM',
+                        'cod' => '貨到付款',
+                        default => $state ?? '-',
+                    })
+                    ->color(fn (?string $state) => match ($state) {
+                        'ecpay_credit' => 'primary',
+                        'bank_transfer' => 'info',
+                        'cod' => 'warning',
+                        default => 'gray',
+                    })
+                    ->label('付款方式'),
 
                 Tables\Columns\TextColumn::make('payment_status')
                     ->badge()
@@ -224,7 +240,7 @@ class OrderResource extends Resource
                         'refunded' => 'gray',
                         default => 'gray',
                     })
-                    ->label('付款'),
+                    ->label('付款狀態'),
 
                 Tables\Columns\TextColumn::make('total')
                     ->money('TWD', 0)
