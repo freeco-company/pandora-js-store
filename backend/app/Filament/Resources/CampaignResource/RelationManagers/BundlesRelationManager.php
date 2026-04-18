@@ -120,8 +120,9 @@ class BundlesRelationManager extends RelationManager
                     ->weight('bold')
                     ->description(fn ($record) => $record->slug)
                     ->label('套組名稱'),
-                // Live price — sum of buy items' VIP × qty. Computed per-row so
-                // admins see exactly what frontend will charge.
+                // Live prices — 套組價 (VIP total) is what frontend charges;
+                // 原價 (retail total) is the strikethrough anchor. Both computed
+                // per-row from Bundle pricing helpers.
                 Tables\Columns\TextColumn::make('bundle_price')
                     ->state(fn ($record) => $record->bundlePrice())
                     ->money('TWD', 0)
@@ -129,6 +130,15 @@ class BundlesRelationManager extends RelationManager
                     ->color('primary')
                     ->alignEnd()
                     ->label('套組價'),
+                Tables\Columns\TextColumn::make('bundle_original_price')
+                    ->state(fn ($record) => $record->bundleOriginalPrice())
+                    ->money('TWD', 0)
+                    ->alignEnd()
+                    ->color('gray')
+                    ->description(fn ($record) => $record->bundleOriginalPrice() > 0
+                        ? '省 $' . number_format($record->bundleOriginalPrice() - $record->bundlePrice(), 0)
+                        : null)
+                    ->label('原價'),
                 Tables\Columns\TextColumn::make('buy_items_count')
                     ->counts('buyItems')
                     ->alignEnd()
