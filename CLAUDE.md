@@ -82,6 +82,7 @@ push → `ssh freeco` → `git pull && php8.3 artisan migrate --force && config:
 
 ## Don'ts（硬性規則）
 
+- **Don't build on production server** — 絕對不可以 SSH 到線上 server 跑 `npm run build`。build 會先刪 `.next/` 目錄，導致 PM2 crash-loop、網站 502。所有部署一律走 CI/CD（`deploy.yml`：CI runner 上 build → rsync `.next/` → pm2 reload）。唯一例外：網站已掛需要緊急修復，且 CI/CD 也壞了。
 - **Don't change 3-tier thresholds**（`VIP_THRESHOLD = 4000`、qty≥2 觸發 combo）— 兩邊要同步改，任何一邊漏改會造成結帳金額對不上。
 - **Don't add fields to checkout form** without asking — 輸入摩擦直接掉轉換。
 - **Don't mock ECPay SHA256 in tests when the secret exists** — 用固定測試金鑰驗真正的 hash。
