@@ -14,6 +14,8 @@ export default function AboutPage() {
   useEffect(() => {
     const hero = heroRef.current;
     if (!hero) return;
+
+    // Block-level hero-enter: eyebrow, tagline, closing line
     const els = hero.querySelectorAll('.hero-enter');
     gsap.set(els, { opacity: 0, y: 40, filter: 'blur(6px)' });
     gsap.to(els, {
@@ -21,6 +23,58 @@ export default function AboutPage() {
       duration: 1.2, ease: 'power3.out',
       stagger: 0.2, delay: 0.15,
     });
+
+    // 真筆畫手寫：用 stroke-dashoffset 把每個字的輪廓「畫」出來
+    const strokeWords = hero.querySelectorAll<SVGTextElement>('.fp-svg-stroke text');
+    strokeWords.forEach((t) => {
+      // SVG <text> 沒有 getTotalLength，用 getComputedTextLength ×2.8 當筆劃總長估算
+      const approx = Math.max(1000, t.getComputedTextLength() * 2.8);
+      t.style.strokeDasharray = String(approx);
+      t.style.strokeDashoffset = String(approx);
+    });
+
+    const drawStart = 0.35;
+    const drawDuration = 1.2;
+    const drawStagger = 0.45;
+
+    gsap.to(strokeWords, {
+      strokeDashoffset: 0,
+      duration: drawDuration,
+      ease: 'power1.inOut',
+      stagger: drawStagger,
+      delay: drawStart,
+    });
+
+    const drawEnd = drawStart + (strokeWords.length - 1) * drawStagger + drawDuration;
+
+    // 筆畫畫完後：淡入金色漸層填色層（文字本體變金屬質感）
+    const fillLayer = hero.querySelector<SVGGElement>('.fp-svg-fill');
+    if (fillLayer) {
+      gsap.to(fillLayer, {
+        opacity: 1,
+        duration: 0.55,
+        ease: 'power2.out',
+        delay: drawEnd + 0.1,
+      });
+      // 同時把描線層淡到近乎透明（留一絲作邊緣）
+      gsap.to('.fp-svg-stroke', {
+        opacity: 0.2,
+        duration: 0.55,
+        ease: 'power2.out',
+        delay: drawEnd + 0.1,
+      });
+    }
+
+    // 金色底線收尾
+    const underline = hero.querySelector('.fp-underline');
+    if (underline) {
+      gsap.to(underline, {
+        scaleX: 1,
+        duration: 0.7,
+        ease: 'power2.inOut',
+        delay: drawEnd + 0.25,
+      });
+    }
   }, []);
 
   return (
@@ -28,7 +82,7 @@ export default function AboutPage() {
       <GsapScrollInit />
       {/* Zen Maru Gothic — 日系圓角字體 + Outfit — 英文幾何圓角 */}
       {/* eslint-disable-next-line @next/next/no-page-custom-font */}
-      <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@300;400;500;700;900&family=Outfit:wght@300;400;600;700;800;900&display=swap" rel="stylesheet" />
+      <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Zen+Maru+Gothic:wght@300;400;500;700;900&family=Outfit:wght@300;400;600;700;800;900&display=swap" rel="stylesheet" />
 
       <style jsx global>{`
         .about-warm {
@@ -62,14 +116,59 @@ export default function AboutPage() {
         }
         .about-warm section { overflow: hidden; position: relative; }
 
-        /* ── Hero wordmark — 系統 luxury serif italic（iOS: Bodoni 72/Didot、macOS: Baskerville、Windows: Palatino） ── */
-        .fp-wordmark {
-          font-family: 'Bodoni 72', 'Didot', 'Bodoni Moda', 'Baskerville', 'Big Caslon', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
-          font-style: italic;
-          font-weight: 400;
-          color: #2a1a10;
-          line-height: 1;
-          letter-spacing: -0.015em;
+        /* ── Hero wordmark — SVG 筆畫手寫 + 金屬光澤 ── */
+        .fp-svg {
+          display: block;
+          width: 100%;
+          max-width: 640px;
+          height: auto;
+          margin: 0 auto;
+          overflow: visible;
+          filter: drop-shadow(0 3px 14px rgba(90,58,32,0.10));
+          transition: filter 0.5s ease;
+        }
+        .fp-svg text {
+          font-family: 'Cinzel', 'Trajan Pro', 'Libre Caslon Display', 'Baskerville', Georgia, serif;
+          font-weight: 500;
+          font-size: 88px;
+          letter-spacing: 0.08em;
+        }
+        /* 描線層（動畫「手寫」用） */
+        .fp-svg-stroke text {
+          fill: none;
+          stroke: #2a1a10;
+          stroke-width: 1.2;
+          stroke-linejoin: round;
+          stroke-linecap: round;
+        }
+        /* 金色填色層（寫完後淡入） */
+        .fp-svg-fill text {
+          fill: url(#fpGold);
+        }
+        .fp-svg-fill {
+          opacity: 0;
+        }
+        /* hover：金色漸層流動 + 淡金光暈（手機無 hover，不影響） */
+        @media (hover: hover) {
+          .fp-svg:hover {
+            filter: drop-shadow(0 4px 22px rgba(217,180,125,0.45)) brightness(1.05);
+          }
+          .fp-svg:hover .fp-gold-shift {
+            transform: translateX(100%);
+          }
+        }
+        .fp-gold-shift {
+          transition: transform 1.1s cubic-bezier(0.22, 0.61, 0.36, 1);
+          transform: translateX(0);
+        }
+        /* 書寫筆觸底線 — 手繪感橫線，進場時由左至右畫出 */
+        .fp-underline {
+          display: block;
+          margin: 22px auto 0;
+          height: 2px;
+          background: linear-gradient(90deg, transparent 0%, var(--gold) 15%, var(--gold) 85%, transparent 100%);
+          transform-origin: left center;
+          transform: scaleX(0);
         }
         /* 副標細緻分隔符 */
         .fp-rule {
@@ -235,7 +334,6 @@ export default function AboutPage() {
           1. HERO — FP 團隊
       ═══════════════════════════════════════════ */}
       <section ref={heroRef} className="relative min-h-screen flex items-center justify-center">
-        <div className="fp-watermark" aria-hidden>FP</div>
         <FloatingPetals density={6} />
         <RippleBackground opacity={0.08} />
         <MouseParallax className="absolute inset-0 flex items-center justify-center pointer-events-none" factor={0.02}>
@@ -249,18 +347,51 @@ export default function AboutPage() {
             <div className="w-px h-16 mx-auto mb-6" style={{ background: 'linear-gradient(to bottom, transparent, var(--gold), transparent)' }} />
             <span className="text-[11px] font-medium tracking-[0.6em] text-[var(--gold)] uppercase">FP TEAM · Est. 2019</span>
           </div>
-          <div className="hero-enter mt-10 sm:mt-12">
-            <h1 className="fp-wordmark fp-glow text-[clamp(3.25rem,11vw,7rem)]">
-              Fairy Pandora
-            </h1>
-          </div>
-          <div className="hero-enter mt-8">
-            <span className="fp-rule">Since 2019</span>
+          <div className="mt-10 sm:mt-12 max-w-full">
+            <h1 className="sr-only">Fairy Pandora</h1>
+            <svg
+              viewBox="0 0 640 240"
+              className="fp-svg"
+              preserveAspectRatio="xMidYMid meet"
+              aria-hidden
+            >
+              <defs>
+                <linearGradient id="fpGold" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stopColor="#d9b47d" />
+                  <stop offset="25%" stopColor="#9F6B3E" />
+                  <stop offset="50%" stopColor="#6d4422" />
+                  <stop offset="75%" stopColor="#9F6B3E" />
+                  <stop offset="100%" stopColor="#e8c785" />
+                  <animate
+                    attributeName="y1"
+                    values="-40%;100%"
+                    dur="7s"
+                    repeatCount="indefinite"
+                  />
+                  <animate
+                    attributeName="y2"
+                    values="60%;200%"
+                    dur="7s"
+                    repeatCount="indefinite"
+                  />
+                </linearGradient>
+              </defs>
+              <g className="fp-svg-stroke">
+                <text x="320" y="100" textAnchor="middle" className="fp-svg-word">FAIRY</text>
+                <text x="320" y="210" textAnchor="middle" className="fp-svg-word">PANDORA</text>
+              </g>
+              <g className="fp-svg-fill">
+                <text x="320" y="100" textAnchor="middle">FAIRY</text>
+                <text x="320" y="210" textAnchor="middle">PANDORA</text>
+              </g>
+            </svg>
+            <span className="fp-underline max-w-[320px] sm:max-w-[440px]" aria-hidden />
           </div>
           <div className="hero-enter mt-10">
             <p className="text-base sm:text-lg text-[var(--ink-soft)] max-w-xl mx-auto leading-relaxed font-light">
-              每個推薦的背後，都是一段真實的故事。<br />
-              我們不是一間普通的電商 — 我們是一群親身體驗過改變的人。
+              朵朵真實經歷 — 離開職場五年的全職二寶媽，<br />
+              從零起步經營社群，到全網近 4 萬粉絲相伴，<br />
+              親身見證下半身蛻變的故事…
             </p>
           </div>
           <div className="hero-enter mt-14">
