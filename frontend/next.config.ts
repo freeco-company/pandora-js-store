@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import pkg from "./package.json";
 
 // Bundle analyzer — only loaded when ANALYZE=true so the server can
 // use `npm install --omit=dev` without hitting MODULE_NOT_FOUND.
@@ -9,6 +10,13 @@ const withBundleAnalyzer =
     : (config: NextConfig) => config;
 
 const nextConfig: NextConfig = {
+  // Inline the semver version from package.json into the client bundle so
+  // the footer always reflects the actual shipped release. Previously CI
+  // overrode this with github.sha which is a 40-char hash, unreadable to
+  // customers. Bump package.json version → bump footer display.
+  env: {
+    NEXT_PUBLIC_APP_VERSION: pkg.version,
+  },
   async headers() {
     return [
       {

@@ -441,6 +441,12 @@ export default function CheckoutPage() {
                     update('same_as_customer', false);
                     update('shipping_name', a.recipient_name);
                     update('shipping_phone', a.phone);
+                    // Populate the split fields too so the 縣市 / 區 / 路段 inputs
+                    // reflect the picked address (previously only shipping_address
+                    // was filled, leaving the three inputs visually empty).
+                    setShipCity(a.city || '');
+                    setShipDistrict(a.district || '');
+                    setShipStreet(a.street || '');
                     const full = [a.postal_code, a.city, a.district, a.street].filter(Boolean).join(' ');
                     update('shipping_address', full);
                   }}

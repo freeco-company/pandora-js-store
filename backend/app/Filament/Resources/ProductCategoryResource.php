@@ -28,14 +28,19 @@ class ProductCategoryResource extends Resource
         return $form
             ->schema([
                 Forms\Components\TextInput::make('name')->required()->label('分類名稱'),
-                Forms\Components\TextInput::make('slug')->required()->unique(ignoreRecord: true)->label('Slug'),
+                Forms\Components\TextInput::make('slug')
+                    ->required()
+                    ->unique(ignoreRecord: true)
+                    ->label('網址代稱')
+                    ->helperText('分類頁網址：/products/category/{代稱}'),
                 Forms\Components\Textarea::make('description')->label('描述'),
                 Forms\Components\Select::make('parent_id')
                     ->relationship('parent', 'name')
                     ->label('上層分類'),
                 Forms\Components\TextInput::make('sort_order')->numeric()->default(0)->label('排序'),
                 Forms\Components\FileUpload::make('image')->image()->directory('categories')->label('圖片'),
-            ]);
+            ])
+            ->columns(1);
     }
 
     public static function table(Table $table): Table
@@ -43,10 +48,10 @@ class ProductCategoryResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('name')->searchable()->sortable()->label('名稱'),
-                Tables\Columns\TextColumn::make('slug')->label('Slug'),
+                Tables\Columns\TextColumn::make('slug')->label('網址代稱'),
                 Tables\Columns\TextColumn::make('parent.name')->label('上層'),
-                Tables\Columns\TextColumn::make('products_count')->counts('products')->label('商��數'),
-                Tables\Columns\TextColumn::make('sort_order')->sortable()->label('排��'),
+                Tables\Columns\TextColumn::make('products_count')->counts('products')->label('商品數'),
+                Tables\Columns\TextColumn::make('sort_order')->sortable()->label('排序'),
             ])
             ->defaultSort('sort_order')
             ->actions([

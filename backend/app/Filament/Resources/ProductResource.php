@@ -147,7 +147,7 @@ class ProductResource extends Resource
                             ->helperText('社群分享圖，建議 1200×630px。留空使用封面圖。'),
                     ])->collapsible()->collapsed(fn ($record) => ! $record?->seoMeta?->title),
                 ])->columnSpan(1),
-            ])->columns(3);
+            ])->columns(1); // Top-level: stack vertically for readability
     }
 
     public static function table(Table $table): Table

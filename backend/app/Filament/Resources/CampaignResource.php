@@ -135,7 +135,7 @@ class CampaignResource extends Resource
                             ->helperText('活動進行中出現在首頁'),
                     ]),
                 ])->columnSpan(1),
-            ])->columns(3);
+            ])->columns(1); // Top-level: stack vertically for readability
     }
 
     public static function table(Table $table): Table

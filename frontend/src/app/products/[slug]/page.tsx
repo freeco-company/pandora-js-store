@@ -20,6 +20,7 @@ import ProductFaq from '@/components/ProductFaq';
 import { sanitizeHtml } from '@/lib/sanitize';
 import type { Product } from '@/lib/api';
 import { breadcrumbSchema, faqSchema, productFaqs, productSchema, jsonLdScript } from '@/lib/jsonld';
+import { SITE_URL } from '@/lib/site';
 
 export const revalidate = 3600;
 
@@ -139,7 +140,7 @@ export default async function ProductDetailPage({ params }: Props) {
 
   const reviewsData = reviewsRes.status === 'fulfilled' ? reviewsRes.value : null;
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://pandora.js-store.com.tw';
+  const siteUrl = SITE_URL;
   const prodJsonLd = productSchema({
     name: product.name,
     description: product.short_description || product.name,

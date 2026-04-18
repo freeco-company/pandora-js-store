@@ -1,6 +1,7 @@
 import { fetchApi, imageUrl, type Article } from '@/lib/api';
+import { SITE_URL } from '@/lib/site';
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://pandora.js-store.com.tw';
+const siteUrl = SITE_URL;
 
 export const revalidate = 3600;
 

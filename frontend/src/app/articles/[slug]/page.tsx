@@ -7,6 +7,7 @@ import ShareButtons from '@/components/ShareButtons';
 import ProductCardGrid from '@/components/ProductCardGrid';
 import { sanitizeHtml } from '@/lib/sanitize';
 import { breadcrumbSchema, articleSchema, jsonLdScript } from '@/lib/jsonld';
+import { SITE_URL } from '@/lib/site';
 import { estimateReadingTime } from '@/lib/reading-time';
 
 export const revalidate = 3600;
@@ -215,7 +216,7 @@ export default async function ArticleDetailPage({ params }: Props) {
 
       {/* Share */}
       <ShareButtons
-        url={`${process.env.NEXT_PUBLIC_SITE_URL || 'https://pandora.js-store.com.tw'}/articles/${article.slug}`}
+        url={`${SITE_URL}/articles/${article.slug}`}
         title={article.title}
       />
 

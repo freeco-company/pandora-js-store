@@ -72,12 +72,38 @@ export function trackPurchase(
   });
 }
 
+/** First-party pageview ping for the dashboard 今日瀏覽人數 widget. */
+function trackPageView(pathname: string) {
+  if (typeof window === 'undefined') return;
+  try {
+    let sid = localStorage.getItem('pandora-session-id');
+    if (!sid) {
+      sid = crypto.randomUUID();
+      localStorage.setItem('pandora-session-id', sid);
+    }
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+    fetch(`${apiUrl}/track/view`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        path: pathname,
+        session_id: sid,
+        referer: document.referrer || null,
+      }),
+      keepalive: true,
+    }).catch(() => {});
+  } catch {
+    // ignore — tracking failure must never break the page
+  }
+}
+
 export default function Analytics() {
   const pathname = usePathname();
 
   // Virtual pageview on client-side navigation
   useEffect(() => {
     pushEvent('page_view', { page_path: pathname });
+    trackPageView(pathname);
   }, [pathname]);
 
   if (!GTM_ID) return null;

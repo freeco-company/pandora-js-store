@@ -77,6 +77,15 @@ body {
 /* Min touch target — ensure 44x44 tap targets on mobile */
 .touch-target { min-height: 44px; min-width: 44px; }
 
+/* Prevent iOS Safari from auto-zooming the page when tapping any form input.
+   Safari triggers zoom whenever focused input font-size < 16px. Apply the
+   floor only at mobile widths so desktop keeps its denser type scale. */
+@media (max-width: 640px) {
+  input, textarea, select {
+    font-size: 16px;
+  }
+}
+
 /* ─── SVG icon micro-animations ─── */
 @keyframes icon-sway { 0%,100% { transform: rotate(0deg); } 50% { transform: rotate(6deg); } }
 @keyframes icon-pulse { 0%,100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.12); opacity: 0.85; } }

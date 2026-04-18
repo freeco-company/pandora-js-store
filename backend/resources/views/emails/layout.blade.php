@@ -11,21 +11,23 @@
             <td align="center">
                 <table width="560" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 16px; overflow: hidden; max-width: 100%; box-shadow: 0 2px 12px rgba(159,107,62,0.08);">
 
-                    {{-- Logo Header --}}
+                    {{-- Logo Header — text-first, image as decorative enhancement
+                         (many email clients block external images by default; the
+                         brand wordmark below must carry the identity on its own) --}}
                     <tr>
                         <td style="padding: 32px 32px 0; text-align: center;">
-                            <a href="{{ config('services.ecpay.frontend_url', config('app.url')) }}" style="text-decoration: none;">
-                                <img src="{{ config('services.ecpay.frontend_url', config('app.url')) }}/logo.png"
+                            <a href="{{ config('services.ecpay.frontend_url', config('app.url')) }}" style="text-decoration: none; display: inline-block;">
+                                <img src="{{ config('services.ecpay.frontend_url', config('app.url')) }}/logo.png?v=2"
                                      alt="婕樂纖仙女館"
-                                     width="64" height="64"
-                                     style="display: block; margin: 0 auto 12px; border-radius: 50%; border: 2px solid #e7d9cb;" />
+                                     width="56" height="56"
+                                     style="display: block; margin: 0 auto 10px; border-radius: 50%; background-color: #fdf7ef; border: 2px solid #e7d9cb;" />
+                                <div style="font-size: 20px; font-weight: 900; color: #1f1a15; letter-spacing: 1.5px;">
+                                    婕樂纖<span style="color: #9F6B3E;">仙女館</span>
+                                </div>
+                                <div style="font-size: 10px; font-weight: bold; letter-spacing: 3px; color: #b09070; margin-top: 4px;">
+                                    FAIRY PANDORA
+                                </div>
                             </a>
-                            <div style="font-size: 18px; font-weight: bold; color: #1f1a15; letter-spacing: 1px;">
-                                婕樂纖<span style="color: #9F6B3E;">仙女館</span>
-                            </div>
-                            <div style="font-size: 10px; font-weight: bold; letter-spacing: 3px; color: #b09070; margin-top: 4px;">
-                                FAIRY PANDORA
-                            </div>
                         </td>
                     </tr>
 

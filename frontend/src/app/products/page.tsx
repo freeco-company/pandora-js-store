@@ -3,8 +3,9 @@ import { getProducts, getProductCategories, imageUrl } from '@/lib/api';
 import ProductBrowser from '@/components/ProductBrowser';
 import ScrollReveal from '@/components/ScrollReveal';
 import { breadcrumbSchema, jsonLdScript } from '@/lib/jsonld';
+import { SITE_URL } from '@/lib/site';
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://pandora.js-store.com.tw';
+const siteUrl = SITE_URL;
 import TextReveal from '@/components/TextReveal';
 import FloatingShapes from '@/components/FloatingShapes';
 import LogoLoader from '@/components/LogoLoader';

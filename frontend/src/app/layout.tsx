@@ -18,7 +18,8 @@ import LineFloatingButton from '@/components/LineFloatingButton';
 // LenisProvider removed — conflicts with GSAP ScrollTrigger, causes scroll to freeze
 // import LenisProvider from '@/components/LenisProvider';
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://pandora.js-store.com.tw';
+import { SITE_URL } from '@/lib/site';
+const siteUrl = SITE_URL;
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),

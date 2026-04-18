@@ -55,6 +55,9 @@ Route::get('/article-categories', [ArticleController::class, 'categories']);
 Route::get('/banners', [BannerController::class, 'index']);
 Route::get('/popups', [PopupController::class, 'index']);
 
+// Lightweight page-view tracking for dashboard daily-visitors widget
+Route::post('/track/view', [\App\Http\Controllers\Api\PageViewController::class, 'store']);
+
 // Customer gamification dashboard (requires auth)
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/customer/dashboard', [CustomerController::class, 'dashboard']);

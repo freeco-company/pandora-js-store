@@ -1,10 +1,11 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { breadcrumbSchema, faqSchema, jsonLdScript } from '@/lib/jsonld';
+import { SITE_URL } from '@/lib/site';
 
 export const revalidate = 86400;
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://pandora.js-store.com.tw';
+const siteUrl = SITE_URL;
 
 export const metadata: Metadata = {
   title: '婕樂纖哪裡買？官方正品授權購買管道｜婕樂纖仙女館',

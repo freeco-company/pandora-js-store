@@ -1,4 +1,5 @@
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://pandora.js-store.com.tw';
+import { SITE_URL } from '@/lib/site';
+const siteUrl = SITE_URL;
 
 export function GET() {
   const xml = `<?xml version="1.0" encoding="UTF-8"?>

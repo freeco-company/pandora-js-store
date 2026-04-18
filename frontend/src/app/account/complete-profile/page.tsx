@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
-import { updateProfile } from '@/lib/api';
+import { updateProfile, ApiError } from '@/lib/api';
 import LogoLoader from '@/components/LogoLoader';
 
 export default function CompleteProfilePage() {
@@ -64,8 +64,16 @@ export default function CompleteProfilePage() {
       const redirect = sessionStorage.getItem('pandora-login-redirect');
       sessionStorage.removeItem('pandora-login-redirect');
       router.replace(redirect || '/account');
-    } catch {
-      setError('儲存失敗，請稍後再試');
+    } catch (err) {
+      if (err instanceof ApiError) {
+        // Prefer a field-specific message (email/phone unique, format) so
+        // the user knows exactly what to fix. Fall back to backend's top-level
+        // message, then a generic fallback.
+        const fieldMsg = err.fieldError('email') || err.fieldError('phone') || err.fieldError('name');
+        setError(fieldMsg || err.body.message || '儲存失敗，請稍後再試');
+      } else {
+        setError('儲存失敗，請稍後再試');
+      }
     } finally {
       setSaving(false);
     }

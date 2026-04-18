@@ -60,7 +60,8 @@ class BannerResource extends Resource
                         ->label('結束時間')
                         ->helperText('留空表示永不過期'),
                 ])->columns(2),
-            ]);
+            ])
+            ->columns(1);
     }
 
     public static function table(Table $table): Table

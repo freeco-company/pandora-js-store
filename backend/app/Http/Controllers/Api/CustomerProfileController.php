@@ -57,12 +57,29 @@ class CustomerProfileController extends Controller
 
         $rules = [
             'name'  => ['required', 'string', 'max:100'],
-            'phone' => ['nullable', 'string', 'max:30'],
+            'phone' => ['nullable', 'string', 'regex:/^09\d{8}$/'],
         ];
+        // Phone uniqueness only enforced when actually changing — prevents
+        // legitimate profile saves from failing if the DB has historical
+        // duplicates that predate this constraint.
+        if ($request->filled('phone') && $request->input('phone') !== $c->phone) {
+            $rules['phone'][] = 'unique:customers,phone';
+        }
         if ($needsEmail) {
             $rules['email'] = ['nullable', 'email', 'max:255', 'unique:customers,email,' . $c->id];
         }
-        $data = $request->validate($rules);
+
+        // Field-specific Chinese validation messages so the UI can surface
+        // "此信箱已註冊" / "此手機已註冊" instead of a generic fallback.
+        $messages = [
+            'name.required'   => '請輸入姓名',
+            'email.email'     => '請輸入有效的 Email',
+            'email.unique'    => '此 Email 已註冊，請改用其他信箱或改用 LINE / Google 登入',
+            'phone.regex'     => '請輸入有效手機號碼（09 開頭，共 10 碼）',
+            'phone.unique'    => '此手機號碼已註冊，請改用其他號碼',
+        ];
+
+        $data = $request->validate($rules, $messages);
 
         if (! $needsEmail) {
             unset($data['email']);

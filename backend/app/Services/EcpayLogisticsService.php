@@ -151,13 +151,22 @@ class EcpayLogisticsService
         return $parsed;
     }
 
-    /** "商品A x2#商品B x1" style for GoodsName, truncated to 60 chars. */
+    /**
+     * "商品A x2#商品B x1" style for GoodsName.
+     *
+     * ECPay GoodsName limit: 50 char-weights where Chinese counts as 2,
+     * English/digits as 1. Easiest safe bound: truncate at 25 Unicode chars
+     * (25 Chinese = 50 weight; 25 English = 25 weight, both fit).
+     */
     private function formatGoodsName(Order $order): string
     {
         $order->loadMissing('items');
         $parts = $order->items->map(fn ($it) => "{$it->product_name} x{$it->quantity}")->all();
         $name = implode('#', $parts);
-        return mb_substr($name, 0, 60);
+        if (mb_strlen($name) > 25) {
+            $name = mb_substr($name, 0, 22) . '...';
+        }
+        return $name;
     }
 
     /** Safely truncate a name to max N CJK/mixed chars. */

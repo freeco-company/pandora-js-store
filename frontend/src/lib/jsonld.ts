@@ -5,8 +5,9 @@
  * Reference: https://developers.google.com/search/docs/appearance/structured-data
  */
 
-const siteUrl =
-  process.env.NEXT_PUBLIC_SITE_URL || 'https://pandora.js-store.com.tw';
+import { SITE_URL } from './site';
+
+const siteUrl = SITE_URL;
 
 /**
  * Organization — Google knowledge panel + AI search (Perplexity/Google AI Overview).

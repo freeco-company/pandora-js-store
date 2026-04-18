@@ -1,5 +1,6 @@
 import type { MetadataRoute } from 'next';
 import { fetchApi, imageUrl, type Product, type Article, type ProductCategory } from '@/lib/api';
+import { SITE_URL } from '@/lib/site';
 
 interface Campaign {
   id: number;
@@ -34,7 +35,7 @@ async function fetchAllArticles(): Promise<Article[]> {
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://pandora.js-store.com.tw';
+  const baseUrl = SITE_URL;
 
   const staticPages: MetadataRoute.Sitemap = [
     { url: baseUrl, lastModified: new Date(), changeFrequency: 'daily', priority: 1 },

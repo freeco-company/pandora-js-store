@@ -63,12 +63,12 @@ export default function OrderLookupPage() {
         <ScrollReveal variant="fade-up" delay={200}>
           <div className="mt-6 grid grid-cols-3 gap-3 text-center">
             {[
-              { i: 'package', t: '即時追蹤', d: '出貨進度' },
-              { i: 'lock', t: '安全加密', d: 'HTTPS' },
-              { i: 'chat', t: '1 對 1 客服', d: '真人回覆' },
+              { i: 'package', t: '即時追蹤', d: '出貨進度', color: '#D4762C' }, // warm orange
+              { i: 'lock', t: '安全加密', d: 'HTTPS', color: '#4A9D5F' },      // trust green
+              { i: 'chat', t: '1 對 1 客服', d: '真人回覆', color: '#4A9ECD' }, // info blue
             ].map((item, i) => (
               <div key={i} className="p-3 rounded-2xl bg-gradient-to-br from-[#fdf7ef] to-[#f7eee3] border border-[#e7d9cb]">
-                <div className="mb-1 text-[#9F6B3E]"><SiteIcon name={item.i} size={28} /></div>
+                <div className="mb-1"><SiteIcon name={item.i} size={28} color={item.color} /></div>
                 <div className="text-xs font-black text-gray-800">{item.t}</div>
                 <div className="text-[10px] text-gray-500 mt-0.5">{item.d}</div>
               </div>

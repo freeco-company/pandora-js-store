@@ -43,7 +43,8 @@ class BlacklistResource extends Resource
                         ->label('啟用'),
                 ])->columns(2)
                     ->description('被加入黑名單的用戶將無法使用貨到付款功能'),
-            ]);
+            ])
+            ->columns(1);
     }
 
     public static function table(Table $table): Table

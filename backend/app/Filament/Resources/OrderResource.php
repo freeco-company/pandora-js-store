@@ -64,11 +64,17 @@ class OrderResource extends Resource
                             'ecpay_credit' => '信用卡（綠界）',
                             'bank_transfer' => 'ATM 轉帳',
                             'cod' => '貨到付款',
+                            // Legacy WP imports — keep so the form doesn't nuke the value on save
+                            'Wooecpay_Gateway_Credit' => '信用卡（舊 WP 綠界）',
+                            'ry_newebpay_credit' => '藍新信用卡（舊 WP）',
+                            'ry_newebpay_credit_installment' => '藍新分期（舊 WP）',
+                            'bacs' => 'ATM 轉帳（舊 WP）',
                         ])
                         ->label('付款方式'),
                     Forms\Components\Select::make('payment_status')
                         ->options([
                             'unpaid' => '未付款',
+                            'pending' => '未付款（舊 WP 資料）',
                             'paid' => '已付款',
                             'refunded' => '已退款',
                             'failed' => '付款失敗',
@@ -151,7 +157,8 @@ class OrderResource extends Resource
                         ->label('訂單備註')
                         ->columnSpanFull(),
                 ])->collapsible(),
-            ]);
+            ])
+            ->columns(1); // Top-level: stack sections vertically (no side-by-side)
     }
 
     public static function table(Table $table): Table
@@ -211,14 +218,20 @@ class OrderResource extends Resource
                 Tables\Columns\TextColumn::make('payment_method')
                     ->badge()
                     ->formatStateUsing(fn (?string $state) => match ($state) {
+                        // Current system values
                         'ecpay_credit' => '信用卡',
                         'bank_transfer' => 'ATM',
                         'cod' => '貨到付款',
-                        default => $state ?? '-',
+                        // Legacy values carried over from the WP / WooCommerce import
+                        'Wooecpay_Gateway_Credit' => '信用卡（舊）',
+                        'ry_newebpay_credit' => '藍新信用卡（舊）',
+                        'ry_newebpay_credit_installment' => '藍新分期（舊）',
+                        'bacs' => 'ATM（舊）',
+                        default => $state ?? '—',
                     })
                     ->color(fn (?string $state) => match ($state) {
-                        'ecpay_credit' => 'primary',
-                        'bank_transfer' => 'info',
+                        'ecpay_credit', 'Wooecpay_Gateway_Credit', 'ry_newebpay_credit', 'ry_newebpay_credit_installment' => 'primary',
+                        'bank_transfer', 'bacs' => 'info',
                         'cod' => 'warning',
                         default => 'gray',
                     })
@@ -228,14 +241,14 @@ class OrderResource extends Resource
                     ->badge()
                     ->formatStateUsing(fn (?string $state) => match ($state) {
                         'paid' => '已付款',
-                        'unpaid' => '未付款',
+                        'unpaid', 'pending' => '未付款', // 'pending' from WP imports
                         'refunded' => '已退款',
                         'failed' => '付款失敗',
-                        default => $state ?? '-',
+                        default => $state ?? '—',
                     })
                     ->color(fn (?string $state) => match ($state) {
                         'paid' => 'success',
-                        'unpaid' => 'warning',
+                        'unpaid', 'pending' => 'warning',
                         'failed' => 'danger',
                         'refunded' => 'gray',
                         default => 'gray',
@@ -269,11 +282,16 @@ class OrderResource extends Resource
                         'ecpay_credit' => '信用卡',
                         'bank_transfer' => 'ATM',
                         'cod' => '貨到付款',
+                        'Wooecpay_Gateway_Credit' => '信用卡（舊 WP）',
+                        'ry_newebpay_credit' => '藍新信用卡（舊）',
+                        'ry_newebpay_credit_installment' => '藍新分期（舊）',
+                        'bacs' => 'ATM（舊 WP）',
                     ])
                     ->label('付款方式'),
                 Tables\Filters\SelectFilter::make('payment_status')
                     ->options([
                         'unpaid' => '未付款',
+                        'pending' => '未付款（舊）',
                         'paid' => '已付款',
                         'refunded' => '已退款',
                         'failed' => '付款失敗',

@@ -51,7 +51,8 @@ class ReviewResource extends Resource
                 Forms\Components\Toggle::make('is_verified_purchase')->default(false)->label('已驗證購買'),
                 Forms\Components\Toggle::make('is_seeded')->default(false)->label('種子資料'),
                 Forms\Components\Toggle::make('is_visible')->default(true)->label('顯示'),
-            ]);
+            ])
+            ->columns(1);
     }
 
     public static function table(Table $table): Table
@@ -71,6 +72,11 @@ class ReviewResource extends Resource
             ])
             ->defaultSort('created_at', 'desc')
             ->filters([
+                Tables\Filters\SelectFilter::make('product_id')
+                    ->relationship('product', 'name')
+                    ->searchable()
+                    ->preload()
+                    ->label('商品'),
                 Tables\Filters\TernaryFilter::make('is_seeded')->label('種子資料'),
                 Tables\Filters\TernaryFilter::make('is_visible')->label('顯示狀態'),
             ])

@@ -13,7 +13,7 @@ class Dashboard extends BaseDashboard
 {
     use HasFiltersForm;
 
-    protected static ?string $title = '戰情室 Dashboard';
+    protected static ?string $title = 'Dashboard';
 
     public function filtersForm(Schema $schema): Schema
     {
@@ -50,17 +50,21 @@ class Dashboard extends BaseDashboard
                             ->label('起始日期')
                             ->default(now()->subDays(29)->toDateString())
                             ->native(false)
-                            ->displayFormat('Y/m/d'),
+                            ->displayFormat('Y/m/d')
+                            ->live(onBlur: true), // Apply on blur so each keystroke doesn't hammer widgets
                         DatePicker::make('endDate')
                             ->label('結束日期')
                             ->default(now()->toDateString())
                             ->native(false)
                             ->displayFormat('Y/m/d')
-                            ->afterOrEqual('startDate'),
+                            ->afterOrEqual('startDate')
+                            ->live(onBlur: true),
                     ])
                     ->columns(['default' => 1, 'sm' => 3])
+                    ->columnSpanFull() // Filter card spans the full dashboard width
                     ->collapsible(),
-            ]);
+            ])
+            ->columns(1); // Wrap filter section in a single-column grid
     }
 
     public static function resolvePreset(?string $preset): ?array

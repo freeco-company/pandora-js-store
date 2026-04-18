@@ -8,6 +8,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { SITE_URL } from '@/lib/site';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
 import { useToast } from '@/components/Toast';
@@ -42,7 +43,7 @@ export default function ReferralPage() {
   if (loading) return <div className="py-24 flex justify-center"><LogoLoader size={72} /></div>;
   if (!data) return null;
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://pandora.js-store.com.tw';
+  const siteUrl = SITE_URL;
   const link = `${siteUrl}/?ref=${data.referral_code}`;
   const shareText = `我用婕樂纖仙女館享健康仙女生活！用我的邀請碼 ${data.referral_code} 一起加入 → ${link}`;
 

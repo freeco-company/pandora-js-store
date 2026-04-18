@@ -38,7 +38,8 @@ class CouponResource extends Resource
                 Forms\Components\TextInput::make('used_count')->numeric()->default(0)->disabled()->label('已使用次數'),
                 Forms\Components\DateTimePicker::make('expires_at')->label('到期日'),
                 Forms\Components\Toggle::make('is_active')->default(true)->label('啟用'),
-            ]);
+            ])
+            ->columns(1);
     }
 
     public static function table(Table $table): Table
@@ -52,7 +53,7 @@ class CouponResource extends Resource
                 Tables\Columns\TextColumn::make('value')->label('折扣值'),
                 Tables\Columns\TextColumn::make('used_count')->label('已用'),
                 Tables\Columns\TextColumn::make('max_uses')->label('上限'),
-                Tables\Columns\IconColumn::make('is_active')->boolean()->label('啟���'),
+                Tables\Columns\IconColumn::make('is_active')->boolean()->label('啟用'),
                 Tables\Columns\TextColumn::make('expires_at')->dateTime('Y-m-d')->label('到期日'),
             ])
             ->actions([

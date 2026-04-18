@@ -1,6 +1,26 @@
 export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
 const STORAGE_URL = process.env.NEXT_PUBLIC_STORAGE_URL || 'http://localhost:8000';
 
+/**
+ * Error thrown for non-2xx responses. Exposes the parsed Laravel validation
+ * payload so UIs can show field-specific messages (e.g. "email 已被使用"
+ * vs generic "儲存失敗").
+ */
+export class ApiError extends Error {
+  constructor(
+    public status: number,
+    public body: { message?: string; errors?: Record<string, string[]> } = {},
+  ) {
+    super(body.message || `API error: ${status}`);
+    this.name = 'ApiError';
+  }
+
+  /** First error message for a given field, or undefined. */
+  fieldError(field: string): string | undefined {
+    return this.body.errors?.[field]?.[0];
+  }
+}
+
 /** Resolve image path to full URL (handles /storage/... paths from API) */
 export function imageUrl(path: string | null): string | null {
   if (!path) return null;
@@ -18,7 +38,10 @@ export async function fetchApi<T>(endpoint: string, options?: RequestInit): Prom
     signal: AbortSignal.timeout(15_000),
     ...options,
   });
-  if (!res.ok) throw new Error(`API error: ${res.status}`);
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new ApiError(res.status, body);
+  }
   return res.json();
 }
 
@@ -369,7 +392,10 @@ async function authedFetch<T>(endpoint: string, token: string, options?: Request
     signal: AbortSignal.timeout(15_000),
     ...options,
   });
-  if (!res.ok) throw new Error(`API error: ${res.status}`);
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new ApiError(res.status, body);
+  }
   return res.json();
 }
 

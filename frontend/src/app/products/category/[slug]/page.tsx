@@ -5,10 +5,11 @@ import { getProducts, getProductCategories, imageUrl } from '@/lib/api';
 import type { Product } from '@/lib/api';
 import ProductBrowser from '@/components/ProductBrowser';
 import { breadcrumbSchema, jsonLdScript } from '@/lib/jsonld';
+import { SITE_URL } from '@/lib/site';
 
 export const revalidate = 3600;
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://pandora.js-store.com.tw';
+const siteUrl = SITE_URL;
 
 // SEO metadata per category
 const categoryMeta: Record<string, { title: string; h1: string; description: string; intro: string }> = {

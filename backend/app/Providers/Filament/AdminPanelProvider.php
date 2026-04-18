@@ -89,10 +89,10 @@ class AdminPanelProvider extends PanelProvider
             ])
 
             // ── Widgets ──
+            // No AccountWidget — the "Welcome Admin / Sign out" card is dead
+            // space on a single-admin panel; sign-out lives in the user menu.
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
-            ->widgets([
-                AccountWidget::class,
-            ])
+            ->widgets([])
 
             // ── Middleware ──
             ->middleware([

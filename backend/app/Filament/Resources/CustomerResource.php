@@ -40,7 +40,8 @@ class CustomerResource extends Resource
                     Forms\Components\TextInput::make('address_zip')->label('郵遞區號'),
                     Forms\Components\TextInput::make('address_detail')->label('詳細地址'),
                 ])->columns(2),
-            ]);
+            ])
+            ->columns(1); // Top-level: stack vertically for readability
     }
 
     public static function table(Table $table): Table
@@ -101,6 +102,13 @@ class CustomerResource extends Resource
             ->actions([
                 \Filament\Actions\EditAction::make()->iconButton(),
             ]);
+    }
+
+    public static function getRelations(): array
+    {
+        return [
+            CustomerResource\RelationManagers\OrdersRelationManager::class,
+        ];
     }
 
     public static function getPages(): array

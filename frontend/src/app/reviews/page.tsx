@@ -2,10 +2,11 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { getAggregateReviews, imageUrl } from '@/lib/api';
 import { faqSchema, breadcrumbSchema, jsonLdScript } from '@/lib/jsonld';
+import { SITE_URL } from '@/lib/site';
 
 export const revalidate = 3600;
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://pandora.js-store.com.tw';
+const siteUrl = SITE_URL;
 
 export const metadata: Metadata = {
   title: '婕樂纖評價｜真實買家使用心得與商品評論',

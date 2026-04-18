@@ -290,12 +290,14 @@ export default function SiteIcon({ name, size = 20, className = '', color }: Pro
         </svg>
       );
     case 'chat':
+      // Multi-color chat bubble: blue body = conversation, white dots.
       return (
-        <svg className={cls} style={s} viewBox="0 0 20 20" fill="none" aria-hidden>
-          <path d="M3 4a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2H8l-4 3v-3a2 2 0 01-1-1.7V4z" fill="currentColor" opacity="0.15" stroke="currentColor" strokeWidth="1.2" />
-          <circle cx="7" cy="8" r="1" fill="currentColor" />
-          <circle cx="10" cy="8" r="1" fill="currentColor" />
-          <circle cx="13" cy="8" r="1" fill="currentColor" />
+        <svg className={cls} style={{ width: size, height: size } as React.CSSProperties} viewBox="0 0 20 20" fill="none" aria-hidden>
+          <path d="M3 4a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2H8l-4 3v-3a2 2 0 01-1-1.7V4z" fill="#4A9ECD" />
+          <path d="M3 4a2 2 0 012-2h10a2 2 0 012 2v4H3z" fill="#6BC4FF" opacity="0.6" />
+          <circle cx="7" cy="8" r="1.2" fill="#ffffff" />
+          <circle cx="10" cy="8" r="1.2" fill="#ffffff" />
+          <circle cx="13" cy="8" r="1.2" fill="#ffffff" />
         </svg>
       );
     case 'phone':
@@ -334,10 +336,16 @@ export default function SiteIcon({ name, size = 20, className = '', color }: Pro
       );
 
     case 'package':
+      // Multi-color package: warm kraft-paper box with tape accent. Ignores
+      // `color` prop by design — used as a trust badge where fixed hues read
+      // better than brand-tint monochrome.
       return (
-        <svg className={cls} style={s} viewBox="0 0 20 20" fill="none" aria-hidden>
-          <path d="M3 6l7-4 7 4v8l-7 4-7-4V6z" stroke="currentColor" strokeWidth="1.2" fill="currentColor" opacity="0.1" />
-          <path d="M3 6l7 4 7-4M10 10v8" stroke="currentColor" strokeWidth="1.2" />
+        <svg className={cls} style={{ width: size, height: size } as React.CSSProperties} viewBox="0 0 20 20" fill="none" aria-hidden>
+          <path d="M3 6l7-4 7 4v8l-7 4-7-4V6z" fill="#D6A472" />
+          <path d="M3 6l7 4 7-4" stroke="#8B5A2B" strokeWidth="1.2" strokeLinejoin="round" fill="none" />
+          <path d="M10 10v8" stroke="#8B5A2B" strokeWidth="1.2" />
+          <rect x="9" y="2" width="2" height="16" fill="#E54B50" opacity="0.85" />
+          <path d="M3 6l7 4 7-4" stroke="#F5D7AC" strokeWidth="0.5" fill="none" />
         </svg>
       );
     // ── Mascot Outfits ─────────────────────────────────────
@@ -432,11 +440,14 @@ export default function SiteIcon({ name, size = 20, className = '', color }: Pro
       );
 
     case 'lock':
+      // Multi-color padlock: green body = safe/trusted, golden shackle.
       return (
-        <svg className={cls} style={s} viewBox="0 0 20 20" fill="none" aria-hidden>
-          <rect x="4" y="9" width="12" height="9" rx="2" stroke="currentColor" strokeWidth="1.3" fill="currentColor" opacity="0.1" />
-          <path d="M7 9V6a3 3 0 016 0v3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" fill="none" />
-          <circle cx="10" cy="13.5" r="1.2" fill="currentColor" />
+        <svg className={cls} style={{ width: size, height: size } as React.CSSProperties} viewBox="0 0 20 20" fill="none" aria-hidden>
+          <path d="M7 9V6a3 3 0 016 0v3" stroke="#B8860B" strokeWidth="1.8" strokeLinecap="round" fill="none" />
+          <rect x="4" y="9" width="12" height="9" rx="2" fill="#4A9D5F" />
+          <rect x="4" y="9" width="12" height="3" fill="#6BC07E" />
+          <circle cx="10" cy="13.5" r="1.4" fill="#FFF8D6" />
+          <rect x="9.4" y="13.5" width="1.2" height="2.8" rx="0.6" fill="#FFF8D6" />
         </svg>
       );
     case 'no-entry':

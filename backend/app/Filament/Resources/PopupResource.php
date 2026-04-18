@@ -63,7 +63,8 @@ class PopupResource extends Resource
                     Forms\Components\DateTimePicker::make('ends_at')
                         ->label('結束時間'),
                 ])->columns(2),
-            ]);
+            ])
+            ->columns(1);
     }
 
     public static function table(Table $table): Table

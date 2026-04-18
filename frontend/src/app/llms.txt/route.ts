@@ -1,9 +1,10 @@
 import { fetchApi, type Product } from '@/lib/api';
+import { SITE_URL } from '@/lib/site';
 
 export const revalidate = 3600;
 
 export async function GET() {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://pandora.js-store.com.tw';
+  const siteUrl = SITE_URL;
 
   let products: Product[] = [];
   try {

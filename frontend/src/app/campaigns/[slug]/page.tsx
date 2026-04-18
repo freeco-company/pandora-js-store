@@ -8,7 +8,9 @@ import CampaignBundleCard from '@/components/CampaignBundleCard';
 import { jsonLdScript } from '@/lib/jsonld';
 import { formatPrice } from '@/lib/format';
 
-export const revalidate = 60;
+// force-dynamic so notFound() returns true 404 (not cached 200). The page
+// is cheap to render (one API hit) and campaigns are time-sensitive anyway.
+export const dynamic = 'force-dynamic';
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
