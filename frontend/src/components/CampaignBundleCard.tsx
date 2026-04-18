@@ -138,17 +138,17 @@ export default function CampaignBundleCard({ bundle }: { bundle: CampaignBundle 
                   </span>
                 </li>
               ))}
-              {/* 自訂加贈（服務型，無商品圖）— 用淡色禮物 icon 佔位 */}
+              {/* 自訂加贈 — 視覺上跟商品 gift 一致，沒圖就用禮物 icon 佔位 */}
               {bundle.custom_gifts.map((cg, idx) => (
                 <li key={`cg-${idx}`} className="flex items-center gap-3 p-3 rounded-xl bg-[#fef5f3] border border-[#e74c3c]/10">
-                  <div className="relative w-12 h-12 rounded-lg bg-[#e74c3c]/10 shrink-0 flex items-center justify-center">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-[#e74c3c]">
+                  <div className="relative w-12 h-12 rounded-lg bg-white shrink-0 border border-[#e74c3c]/15 flex items-center justify-center">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" className="text-[#e74c3c]/60">
                       <path d="M20 12v10H4V12M2 7h20v5H2V7zM12 22V7M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-black text-[#3d2e22] line-clamp-1">{cg.name}</div>
-                    <div className="text-[11px] text-[#e74c3c]/70">限時加贈</div>
+                    <div className="text-[11px] text-[#e74c3c]/70">免費贈送</div>
                   </div>
                   <span className="text-[10px] font-black text-white bg-[#e74c3c] px-2 py-0.5 rounded-full">
                     × {cg.quantity} FREE
