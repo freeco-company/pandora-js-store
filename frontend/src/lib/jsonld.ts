@@ -284,6 +284,7 @@ export function articleSchema(article: {
   slug: string;
   publishedAt: string;
   updatedAt?: string | null;
+  wordCount?: number;
 }) {
   return {
     '@context': 'https://schema.org',
@@ -293,6 +294,7 @@ export function articleSchema(article: {
     image: article.image || undefined,
     datePublished: article.publishedAt,
     ...(article.updatedAt ? { dateModified: article.updatedAt } : { dateModified: article.publishedAt }),
+    ...(article.wordCount ? { wordCount: article.wordCount } : {}),
     author: { '@type': 'Organization', name: '婕樂纖仙女館' },
     publisher: {
       '@type': 'Organization',

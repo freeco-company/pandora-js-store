@@ -108,12 +108,17 @@ export default async function ArticleDetailPage({ params }: Props) {
             ? '口碑推薦'
             : '文章';
 
+  // Word count for schema.org (Chinese: strip tags, count chars)
+  const plainText = article.content.replace(/<[^>]*>/g, '').replace(/\s+/g, '');
+  const wordCount = plainText.length;
+
   const articleJsonLd = articleSchema({
     title: article.title,
     excerpt: article.excerpt || article.title,
     image: article.featured_image ? imageUrl(article.featured_image) : null,
     slug: article.slug,
     publishedAt: article.published_at,
+    wordCount,
   });
   const typeLabel =
     article.source_type === 'blog' || article.source_type === 'news'

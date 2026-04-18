@@ -11,11 +11,13 @@ export const revalidate = 3600;
 
 export const metadata: Metadata = {
   title: '最新文章',
-  description: '婕樂纖誌 — 營養師專欄、媒體報導、品牌故事與真實口碑。',
+  description:
+    '婕樂纖誌 — 營養師專欄、媒體報導、品牌事蹟與真實口碑推薦。深入了解 JEROSSE 婕樂纖產品背後的健康知識、使用心得與品牌故事，幫助你做出更聰明的保健選擇。',
   alternates: { canonical: '/articles' },
   openGraph: {
     title: '婕樂纖誌｜營養師專欄・媒體報導・品牌故事',
-    description: '婕樂纖誌 — 營養師專欄、媒體報導、品牌故事與真實口碑。',
+    description:
+      '婕樂纖誌 — 營養師專欄、媒體報導、品牌事蹟與真實口碑推薦。深入了解產品背後的健康知識與使用心得。',
   },
 };
 

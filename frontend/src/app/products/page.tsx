@@ -13,11 +13,13 @@ export const revalidate = 3600;
 
 export const metadata: Metadata = {
   title: '全館商品',
-  description: 'JEROSSE 婕樂纖全系列商品，任選兩件享搭配價，滿額再享VIP優惠。',
+  description:
+    'JEROSSE 婕樂纖全系列商品一覽：保健食品、美容保養、體重管理、葉黃素、益生菌、口服玻尿酸。任選兩件享 1+1 搭配價，滿 NT$4,000 全車自動升級 VIP 最低價。官方正品授權，安心選購。',
   alternates: { canonical: '/products' },
   openGraph: {
     title: '全館商品｜婕樂纖仙女館',
-    description: 'JEROSSE 婕樂纖全系列商品，任選兩件享搭配價，滿額再享VIP優惠。',
+    description:
+      'JEROSSE 婕樂纖全系列商品一覽：保健食品、美容保養、體重管理、葉黃素、益生菌、口服玻尿酸。任選兩件享搭配價，滿額再享 VIP 優惠。',
   },
 };
 

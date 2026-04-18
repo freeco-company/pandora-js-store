@@ -14,9 +14,6 @@ import Analytics from '@/components/Analytics';
 import CustomCursor from '@/components/CustomCursor';
 import MobileDrawer from '@/components/MobileDrawer';
 import MobileBottomNavWrapper from '@/components/MobileBottomNavWrapper';
-import dynamic from 'next/dynamic';
-
-const WebVitals = dynamic(() => import('@/components/WebVitals'), { ssr: false });
 // LenisProvider removed — conflicts with GSAP ScrollTrigger, causes scroll to freeze
 // import LenisProvider from '@/components/LenisProvider';
 
@@ -122,7 +119,6 @@ export default function RootLayout({
                     <Analytics />
                     <MobileDrawer />
                     <MobileBottomNavWrapper />
-                    <WebVitals />
                   </MobileMenuProvider>
                 </SerendipityProvider>
               </CelebrationProvider>
