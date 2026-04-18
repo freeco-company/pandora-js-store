@@ -154,57 +154,72 @@ class ProductResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\Layout\Split::make([
-                    Tables\Columns\ImageColumn::make('gallery')
-                        ->square()
-                        ->size(56)
-                        ->getStateUsing(function ($record) {
-                            $gallery = $record->gallery ?? [];
-                            return ! empty($gallery) ? [$gallery[0]] : [];
-                        })
-                        ->disk('public'),
+                Tables\Columns\ImageColumn::make('gallery')
+                    ->square()
+                    ->size(56)
+                    ->getStateUsing(function ($record) {
+                        $gallery = $record->gallery ?? [];
+                        return ! empty($gallery) ? [$gallery[0]] : [];
+                    })
+                    ->disk('public')
+                    ->label('圖'),
 
-                    Tables\Columns\Layout\Stack::make([
-                        Tables\Columns\TextColumn::make('name')
-                            ->searchable()
-                            ->sortable()
-                            ->weight('bold')
-                            ->description(fn ($record) => $record->sku ?: null)
-                            ->limit(40)
-                            ->label('商品名稱'),
-                        Tables\Columns\TextColumn::make('stock_status')
-                            ->badge()
-                            ->formatStateUsing(fn (?string $state) => match ($state) {
-                                'instock' => '有貨',
-                                'outofstock' => '缺貨',
-                                default => $state ?? '-',
-                            })
-                            ->color(fn (?string $state) => $state === 'outofstock' ? 'danger' : 'success'),
-                    ])->space(1),
+                Tables\Columns\TextColumn::make('name')
+                    ->searchable()
+                    ->sortable()
+                    ->weight('bold')
+                    ->description(fn ($record) => $record->sku ?: null)
+                    ->limit(40)
+                    ->label('商品名稱'),
 
-                    Tables\Columns\Layout\Stack::make([
-                        Tables\Columns\TextColumn::make('price')
-                            ->money('TWD', 0)
-                            ->sortable()
-                            ->weight('bold')
-                            ->label('單件'),
-                        Tables\Columns\TextColumn::make('combo_price')
-                            ->money('TWD', 0)
-                            ->color('info')
-                            ->placeholder('—')
-                            ->label('搭配'),
-                        Tables\Columns\TextColumn::make('vip_price')
-                            ->money('TWD', 0)
-                            ->color('warning')
-                            ->placeholder('—')
-                            ->label('VIP'),
-                    ])->space(1),
+                Tables\Columns\TextColumn::make('price')
+                    ->money('TWD', 0)
+                    ->alignEnd()
+                    ->sortable()
+                    ->label('單件'),
 
-                    Tables\Columns\ToggleColumn::make('is_active')
-                        ->label('啟用'),
-                ])->from('md'),
+                Tables\Columns\TextColumn::make('combo_price')
+                    ->money('TWD', 0)
+                    ->alignEnd()
+                    ->color('info')
+                    ->placeholder('—')
+                    ->label('搭配價'),
+
+                Tables\Columns\TextColumn::make('vip_price')
+                    ->money('TWD', 0)
+                    ->alignEnd()
+                    ->color('warning')
+                    ->placeholder('—')
+                    ->label('VIP 價'),
+
+                Tables\Columns\TextColumn::make('stock_status')
+                    ->badge()
+                    ->formatStateUsing(fn (?string $state) => match ($state) {
+                        'instock' => '有貨',
+                        'outofstock' => '缺貨',
+                        default => $state ?? '-',
+                    })
+                    ->color(fn (?string $state) => $state === 'outofstock' ? 'danger' : 'success')
+                    ->label('庫存')
+                    ->toggleable(),
+
+                Tables\Columns\IconColumn::make('hf_cert_no')
+                    ->icon('heroicon-m-shield-check')
+                    ->getStateUsing(fn ($record) => (bool) $record->hf_cert_no)
+                    ->color('success')
+                    ->tooltip(fn ($record) => $record->hf_cert_no ?: null)
+                    ->label('健食')
+                    ->toggleable(),
+
+                Tables\Columns\ToggleColumn::make('is_active')
+                    ->label('啟用'),
+
+                Tables\Columns\TextColumn::make('sort_order')
+                    ->sortable()
+                    ->alignEnd()
+                    ->label('排序')
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
-            ->contentGrid(['default' => 1, 'md' => null])
             ->paginated([25, 50, 100, 200])
             ->defaultPaginationPageOption(25)
             ->defaultSort('sort_order')
