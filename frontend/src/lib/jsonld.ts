@@ -80,8 +80,6 @@ export function localBusinessSchema() {
     address: {
       '@type': 'PostalAddress',
       addressCountry: 'TW',
-      addressLocality: '台北市',
-      addressRegion: '台灣',
     },
     priceRange: 'NT$590–NT$3,980',
     currenciesAccepted: 'TWD',

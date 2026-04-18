@@ -51,7 +51,6 @@ function FooterInner() {
             <div className="text-sm text-gray-400 space-y-1.5">
               <p>產品由 <span className="text-gray-300">法芮可有限公司</span> 提供</p>
               <p>統一編號：90445399</p>
-              <p>公司地址：110 臺北市信義區忠孝東路五段 510 號 26 樓</p>
               <p>
                 客服信箱：
                 <a href="mailto:contact@freeco.cc" className="text-gray-300 hover:text-white transition-colors">
