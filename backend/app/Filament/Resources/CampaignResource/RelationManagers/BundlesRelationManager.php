@@ -111,12 +111,24 @@ class BundlesRelationManager extends RelationManager
             ->recordTitleAttribute('name')
             ->columns([
                 Tables\Columns\ImageColumn::make('image')
-                    ->square()->size(56)->disk('public')->label('主圖'),
+                    ->square()->size(56)->disk('public')
+                    ->checkFileExistence(false) // trust the DB path; skip per-row disk stat
+                    ->defaultImageUrl(asset('images/placeholder-bundle.svg'))
+                    ->label('主圖'),
                 Tables\Columns\TextColumn::make('name')
                     ->searchable()
                     ->weight('bold')
                     ->description(fn ($record) => $record->slug)
                     ->label('套組名稱'),
+                // Live price — sum of buy items' VIP × qty. Computed per-row so
+                // admins see exactly what frontend will charge.
+                Tables\Columns\TextColumn::make('bundle_price')
+                    ->state(fn ($record) => $record->bundlePrice())
+                    ->money('TWD', 0)
+                    ->weight('bold')
+                    ->color('primary')
+                    ->alignEnd()
+                    ->label('套組價'),
                 Tables\Columns\TextColumn::make('buy_items_count')
                     ->counts('buyItems')
                     ->alignEnd()
