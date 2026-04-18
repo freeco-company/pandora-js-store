@@ -101,19 +101,21 @@ class CampaignResource extends Resource
 
     public static function table(Table $table): Table
     {
+        // NOTE: Filament closure param names matter — they're injected by name.
+        // Valid names: $state, $record, $column, $livewire. Don't rename to $s.
         $statusOf = fn ($record): string => match (true) {
             $record->isRunning() => 'active',
             $record->hasEnded() => 'ended',
             $record->start_at > now() => 'upcoming',
             default => 'inactive',
         };
-        $statusLabel = fn (string $s): string => match ($s) {
+        $statusLabel = fn (string $state): string => match ($state) {
             'active' => '進行中',
             'upcoming' => '即將開始',
             'ended' => '已結束',
             default => '未啟用',
         };
-        $statusColor = fn (string $s): string => match ($s) {
+        $statusColor = fn (string $state): string => match ($state) {
             'active' => 'success',
             'upcoming' => 'warning',
             'ended' => 'danger',
