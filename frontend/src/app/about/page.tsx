@@ -1,34 +1,40 @@
 import type { Metadata } from 'next';
 import AboutPage from './AboutClient';
-import { breadcrumbSchema, jsonLdScript } from '@/lib/jsonld';
+import {
+  aboutPageSchema,
+  breadcrumbSchema,
+  founderSchema,
+  jsonLdScript,
+  organizationSchema,
+} from '@/lib/jsonld';
 
 export const revalidate = 86400;
 
 export const metadata: Metadata = {
   title: '關於 FP｜婕樂纖仙女館團隊',
   description:
-    'Fairy Pandora 婕樂纖仙女館 — JEROSSE 官方正品授權經銷。認識創辦人朵朵與我們的團隊。',
+    'Fairy Pandora (FP) 是 JEROSSE 婕樂纖官方正品授權經銷，由創辦人朵朵帶領皇家團隊經營。以「真實分享、不話術」為核心，陪伴每位仙女找回自信。',
   alternates: { canonical: '/about' },
   openGraph: {
     title: '關於 FP｜婕樂纖仙女館團隊',
-    description: '認識 Fairy Pandora 團隊，陪你從仙女蛻變成潘朵拉。',
+    description: 'Fairy Pandora — JEROSSE 官方正品授權。認識創辦人朵朵與皇家團隊。',
   },
 };
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://pandora.js-store.com.tw';
-
-const teamJsonLd = [{
-  '@context': 'https://schema.org', '@type': 'Person',
-  '@id': `${siteUrl}/about#duoduo`, name: '朵朵',
-  jobTitle: 'Co-Founder · 婕樂纖仙女館',
-  worksFor: { '@id': `${siteUrl}/#organization` },
-}];
-
 export default function Page() {
-  const breadcrumbs = breadcrumbSchema([{ name: '首頁', url: '/' }, { name: '關於 FP' }]);
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(breadcrumbs, ...teamJsonLd) }} />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: jsonLdScript(
+            aboutPageSchema(),
+            organizationSchema(),
+            founderSchema(),
+            breadcrumbSchema([{ name: '首頁', url: '/' }, { name: '關於 FP' }]),
+          ),
+        }}
+      />
       <AboutPage />
     </>
   );

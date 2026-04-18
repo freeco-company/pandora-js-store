@@ -25,15 +25,17 @@ const GsapScrollInit = dynamic(() => import('@/components/GsapScrollInit'));
 export const revalidate = 3600;
 
 export default async function HomePage() {
-  let products: Product[] = [];
-  let categories: ProductCategory[] = [];
-  let banners: Banner[] = [];
-  let popups: Popup[] = [];
+  const [productsRes, categoriesRes, bannersRes, popupsRes] = await Promise.allSettled([
+    getProducts(),
+    getProductCategories(),
+    getBanners(),
+    getPopups(),
+  ]);
 
-  try { products = await getProducts(); } catch {}
-  try { categories = await getProductCategories(); } catch {}
-  try { banners = await getBanners(); } catch {}
-  try { popups = await getPopups(); } catch {}
+  const products: Product[] = productsRes.status === 'fulfilled' ? productsRes.value : [];
+  const categories: ProductCategory[] = categoriesRes.status === 'fulfilled' ? categoriesRes.value : [];
+  const banners: Banner[] = bannersRes.status === 'fulfilled' ? bannersRes.value : [];
+  const popups: Popup[] = popupsRes.status === 'fulfilled' ? popupsRes.value : [];
 
   return (
     <>

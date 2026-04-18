@@ -17,9 +17,10 @@ import SiteIcon from '@/components/SiteIcon';
 import CampaignPricing from '@/components/CampaignPricing';
 import ProductReviews from '@/components/ProductReviews';
 import ReviewForm from '@/components/ReviewForm';
+import ProductFaq from '@/components/ProductFaq';
 import { sanitizeHtml } from '@/lib/sanitize';
 import type { Product } from '@/lib/api';
-import { breadcrumbSchema, productSchema, jsonLdScript } from '@/lib/jsonld';
+import { breadcrumbSchema, faqSchema, productFaqs, productSchema, jsonLdScript } from '@/lib/jsonld';
 
 export const revalidate = 3600;
 
@@ -111,11 +112,15 @@ export default async function ProductDetailPage({ params }: Props) {
     permanentRedirect(`/products/${canonical}`);
   }
 
-  // Fetch related products
+  // Fetch related products + reviews in parallel
+  const [allProductsRes, reviewsRes] = await Promise.allSettled([
+    getProducts(),
+    getProductReviews(product.slug),
+  ]);
+
   let relatedProducts: Product[] = [];
-  try {
-    const allProducts = await getProducts();
-    const others = allProducts.filter((p) => p.id !== product.id);
+  if (allProductsRes.status === 'fulfilled') {
+    const others = allProductsRes.value.filter((p) => p.id !== product.id);
     const categoryIds = product.categories.map((c) => c.id);
     const sameCategory = others.filter((p) =>
       p.categories.some((c) => categoryIds.includes(c.id))
@@ -131,17 +136,9 @@ export default async function ProductDetailPage({ params }: Props) {
     } else {
       relatedProducts = others.sort(() => Math.random() - 0.5).slice(0, 4);
     }
-  } catch {
-    // Ignore
   }
 
-  // Fetch reviews
-  let reviewsData = null;
-  try {
-    reviewsData = await getProductReviews(product.slug);
-  } catch {
-    // Reviews unavailable — degrade gracefully
-  }
+  const reviewsData = reviewsRes.status === 'fulfilled' ? reviewsRes.value : null;
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://pandora.js-store.com.tw';
   const prodJsonLd = productSchema({
@@ -158,6 +155,14 @@ export default async function ProductDetailPage({ params }: Props) {
     reviewCount: reviewsData?.total_count,
     reviewRating: reviewsData?.average_rating,
   });
+  const faqs = productFaqs({
+    name: product.name,
+    comboPrice: product.combo_price,
+    vipPrice: product.vip_price,
+    hfCertNo: product.hf_cert_no,
+    hfCertClaim: product.hf_cert_claim,
+  });
+  const faqJsonLd = faqs.length > 0 ? faqSchema(faqs) : null;
   const breadcrumbs = breadcrumbSchema([
     { name: '首頁', url: '/' },
     { name: '全館商品', url: '/products' },
@@ -171,7 +176,11 @@ export default async function ProductDetailPage({ params }: Props) {
     <>
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: jsonLdScript(prodJsonLd, breadcrumbs) }}
+      dangerouslySetInnerHTML={{
+        __html: faqJsonLd
+          ? jsonLdScript(prodJsonLd, breadcrumbs, faqJsonLd)
+          : jsonLdScript(prodJsonLd, breadcrumbs),
+      }}
     />
     <div className="max-w-[1290px] mx-auto px-5 sm:px-6 lg:px-8 py-6 sm:py-10 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-10">
       {/* Breadcrumb bar (visual, complements JSON-LD) */}
@@ -366,6 +375,9 @@ export default async function ProductDetailPage({ params }: Props) {
           </div>
         </section>
       )}
+
+      {/* Generic product FAQ — content matches FAQPage JSON-LD above */}
+      <ProductFaq faqs={faqs} />
 
       {/* Reviews */}
       {reviewsData && <ProductReviews data={reviewsData} />}

@@ -27,7 +27,19 @@ export function organizationSchema() {
       height: 512,
     },
     description:
-      'JEROSSE 婕樂纖官方正品授權經銷商。健康保健食品、美容保養、體重管理、葉黃素、益生菌、口服玻尿酸。1+1 搭配價、滿額 VIP 優惠。',
+      '婕樂纖仙女館（Fairy Pandora, FP）是 JEROSSE 婕樂纖官方正品授權經銷商，由創辦人朵朵帶領 FP 皇家團隊，以「真實分享、不話術」為核心經營理念。提供纖飄錠、纖纖飲X、爆纖錠、益生菌、葉黃素、水光錠、口服玻尿酸等健康保健與美容保養產品，採三階梯定價：單件原價、任選兩件享搭配價、滿 NT$4,000 自動升級 VIP 優惠價。',
+    slogan: '由內而外，綻放光彩',
+    knowsAbout: [
+      'JEROSSE 婕樂纖',
+      '保健食品',
+      '體重管理',
+      '葉黃素',
+      '益生菌',
+      '口服玻尿酸',
+      '膠原蛋白',
+      '國家健康食品認證',
+      '美容保養',
+    ],
     sameAs: [
       'https://www.instagram.com/pandorasdo/',
       'https://lin.ee/62wj7qa',
@@ -40,10 +52,7 @@ export function organizationSchema() {
       url: 'https://lin.ee/62wj7qa',
     },
     foundingDate: '2020',
-    founder: {
-      '@type': 'Person',
-      name: '朵朵',
-    },
+    founder: { '@id': `${siteUrl}/about#duoduo` },
     address: {
       '@type': 'PostalAddress',
       addressCountry: 'TW',
@@ -286,6 +295,107 @@ export function productSchema(product: {
       },
     } : {}),
   };
+}
+
+/**
+ * AboutPage schema — signals to Google + AI crawlers that this URL is the
+ * canonical "about the brand" entry point. Links back to the Organization
+ * node so knowledge panels and AI overviews pull consistent facts.
+ */
+export function aboutPageSchema(opts?: { url?: string; description?: string }) {
+  const url = opts?.url ? `${siteUrl}${opts.url}` : `${siteUrl}/about`;
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'AboutPage',
+    '@id': `${url}#aboutpage`,
+    url,
+    name: '關於 FP｜婕樂纖仙女館團隊',
+    description:
+      opts?.description ||
+      'Fairy Pandora (FP) 是 JEROSSE 婕樂纖官方正品授權經銷，由創辦人朵朵帶領 FP 皇家團隊，提供保健食品、美容保養、體重管理產品的官方經銷服務。',
+    inLanguage: 'zh-TW',
+    mainEntity: { '@id': `${siteUrl}/#organization` },
+    isPartOf: { '@id': `${siteUrl}/#website` },
+  };
+}
+
+/**
+ * Founder schema — rich Person node with bio keywords, used on /about.
+ * Linked into Organization via `founder` reference, so AI crawlers can
+ * attribute the brand story to a real human.
+ */
+export function founderSchema() {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Person',
+    '@id': `${siteUrl}/about#duoduo`,
+    name: '朵朵',
+    alternateName: 'Duoduo',
+    jobTitle: 'Co-Founder · FP 皇家團隊長',
+    worksFor: { '@id': `${siteUrl}/#organization` },
+    description:
+      '朵朵是婕樂纖仙女館（Fairy Pandora）的共同創辦人，從 36 歲素人二寶媽起步，兩年時間成為 JEROSSE 最高階皇家團隊長，帶領 FP 團隊以「真實分享」為核心理念經營健康保健電商。',
+    knowsAbout: [
+      'JEROSSE 婕樂纖',
+      '保健食品',
+      '體重管理',
+      '健康食品認證',
+      '女性美容保養',
+      '電商經營',
+      '社群口碑行銷',
+    ],
+    nationality: 'TW',
+  };
+}
+
+/**
+ * Per-product FAQ — generic questions derived from product fields.
+ *
+ * Google requires FAQ schema to match visible content on the page; render
+ * these via <ProductFaq /> alongside emitting this schema.
+ */
+export function productFaqs(product: {
+  name: string;
+  comboPrice?: number | null;
+  vipPrice?: number | null;
+  hfCertNo?: string | null;
+  hfCertClaim?: string | null;
+}): Array<{ question: string; answer: string }> {
+  const faqs: Array<{ question: string; answer: string }> = [];
+
+  if (product.hfCertNo && product.hfCertClaim) {
+    faqs.push({
+      question: `${product.name} 有通過國家健康食品認證嗎？`,
+      answer: `本產品已通過衛福部健康食品認證，認證字號 ${product.hfCertNo}。核准功效：${product.hfCertClaim}。`,
+    });
+  }
+
+  faqs.push({
+    question: `${product.name} 怎麼購買最划算？`,
+    answer:
+      product.comboPrice && product.vipPrice
+        ? `婕樂纖仙女館採三階梯定價：單件為原價；任選兩件不同商品享搭配價；整車搭配價小計滿 NT$4,000 自動升級為 VIP 優惠價。整車同享同一階梯，不跨品項混算。`
+        : product.comboPrice
+          ? `任選兩件不同商品享搭配價，全車自動切換，同品項也可搭配其他品項。`
+          : `本商品以單件原價購入，未提供多件搭配折扣。`,
+  });
+
+  faqs.push({
+    question: '多久會出貨？幾天會收到？',
+    answer: '訂單成立且付款完成後，官方出貨倉 24 小時內寄出（週末與國定假日順延）。宅配由物流配送，一般 1–2 個工作天到貨，偏遠地區 2–3 天。超商取貨約 2–3 個工作天到店。',
+  });
+
+  faqs.push({
+    question: '可以退貨嗎？',
+    answer: '依消保法規定，商品送達後 7 日內享有鑑賞期。食品、保健食品、美容開口類商品一經拆封、啟封或使用後，基於衛生安全考量恕不接受退換貨；未拆封商品請保持完整包裝並於 7 日內主動聯繫客服辦理。詳情請參閱「退換貨政策」。',
+  });
+
+  faqs.push({
+    question: '如何確認是 JEROSSE 官方正品？',
+    answer: '婕樂纖仙女館（Fairy Pandora）為 JEROSSE 婕樂纖官方授權經銷商，每件商品皆由原廠統一配送，包裝附有防偽標籤可掃碼驗證。若有任何疑慮，歡迎透過 LINE 客服查詢授權紀錄。',
+  });
+
+  return faqs;
 }
 
 /**
