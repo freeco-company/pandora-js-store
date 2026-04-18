@@ -35,11 +35,6 @@ class CartPricingService
                 $unavailable[] = ['product_id' => $product->id, 'reason' => 'inactive', 'name' => $product->name];
                 return null;
             }
-            // Campaign product whose campaign period is over (ended or not yet started)
-            if ($product->campaigns->isNotEmpty() && !$product->is_campaign) {
-                $unavailable[] = ['product_id' => $product->id, 'reason' => 'campaign_ended', 'name' => $product->name];
-                return null;
-            }
             if ($product->stock_status === 'outofstock') {
                 $unavailable[] = ['product_id' => $product->id, 'reason' => 'out_of_stock', 'name' => $product->name];
                 return null;

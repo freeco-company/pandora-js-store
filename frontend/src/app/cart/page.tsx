@@ -228,7 +228,14 @@ export default function CartPage() {
                 <div className="flex items-center gap-3 mt-2">
                   <div className="flex items-center border border-gray-200 rounded-full">
                     <button
-                      onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
+                      onClick={() => {
+                        // 減到 0 = 移除 → 先跳確認 modal，避免誤刪
+                        if (item.quantity <= 1) {
+                          setRemoveConfirmId(item.product.id);
+                        } else {
+                          updateQuantity(item.product.id, item.quantity - 1);
+                        }
+                      }}
                       className="w-11 h-11 flex items-center justify-center text-gray-600 hover:text-gray-900 active:scale-95 transition"
                       aria-label="減少"
                     >

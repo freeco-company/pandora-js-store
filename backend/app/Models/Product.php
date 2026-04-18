@@ -55,20 +55,14 @@ class Product extends Model
     }
 
     /**
-     * Products visible to customers right now:
-     *   - is_active = true
-     *   - AND (no campaign associations OR at least one active campaign)
-     *
-     * Products whose campaigns are all past/future are hidden — they only
-     * surface during the campaign's running window.
+     * Products visible to customers. Campaigns are bundle-promotions —
+     * they don't hide the underlying products. A product participating
+     * in a campaign stays listed at its normal price; the bundle itself
+     * appears/disappears separately via the campaign page.
      */
     public function scopeVisible($query)
     {
-        return $query->where('is_active', true)
-            ->where(function ($q) {
-                $q->whereDoesntHave('campaigns')
-                  ->orWhereHas('campaigns', fn ($qq) => $qq->active());
-            });
+        return $query->where('is_active', true);
     }
 
     /**

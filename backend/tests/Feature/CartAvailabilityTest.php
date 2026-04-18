@@ -120,9 +120,9 @@ class CartAvailabilityTest extends TestCase
             ->assertJsonPath('items.0.product_id', $good->id);
     }
 
-    // ── Campaign visibility: only during running period ─────────
+    // ── Campaigns are bundle promotions — products stay visible always ─────
 
-    public function test_product_detail_visible_during_running_campaign(): void
+    public function test_product_detail_visible_even_when_in_campaign(): void
     {
         $p = $this->activeProduct();
         $campaign = Campaign::create([
@@ -134,100 +134,32 @@ class CartAvailabilityTest extends TestCase
         ]);
         $campaign->products()->attach($p->id);
 
-        $res = $this->getJson("/api/products/{$p->slug}");
-        $res->assertOk()
-            ->assertJsonPath('slug', $p->slug)
-            ->assertJsonPath('active_campaign.slug', 'running');
+        $this->getJson("/api/products/{$p->slug}")
+            ->assertOk()
+            ->assertJsonPath('slug', $p->slug);
     }
 
-    public function test_product_detail_hidden_after_campaign_ended(): void
-    {
-        $p = $this->activeProduct();
-        $campaign = Campaign::create([
-            'name' => 'Ended',
-            'slug' => 'ended',
-            'is_active' => true,
-            'start_at' => now()->subDays(10),
-            'end_at' => now()->subDay(),
-        ]);
-        $campaign->products()->attach($p->id);
-
-        $this->getJson("/api/products/{$p->slug}")->assertNotFound();
-    }
-
-    public function test_product_detail_hidden_before_campaign_starts(): void
-    {
-        $p = $this->activeProduct();
-        $campaign = Campaign::create([
-            'name' => 'Upcoming',
-            'slug' => 'upcoming',
-            'is_active' => true,
-            'start_at' => now()->addDay(),
-            'end_at' => now()->addDays(7),
-        ]);
-        $campaign->products()->attach($p->id);
-
-        $this->getJson("/api/products/{$p->slug}")->assertNotFound();
-    }
-
-    public function test_product_listing_includes_running_campaign_product(): void
+    public function test_product_listing_always_includes_product_regardless_of_campaign(): void
     {
         $normal = $this->activeProduct(['name' => 'Normal']);
-        $campaignProd = $this->activeProduct(['name' => 'Campaign Only']);
+        $inCampaign = $this->activeProduct(['name' => 'Bundle Member']);
+        $expired = $this->activeProduct(['name' => 'Past Campaign Member']);
 
-        $campaign = Campaign::create([
-            'name' => 'Camp',
-            'slug' => 'camp',
-            'is_active' => true,
-            'start_at' => now()->subDay(),
-            'end_at' => now()->addDay(),
-        ]);
-        $campaign->products()->attach($campaignProd->id);
+        Campaign::create([
+            'name' => 'Live', 'slug' => 'live', 'is_active' => true,
+            'start_at' => now()->subDay(), 'end_at' => now()->addDay(),
+        ])->products()->attach($inCampaign->id);
 
-        $res = $this->getJson('/api/products');
-        $slugs = collect($res->json())->pluck('slug')->toArray();
+        Campaign::create([
+            'name' => 'Ended', 'slug' => 'ended-c', 'is_active' => true,
+            'start_at' => now()->subDays(5), 'end_at' => now()->subDay(),
+        ])->products()->attach($expired->id);
+
+        $slugs = collect($this->getJson('/api/products')->json())->pluck('slug')->toArray();
 
         $this->assertContains($normal->slug, $slugs);
-        $this->assertContains($campaignProd->slug, $slugs);
-    }
-
-    public function test_product_listing_excludes_ended_campaign_product(): void
-    {
-        $campaignProd = $this->activeProduct(['name' => 'Expired']);
-        $campaign = Campaign::create([
-            'name' => 'Old',
-            'slug' => 'old',
-            'is_active' => true,
-            'start_at' => now()->subDays(10),
-            'end_at' => now()->subDay(),
-        ]);
-        $campaign->products()->attach($campaignProd->id);
-
-        $res = $this->getJson('/api/products');
-        $slugs = collect($res->json())->pluck('slug')->toArray();
-
-        $this->assertNotContains($campaignProd->slug, $slugs);
-    }
-
-    public function test_cart_rejects_product_with_ended_campaign(): void
-    {
-        $p = $this->activeProduct();
-        $campaign = Campaign::create([
-            'name' => 'Done',
-            'slug' => 'done',
-            'is_active' => true,
-            'start_at' => now()->subDays(5),
-            'end_at' => now()->subHour(),
-        ]);
-        $campaign->products()->attach($p->id);
-
-        $res = $this->postJson('/api/cart/calculate', [
-            'items' => [['product_id' => $p->id, 'quantity' => 1]],
-        ]);
-
-        $res->assertOk()
-            ->assertJsonPath('unavailable.0.reason', 'campaign_ended')
-            ->assertJsonCount(0, 'items');
+        $this->assertContains($inCampaign->slug, $slugs);
+        $this->assertContains($expired->slug, $slugs);
     }
 
     public function test_campaign_show_404_when_not_running(): void
