@@ -152,6 +152,42 @@
             <td style="padding: 14px 16px; color: #9F6B3E; font-size: 20px; font-weight: bold; text-align: right; border-top: 2px solid #9F6B3E;">NT${{ number_format($order->total) }}</td>
         </tr>
     </table>
+
+    {{-- Bank Transfer Info --}}
+    @if($order->payment_method === 'bank_transfer')
+    <table width="100%" cellpadding="0" cellspacing="0" style="border: 2px solid #9F6B3E; border-radius: 12px; overflow: hidden; margin-top: 20px;">
+        <tr>
+            <td colspan="2" style="padding: 14px 16px; background-color: #9F6B3E; color: #fff; font-size: 14px; font-weight: bold; text-align: center;">
+                請完成轉帳，我們立即為您安排出貨
+            </td>
+        </tr>
+        <tr>
+            <td style="padding: 10px 16px; border-bottom: 1px solid #f0e8df; color: #7a5836; font-size: 13px; width: 80px;">銀行</td>
+            <td style="padding: 10px 16px; border-bottom: 1px solid #f0e8df; color: #1f1a15; font-size: 14px; font-weight: bold;">富邦銀行（012）</td>
+        </tr>
+        <tr>
+            <td style="padding: 10px 16px; border-bottom: 1px solid #f0e8df; color: #7a5836; font-size: 13px;">帳號</td>
+            <td style="padding: 10px 16px; border-bottom: 1px solid #f0e8df; color: #9F6B3E; font-size: 16px; font-weight: bold; letter-spacing: 1px;">82110000082812</td>
+        </tr>
+        <tr>
+            <td style="padding: 10px 16px; border-bottom: 1px solid #f0e8df; color: #7a5836; font-size: 13px;">戶名</td>
+            <td style="padding: 10px 16px; border-bottom: 1px solid #f0e8df; color: #1f1a15; font-size: 14px; font-weight: bold;">法芮可有限公司</td>
+        </tr>
+        <tr>
+            <td style="padding: 10px 16px; color: #7a5836; font-size: 13px;">轉帳金額</td>
+            <td style="padding: 10px 16px; color: #9F6B3E; font-size: 18px; font-weight: bold;">NT${{ number_format($order->total) }}</td>
+        </tr>
+    </table>
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin-top: 12px;">
+        <tr>
+            <td style="padding: 12px 16px; background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; font-size: 12px; color: #166534; line-height: 1.6;">
+                <strong style="font-size: 13px;">請放心轉帳</strong><br>
+                婕樂纖仙女館由<strong>法芮可有限公司</strong>合法設立經營，所有商品皆為 JEROSSE 婕樂纖官方正品授權。轉帳完成後，我們會在 <strong>1 個工作天內</strong>確認款項並安排出貨。<br><br>
+                如有任何疑問，歡迎隨時透過 <a href="https://lin.ee/62wj7qa" style="color: #9F6B3E; font-weight: bold; text-decoration: underline;">LINE 客服</a> 聯繫，我們很樂意協助您。
+            </td>
+        </tr>
+    </table>
+    @endif
 @endsection
 
 @section('cta')

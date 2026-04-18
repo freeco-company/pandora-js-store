@@ -11,13 +11,11 @@ use Laravel\Socialite\Facades\Socialite;
 class AuthController extends Controller
 {
     /**
-     * Return the Google OAuth redirect URL.
+     * Redirect to Google OAuth — direct 302, no JSON roundtrip.
      */
-    public function redirectToGoogle(): JsonResponse
+    public function redirectToGoogle()
     {
-        $url = Socialite::driver('google')->stateless()->redirect()->getTargetUrl();
-
-        return response()->json(['url' => $url]);
+        return Socialite::driver('google')->stateless()->redirect();
     }
 
     /**
@@ -25,7 +23,7 @@ class AuthController extends Controller
      */
     public function handleGoogleCallback(Request $request)
     {
-        $frontendUrl = config('services.ecpay.frontend_url', 'http://localhost:3000');
+        $frontendUrl = config('services.ecpay.frontend_url', 'https://pandora.js-store.com.tw');
 
         try {
             $googleUser = Socialite::driver('google')->stateless()->user();
@@ -79,19 +77,16 @@ class AuthController extends Controller
      * with APP_KEY via HMAC so the callback can verify it without session
      * storage, and pass it through the OAuth redirect.
      */
-    public function redirectToLine(): JsonResponse
+    public function redirectToLine()
     {
         $state = bin2hex(random_bytes(16));
         $signature = hash_hmac('sha256', $state, config('app.key'));
         $statePayload = $state . '.' . $signature;
 
-        $url = Socialite::driver('line')
+        return Socialite::driver('line')
             ->stateless()
             ->with(['state' => $statePayload])
-            ->redirect()
-            ->getTargetUrl();
-
-        return response()->json(['url' => $url]);
+            ->redirect();
     }
 
     /**
@@ -99,7 +94,7 @@ class AuthController extends Controller
      */
     public function handleLineCallback(Request $request)
     {
-        $frontendUrl = config('services.ecpay.frontend_url', 'http://localhost:3000');
+        $frontendUrl = config('services.ecpay.frontend_url', 'https://pandora.js-store.com.tw');
 
         try {
             // Verify the HMAC-signed state to prevent CSRF
@@ -154,6 +149,10 @@ class AuthController extends Controller
      */
     public function me(Request $request): JsonResponse
     {
-        return response()->json($request->user());
+        $customer = $request->user();
+        $data = $customer->toArray();
+        $data['auth_provider'] = $customer->line_id ? 'line' : ($customer->google_id ? 'google' : 'email');
+
+        return response()->json($data);
     }
 }

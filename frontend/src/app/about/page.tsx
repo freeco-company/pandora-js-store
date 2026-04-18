@@ -1,18 +1,17 @@
 import type { Metadata } from 'next';
-import AboutPage from '@/components/AboutPage';
+import AboutPage from './AboutClient';
 import { breadcrumbSchema, jsonLdScript } from '@/lib/jsonld';
 
 export const revalidate = 86400;
 
 export const metadata: Metadata = {
-  title: '關於 FP｜從仙女到潘朵拉的蛻變之旅',
+  title: '關於 FP｜婕樂纖仙女館團隊',
   description:
-    'Fairy Pandora 婕樂纖仙女館 — 不只是品牌名，是每位女性從認識自己開始，打開專屬美麗盒子的旅程。JEROSSE 官方正品授權經銷，用三階梯定價讓健康美麗更無負擔。',
+    'Fairy Pandora 婕樂纖仙女館 — JEROSSE 官方正品授權經銷。認識創辦人朵朵與我們的團隊。',
   alternates: { canonical: '/about' },
   openGraph: {
-    title: '關於 FP｜從仙女到潘朵拉的蛻變之旅',
-    description:
-      'Fairy Pandora 婕樂纖仙女館 — 不只是品牌名，是每位女性從認識自己開始，打開專屬美麗盒子的旅程。',
+    title: '關於 FP｜婕樂纖仙女館團隊',
+    description: '認識 Fairy Pandora 團隊，陪你從仙女蛻變成潘朵拉。',
   },
 };
 

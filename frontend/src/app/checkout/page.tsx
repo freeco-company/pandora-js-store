@@ -50,6 +50,7 @@ export default function CheckoutPage() {
   const [submitting, setSubmitting] = useState(false);
   const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
   const [codStatus, setCodStatus] = useState<{ blocked: boolean; message: string | null }>({ blocked: false, message: null });
+  const [termsAgreed, setTermsAgreed] = useState(false);
 
   // Shipping address split state (re-assembled into form.shipping_address on change)
   const [shipCity, setShipCity] = useState('');
@@ -215,7 +216,7 @@ export default function CheckoutPage() {
         items: items.map((i) => ({ product_id: i.product.id, quantity: i.quantity })),
         customer: {
           name: form.name,
-          email: form.email,
+          email: form.email.trim().toLowerCase(),
           phone: form.phone,
         },
         payment_method: form.payment_method,
@@ -228,7 +229,8 @@ export default function CheckoutPage() {
         note: [
           form.social_id ? `[社群帳號] ${form.social_id}` : '',
           form.note || '',
-        ].filter(Boolean).join('\n') || undefined,
+        ].filter((s) => s.trim()).join('\n') || undefined,
+        idempotency_key: crypto.randomUUID(),
       };
 
       const order = await fetchApi<{ order_number: string } & CelebrationKeys>('/orders', {
@@ -280,7 +282,9 @@ export default function CheckoutPage() {
       }
 
       setTimeout(() => {
-        router.push(`/order-complete?order=${order.order_number}`);
+        const params = new URLSearchParams({ order: order.order_number, payment: form.payment_method });
+        if (form.payment_method === 'bank_transfer') params.set('total', String(finalTotal));
+        router.push(`/order-complete?${params}`);
       }, (order._achievements?.length || 0) > 0 ? 1200 : 0);
     } catch (err: any) {
       toast(err?.message || '訂單建立失敗，請稍後再試', 'error');
@@ -656,23 +660,26 @@ export default function CheckoutPage() {
                 </div>
               )}
 
-              {/* COD social ID + policy — visible when COD selected */}
+              {/* Social ID — always visible, required for COD */}
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-700">
+                  社群帳號（FB / IG / LINE）
+                  {form.payment_method === 'cod' && <span className="text-red-500"> *</span>}
+                </label>
+                <input
+                  type="text"
+                  value={form.social_id}
+                  onChange={(e) => update('social_id', e.target.value)}
+                  placeholder="請填寫 IG、FB 或 LINE 的帳號（擇一即可）"
+                  className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-[#9F6B3E] focus:border-transparent outline-none text-sm ${errors.social_id ? 'border-red-400' : 'border-gray-300'}`}
+                />
+                <p className="text-[11px] text-gray-400">方便我們聯繫您，不會公開顯示{form.payment_method !== 'cod' && '（選填）'}</p>
+                {errors.social_id && <p className="field-error-text">{errors.social_id}</p>}
+              </div>
+
+              {/* COD policy warning — visible when COD selected */}
               {isLoggedIn && !codStatus.blocked && form.payment_method === 'cod' && (
                 <>
-                  <div className="space-y-2">
-                    <label className="block text-sm font-semibold text-gray-700">
-                      社群帳號 <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={form.social_id}
-                      onChange={(e) => update('social_id', e.target.value)}
-                      placeholder="請填寫 IG、FB 或 LINE 的帳號（擇一即可）"
-                      className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-[#9F6B3E] focus:border-transparent outline-none text-sm ${errors.social_id ? 'border-red-400' : 'border-gray-300'}`}
-                    />
-                    <p className="text-[11px] text-gray-400">方便我們在取件異常時聯繫您，不會公開顯示</p>
-                    {errors.social_id && <p className="field-error-text">{errors.social_id}</p>}
-                  </div>
                   <div className="flex items-start gap-2 p-3 bg-[#fdf7ef] border border-[#e7d9cb] rounded-lg text-[12px] text-[#7a5836] leading-relaxed">
                     <svg className="w-4 h-4 shrink-0 mt-0.5 text-amber-500" viewBox="0 0 20 20" fill="currentColor" aria-hidden><path fillRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.168 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 6a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 6zm0 9a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" /></svg>
                     <div>
@@ -760,11 +767,28 @@ export default function CheckoutPage() {
               </div>
             </div>
 
+            {/* Legal agreement */}
+            <label className="mt-6 flex items-start gap-2.5 cursor-pointer group">
+              <input
+                type="checkbox"
+                checked={termsAgreed}
+                onChange={(e) => setTermsAgreed(e.target.checked)}
+                className="mt-0.5 w-4 h-4 rounded border-gray-300 text-[#9F6B3E] focus:ring-[#9F6B3E] shrink-0"
+              />
+              <span className="text-[11px] text-gray-500 leading-relaxed">
+                我已閱讀並同意
+                <a href="/terms" target="_blank" className="text-[#9F6B3E] underline">服務條款</a>、
+                <a href="/return-policy" target="_blank" className="text-[#9F6B3E] underline">退換貨政策</a>
+                及<a href="/privacy" target="_blank" className="text-[#9F6B3E] underline">隱私權條款</a>，
+                並確認享有商品到貨後七日內無條件退貨之權利。
+              </span>
+            </label>
+
             {/* Submit */}
             <button
               type="submit"
-              disabled={submitting}
-              className="mt-6 w-full py-3 bg-[#9F6B3E] text-white font-semibold rounded-full hover:bg-[#85572F] transition-colors disabled:opacity-50 disabled:cursor-not-allowed btn-press hidden md:block"
+              disabled={submitting || !termsAgreed}
+              className="mt-4 w-full py-3 bg-[#9F6B3E] text-white font-semibold rounded-full hover:bg-[#85572F] transition-colors disabled:opacity-50 disabled:cursor-not-allowed btn-press hidden md:block"
             >
               {submitting ? '處理中...' : '確認送出訂單'}
             </button>
@@ -782,7 +806,7 @@ export default function CheckoutPage() {
       {/* Mobile spacer so last form field isn't under sticky CTA */}
 
       {/* Mobile sticky submit bar */}
-      <CheckoutStickyCTA submitting={submitting} />
+      <CheckoutStickyCTA submitting={submitting} termsAgreed={termsAgreed} />
     </div>
   );
 }

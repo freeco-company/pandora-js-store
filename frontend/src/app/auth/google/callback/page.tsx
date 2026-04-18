@@ -31,13 +31,16 @@ export default function GoogleCallbackPage() {
       .then((customer) => {
         setAuth(token, customer);
 
-        // Redirect to previous page or home
         const redirect = sessionStorage.getItem('pandora-login-redirect');
         sessionStorage.removeItem('pandora-login-redirect');
 
-        // Small delay so user sees success message
         setTimeout(() => {
-          window.location.href = redirect || '/';
+          // If phone is missing, force registration completion
+          if (!customer.phone) {
+            window.location.href = '/account/complete-profile';
+          } else {
+            window.location.href = redirect || '/';
+          }
         }, 800);
       })
       .catch(() => {

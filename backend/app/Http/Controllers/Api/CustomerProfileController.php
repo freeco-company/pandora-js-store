@@ -31,6 +31,9 @@ class CustomerProfileController extends Controller
             ->where('referral_reward_granted', true)
             ->count();
 
+        // Determine login provider for frontend display
+        $authProvider = $c->line_id ? 'line' : ($c->google_id ? 'google' : 'email');
+
         return response()->json([
             'id'         => $c->id,
             'name'       => $c->name,
@@ -38,6 +41,7 @@ class CustomerProfileController extends Controller
             'phone'      => $c->phone,
             'is_vip'     => (bool) $c->is_vip,
             'membership_level' => $c->membership_level,
+            'auth_provider' => $authProvider,
             'total_orders'     => $c->total_orders,
             'total_spent'      => (int) $c->total_spent,
             'referral_code'    => $c->referral_code,

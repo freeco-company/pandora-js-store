@@ -24,21 +24,55 @@ class CartPricingService
         $productIds = collect($cartItems)->pluck('product_id')->unique()->values();
         $products = Product::whereIn('id', $productIds)->get()->keyBy('id');
 
-        $items = collect($cartItems)->map(function ($item) use ($products) {
+        $unavailable = [];
+        $items = collect($cartItems)->map(function ($item) use ($products, &$unavailable) {
             $product = $products->get($item['product_id']);
-            if (!$product) return null;
+            if (!$product) {
+                $unavailable[] = ['product_id' => $item['product_id'], 'reason' => 'not_found', 'name' => '未知商品'];
+                return null;
+            }
+            if (!$product->is_active) {
+                $unavailable[] = ['product_id' => $product->id, 'reason' => 'inactive', 'name' => $product->name];
+                return null;
+            }
+            if ($product->stock_status === 'outofstock') {
+                $unavailable[] = ['product_id' => $product->id, 'reason' => 'out_of_stock', 'name' => $product->name];
+                return null;
+            }
+            $qty = (int) $item['quantity'];
+            if ($product->stock_quantity && $qty > $product->stock_quantity) {
+                $unavailable[] = [
+                    'product_id' => $product->id,
+                    'reason' => 'insufficient_stock',
+                    'name' => $product->name,
+                    'available' => $product->stock_quantity,
+                    'requested' => $qty,
+                ];
+                return null;
+            }
             return [
                 'product_id' => $product->id,
                 'product' => $product,
-                'quantity' => (int) $item['quantity'],
+                'quantity' => $qty,
             ];
         })->filter()->values();
+
+        // If all items are unavailable, return early
+        if ($items->isEmpty()) {
+            return [
+                'tier' => 'regular',
+                'total' => 0,
+                'campaign_vip' => false,
+                'items' => [],
+                'unavailable' => $unavailable,
+            ];
+        }
 
         // Campaign VIP override: any cart item in an active campaign → VIP
         $hasCampaignItem = $this->hasActiveCampaignItem($productIds);
         if ($hasCampaignItem && $items->sum('quantity') >= 2) {
             $vipTotal = $this->calculateTotal($items, 'vip');
-            return $this->buildResult('vip', $items, $vipTotal, true);
+            return $this->buildResult('vip', $items, $vipTotal, true, $unavailable);
         }
 
         $totalQuantity = $items->sum('quantity');
@@ -48,14 +82,14 @@ class CartPricingService
 
             if ($comboTotal >= self::VIP_THRESHOLD) {
                 $vipTotal = $this->calculateTotal($items, 'vip');
-                return $this->buildResult('vip', $items, $vipTotal);
+                return $this->buildResult('vip', $items, $vipTotal, false, $unavailable);
             }
 
-            return $this->buildResult('combo', $items, $comboTotal);
+            return $this->buildResult('combo', $items, $comboTotal, false, $unavailable);
         }
 
         $regularTotal = $this->calculateTotal($items, 'regular');
-        return $this->buildResult('regular', $items, $regularTotal);
+        return $this->buildResult('regular', $items, $regularTotal, false, $unavailable);
     }
 
     /** Check if any of the given product IDs belong to a currently-running campaign. */
@@ -82,12 +116,13 @@ class CartPricingService
         };
     }
 
-    private function buildResult(string $tier, Collection $items, float $total, bool $campaignVip = false): array
+    private function buildResult(string $tier, Collection $items, float $total, bool $campaignVip = false, array $unavailable = []): array
     {
         return [
             'tier' => $tier,
             'total' => $total,
             'campaign_vip' => $campaignVip,
+            'unavailable' => $unavailable,
             'items' => $items->map(function ($item) use ($tier) {
                 $unitPrice = $this->getPrice($item['product'], $tier);
                 return [

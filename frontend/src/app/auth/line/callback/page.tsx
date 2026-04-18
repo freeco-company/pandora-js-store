@@ -35,7 +35,11 @@ export default function LineCallbackPage() {
         sessionStorage.removeItem('pandora-login-redirect');
 
         setTimeout(() => {
-          window.location.href = redirect || '/';
+          if (!customer.phone) {
+            window.location.href = '/account/complete-profile';
+          } else {
+            window.location.href = redirect || '/';
+          }
         }, 800);
       })
       .catch(() => {

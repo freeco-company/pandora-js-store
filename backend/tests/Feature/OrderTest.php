@@ -71,7 +71,7 @@ class OrderTest extends TestCase
     {
         Customer::create([
             'name' => 'Existing', 'email' => 'buyer@example.com',
-            'phone' => '000', 'password' => bcrypt('x'),
+            'phone' => '0912345678', 'password' => bcrypt('x'),
         ]);
 
         $this->postJson('/api/orders', $this->payload())->assertCreated();

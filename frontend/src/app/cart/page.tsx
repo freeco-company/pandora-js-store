@@ -6,17 +6,25 @@ import Icons from '@/components/SvgIcons';
 import { useCart } from '@/components/CartProvider';
 import { tierLabel, getPrice } from '@/lib/pricing';
 import { formatPrice } from '@/lib/format';
-import { imageUrl, getProducts, type Product } from '@/lib/api';
+import { imageUrl, getProducts, calculateCart, type Product, type CartUnavailableItem } from '@/lib/api';
 import ImageWithFallback, { LogoPlaceholder } from '@/components/ImageWithFallback';
 import CartStickyCTA from '@/components/CartStickyCTA';
 
 const VIP_THRESHOLD = 4000;
+
+const UNAVAILABLE_LABELS: Record<string, string> = {
+  not_found: '商品已下架',
+  inactive: '商品已下架',
+  out_of_stock: '已售完',
+  insufficient_stock: '庫存不足',
+};
 
 export default function CartPage() {
   const { items, tier, total, itemPrices, itemCount, addToCart, updateQuantity, removeFromCart, clearCart } = useCart();
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [removeConfirmId, setRemoveConfirmId] = useState<number | null>(null);
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
+  const [unavailable, setUnavailable] = useState<CartUnavailableItem[]>([]);
 
   const totalQuantity = items.reduce((sum, i) => sum + i.quantity, 0);
 
@@ -34,6 +42,16 @@ export default function CartPage() {
     0
   );
   const savings = regularTotal - total;
+
+  // Validate cart items against backend (check stock, active status)
+  useEffect(() => {
+    if (items.length === 0) { setUnavailable([]); return; }
+    calculateCart(items.map((i) => ({ product_id: i.product.id, quantity: i.quantity })))
+      .then((res) => setUnavailable(res.unavailable ?? []))
+      .catch(() => {});
+  }, [items]);
+
+  const unavailableIds = new Set(unavailable.map((u) => u.product_id));
 
   // Fetch related products (exclude those already in cart)
   useEffect(() => {
@@ -157,15 +175,24 @@ export default function CartPage() {
           const subtotal = priceInfo?.subtotal ?? item.product.price * item.quantity;
           const hasDiscount = unitPrice < item.product.price;
 
+          const isUnavailable = unavailableIds.has(item.product.id);
+          const unavailableInfo = unavailable.find((u) => u.product_id === item.product.id);
+
           return (
             <div
               key={item.product.id}
-              className="flex gap-4 p-4 bg-white rounded-[10px]"
+              className={`relative flex gap-4 p-4 bg-white rounded-[10px] ${isUnavailable ? 'opacity-60 ring-2 ring-red-200' : ''}`}
               style={{
-                border: '1px solid rgba(0, 0, 0, 0.05)',
-                boxShadow: '0px 12px 18px -6px rgba(34, 56, 101, 0.04)',
+                border: isUnavailable ? undefined : '1px solid rgba(0, 0, 0, 0.05)',
+                boxShadow: isUnavailable ? undefined : '0px 12px 18px -6px rgba(34, 56, 101, 0.04)',
               }}
             >
+              {isUnavailable && unavailableInfo && (
+                <div className="absolute -top-2 left-4 bg-red-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full z-10">
+                  {UNAVAILABLE_LABELS[unavailableInfo.reason] || '無法購買'}
+                  {unavailableInfo.reason === 'insufficient_stock' && ` (剩 ${unavailableInfo.available})`}
+                </div>
+              )}
               {/* Image */}
               <div className="relative w-20 h-20 sm:w-24 sm:h-24 bg-gray-50 rounded-lg overflow-hidden shrink-0">
                 {item.product.image ? (
@@ -272,12 +299,23 @@ export default function CartPage() {
         </div>
 
         {/* Desktop CTA — mobile has sticky bottom bar */}
-        <Link
-          href="/checkout"
-          className="hidden md:block mt-6 w-full py-3 bg-[#9F6B3E] text-white text-center font-semibold rounded-full hover:bg-[#85572F] transition-colors"
-        >
-          前往結帳
-        </Link>
+        {unavailable.length > 0 ? (
+          <div className="mt-6 text-center">
+            <p className="text-sm text-red-500 font-bold mb-2">
+              購物車中有 {unavailable.length} 件商品無法購買，請先移除
+            </p>
+            <span className="block w-full py-3 bg-gray-300 text-white text-center font-semibold rounded-full cursor-not-allowed">
+              前往結帳
+            </span>
+          </div>
+        ) : (
+          <Link
+            href="/checkout"
+            className="hidden md:block mt-6 w-full py-3 bg-[#9F6B3E] text-white text-center font-semibold rounded-full hover:bg-[#85572F] transition-colors"
+          >
+            前往結帳
+          </Link>
+        )}
       </div>
 
       {/* Related Products */}
@@ -405,7 +443,7 @@ export default function CartPage() {
       )}
 
       {/* Mobile sticky CTA — bottom-fixed, shows total/savings/checkout */}
-      <CartStickyCTA />
+      <CartStickyCTA hasUnavailable={unavailable.length > 0} />
     </div>
   );
 }
@@ -440,17 +478,17 @@ function SlimmingProgress({
 
   // Status message
   const statusMsg = reachedTier2
-    ? { icon: <Icons.Party className="w-5 h-5 text-[#2e7d32]" />, bg: 'bg-[#e8f5e9]', color: 'text-[#2e7d32]', bold: '已達陪跑班門檻！', rest: '完成訂單後私訊截圖即可啟動。' }
+    ? { icon: <Icons.Party className="w-6 h-6 text-[#2e7d32]" />, bg: 'bg-[#e8f5e9]', color: 'text-[#2e7d32]', bold: '已達陪跑班門檻！', rest: '完成訂單即可免費加入「客製化纖體陪跑班」，私訊截圖即啟動。' }
     : reachedTier1
-      ? { icon: <Icons.Sparkles className="w-5 h-5 text-[#7a5836]" />, bg: 'bg-[#fdf7ef]', color: 'text-[#7a5836]', bold: '已達陪伴班！', rest: `再加 $${(TIER2 - slimmingTotal).toLocaleString()} 可升級陪跑班。` }
-      : { icon: <Icons.Lightbulb className="w-5 h-5 text-gray-500" />, bg: 'bg-gray-50', color: 'text-gray-600', bold: `再加 $${(TIER1 - slimmingTotal).toLocaleString()}`, rest: '纖體商品即可加入營養師陪伴班。' };
+      ? { icon: <Icons.Sparkles className="w-6 h-6 text-[#7a5836]" />, bg: 'bg-[#fdf7ef]', color: 'text-[#7a5836]', bold: '已達陪伴班門檻！', rest: `免費加入「纖體陪伴班」。再加 $${(TIER2 - slimmingTotal).toLocaleString()} 可免費升級陪跑班！` }
+      : { icon: <Icons.Lightbulb className="w-6 h-6 text-gray-500" />, bg: 'bg-gray-50', color: 'text-gray-600', bold: `再加 $${(TIER1 - slimmingTotal).toLocaleString()} 纖體商品`, rest: '即可免費加入「纖體陪伴班」！' };
 
   return (
     <div className="mb-5 pb-4 border-b border-gray-200">
       {/* Status card */}
-      <div className={`flex items-center gap-2.5 p-3 rounded-xl ${statusMsg.bg}`}>
+      <div className={`flex items-center gap-3 p-3.5 rounded-xl ${statusMsg.bg}`}>
         <span className="shrink-0">{statusMsg.icon}</span>
-        <div className={`flex-1 min-w-0 text-[12px] ${statusMsg.color}`}>
+        <div className={`flex-1 min-w-0 text-sm leading-snug ${statusMsg.color}`}>
           <span className="font-black">{statusMsg.bold}</span>{' '}
           <span>{statusMsg.rest}</span>
         </div>
@@ -459,11 +497,11 @@ function SlimmingProgress({
       {/* Progress bar + 2-tier step indicator */}
       <div className="mt-3 space-y-2">
         {/* Bar */}
-        <div className="flex items-center justify-between text-[9px] font-bold text-gray-400 mb-0.5">
+        <div className="flex items-center justify-between text-xs font-bold text-gray-400 mb-0.5">
           <span>纖體 ${slimmingTotal.toLocaleString()}</span>
           <span>${TIER2.toLocaleString()}</span>
         </div>
-        <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+        <div className="h-2.5 bg-gray-200 rounded-full overflow-hidden">
           <div
             className="h-full rounded-full transition-all duration-500"
             style={{
@@ -480,25 +518,25 @@ function SlimmingProgress({
         {/* Step dots under bar */}
         <div className="flex items-center">
           {/* Tier 1 */}
-          <div className="flex-1 flex items-center gap-1.5">
-            <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black shrink-0 ${reachedTier1 ? 'bg-[#9F6B3E] text-white' : 'bg-gray-200 text-gray-400'}`}>
+          <div className="flex-1 flex items-center gap-2">
+            <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-black shrink-0 ${reachedTier1 ? 'bg-[#9F6B3E] text-white' : 'bg-gray-200 text-gray-400'}`}>
               {reachedTier1 ? '✓' : '1'}
             </div>
             <div>
-              <div className={`text-[11px] font-black leading-tight ${reachedTier1 ? 'text-[#9F6B3E]' : 'text-gray-400'}`}>陪伴班</div>
-              <div className="text-[9px] text-gray-400 leading-tight">$3,840</div>
+              <div className={`text-sm font-black leading-tight ${reachedTier1 ? 'text-[#9F6B3E]' : 'text-gray-400'}`}>陪伴班</div>
+              <div className="text-xs text-gray-400 leading-tight">滿 $3,840 免費</div>
             </div>
           </div>
           {/* Connector */}
-          <div className={`w-6 h-px shrink-0 ${reachedTier1 ? 'bg-[#9F6B3E]' : 'bg-gray-200'}`} />
+          <div className={`w-8 h-px shrink-0 ${reachedTier1 ? 'bg-[#9F6B3E]' : 'bg-gray-200'}`} />
           {/* Tier 2 */}
-          <div className="flex-1 flex items-center gap-1.5">
-            <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black shrink-0 ${reachedTier2 ? 'bg-[#2e7d32] text-white' : 'bg-gray-200 text-gray-400'}`}>
+          <div className="flex-1 flex items-center gap-2">
+            <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-black shrink-0 ${reachedTier2 ? 'bg-[#2e7d32] text-white' : 'bg-gray-200 text-gray-400'}`}>
               {reachedTier2 ? '✓' : '2'}
             </div>
             <div>
-              <div className={`text-[11px] font-black leading-tight ${reachedTier2 ? 'text-[#2e7d32]' : 'text-gray-400'}`}>陪跑班</div>
-              <div className="text-[9px] text-gray-400 leading-tight">$6,600</div>
+              <div className={`text-sm font-black leading-tight ${reachedTier2 ? 'text-[#2e7d32]' : 'text-gray-400'}`}>陪跑班</div>
+              <div className="text-xs text-gray-400 leading-tight">滿 $6,600 免費</div>
             </div>
           </div>
         </div>
@@ -508,29 +546,40 @@ function SlimmingProgress({
       <button
         type="button"
         onClick={() => setShowDiff(!showDiff)}
-        className="mt-2 text-[11px] font-bold text-[#9F6B3E] underline underline-offset-2 active:opacity-70"
+        className="mt-3 text-sm font-bold text-[#9F6B3E] underline underline-offset-2 active:opacity-70"
       >
-        {showDiff ? '收合差異說明' : '陪伴班 vs 陪跑班 差異？'}
+        {showDiff ? '收合差異說明' : '兩種班別有什麼差別？'}
       </button>
 
       {showDiff && (
-        <div className="mt-2 grid grid-cols-2 gap-2 text-[10px]">
-          <div className="p-2.5 bg-[#fdf7ef] rounded-lg border border-[#e7d9cb]">
-            <div className="font-black text-[#9F6B3E] text-[11px] mb-1.5">陪伴班 · $3,840</div>
-            <ul className="space-y-1 text-gray-700">
-              <li>✓ 營養師飲食建議</li>
-              <li>✓ 產品搭配指導</li>
-              <li>✓ 基礎飲食紀錄</li>
+        <div className="mt-3 grid grid-cols-2 gap-2.5">
+          <div className="p-3 bg-[#fdf7ef] rounded-lg border border-[#e7d9cb]">
+            <div className="font-black text-[#9F6B3E] text-base mb-2">纖體陪伴班</div>
+            <div className="text-xs font-bold text-[#9F6B3E] mb-2">滿 $3,840 免費加入</div>
+            <ul className="space-y-1.5 text-sm text-gray-700">
+              <li>✓ 10 種外食懶人包</li>
+              <li>✓ 紅綠燈餐盤範例</li>
+              <li>✓ 基礎瘦身觀念整理</li>
+              <li>✓ 互動小遊戲</li>
+              <li>✓ 定時 QA 回覆</li>
             </ul>
+            <div className="mt-2 pt-2 border-t border-[#e7d9cb] text-xs text-gray-500">
+              遊戲化・趣味學習・輕鬆入門
+            </div>
           </div>
-          <div className="p-2.5 bg-[#e8f5e9] rounded-lg border border-[#c8e6c9]">
-            <div className="font-black text-[#2e7d32] text-[11px] mb-1.5">陪跑班 · $6,600</div>
-            <ul className="space-y-1 text-gray-700">
+          <div className="p-3 bg-[#e8f5e9] rounded-lg border border-[#c8e6c9]">
+            <div className="font-black text-[#2e7d32] text-base mb-2">客製化陪跑班</div>
+            <div className="text-xs font-bold text-[#2e7d32] mb-2">滿 $6,600 免費加入</div>
+            <ul className="space-y-1.5 text-sm text-gray-700">
               <li>✓ 含陪伴班所有內容</li>
-              <li>✓ 持續追蹤與調整</li>
-              <li>✓ 專屬群組支援</li>
-              <li>✓ 階段成果檢視</li>
+              <li>✓ 一對一飲食點評教學</li>
+              <li>✓ 專屬個人化瘦身調整</li>
+              <li>✓ CBT 飲食引導法</li>
+              <li>✓ 即時 QA（全程在線）</li>
             </ul>
+            <div className="mt-2 pt-2 border-t border-[#c8e6c9] text-xs text-gray-500">
+              高強度・密集點評・進階挑戰
+            </div>
           </div>
         </div>
       )}

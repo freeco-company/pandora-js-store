@@ -80,6 +80,11 @@ export default function RootLayout({
     <html lang="zh-TW" className="h-full antialiased">
       <head>
         <meta name="theme-color" content="#e7d9cb" />
+        {/* Geo targeting — Taiwan */}
+        <meta name="geo.region" content="TW" />
+        <meta name="geo.placename" content="Taipei, Taiwan" />
+        <meta name="geo.position" content="25.0330;121.5654" />
+        <meta name="ICBM" content="25.0330, 121.5654" />
         {/* OpenSearch autodiscovery — lets browsers offer site search in the URL bar */}
         <link rel="search" type="application/opensearchdescription+xml" title="婕樂纖仙女館" href="/opensearch.xml" />
         {/* RSS feed autodiscovery — AI crawlers and aggregators use this */}

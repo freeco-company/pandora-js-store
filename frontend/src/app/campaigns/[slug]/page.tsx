@@ -5,6 +5,7 @@ import ProductCardGrid from '@/components/ProductCardGrid';
 import FloatingShapes from '@/components/FloatingShapes';
 import ScrollReveal from '@/components/ScrollReveal';
 import SiteIcon from '@/components/SiteIcon';
+import { jsonLdScript } from '@/lib/jsonld';
 import { API_URL, type Product } from '@/lib/api';
 
 interface Campaign {
@@ -54,8 +55,31 @@ export default async function CampaignPage({ params }: { params: Promise<{ slug:
   const endDate = new Date(campaign.end_at);
   const isEnded = endDate <= new Date();
 
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://pandora.js-store.com.tw';
+  const eventSchema = {
+    '@type': 'Event',
+    name: campaign.name,
+    description: campaign.description || `${campaign.name} — 限時活動`,
+    startDate: campaign.start_at,
+    endDate: campaign.end_at,
+    eventStatus: isEnded ? 'https://schema.org/EventCancelled' : 'https://schema.org/EventScheduled',
+    eventAttendanceMode: 'https://schema.org/OnlineEventAttendanceMode',
+    location: { '@type': 'VirtualLocation', url: `${siteUrl}/campaigns/${slug}` },
+    organizer: { '@type': 'Organization', name: '婕樂纖仙女館', url: siteUrl },
+    ...(campaign.image ? { image: imageUrl(campaign.image) } : {}),
+    offers: campaign.products.length > 0 ? {
+      '@type': 'AggregateOffer',
+      lowPrice: Math.min(...campaign.products.map(p => p.vip_price ?? p.price)),
+      highPrice: Math.max(...campaign.products.map(p => p.price)),
+      priceCurrency: 'TWD',
+      offerCount: campaign.products.length,
+      availability: isEnded ? 'https://schema.org/SoldOut' : 'https://schema.org/InStock',
+    } : undefined,
+  };
+
   return (
     <div className="min-h-screen">
+      {jsonLdScript(eventSchema)}
       {/* Hero */}
       <section className="relative bg-gradient-to-br from-[#9F6B3E] via-[#c9935a] to-[#85572F] text-white overflow-hidden">
         <FloatingShapes />

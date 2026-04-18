@@ -153,6 +153,7 @@ export default async function ProductDetailPage({ params }: Props) {
     comboPrice: product.combo_price,
     vipPrice: product.vip_price,
     isActive: product.is_active,
+    stockStatus: product.stock_status,
     sku: product.slug,
     reviewCount: reviewsData?.total_count,
     reviewRating: reviewsData?.average_rating,

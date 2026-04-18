@@ -15,6 +15,28 @@
   --font-heading: -apple-system, BlinkMacSystemFont, "PingFang TC", "Microsoft JhengHei", "微軟正黑體", "Noto Sans TC", "Segoe UI", Roboto, sans-serif;
 }
 
+/*
+ * ─── Typography Scale ───
+ * 全站統一字級，避免隨意 text-[Npx]。
+ *
+ *   用途            Tailwind class   大小
+ *   ────────────    ──────────────   ────
+ *   輔助標籤/meta    text-xs          12px
+ *   次要內文         text-sm          14px
+ *   主要內文         text-base        16px
+ *   強調內文         text-lg          18px
+ *   小標題           text-xl          20px
+ *   段落標題         text-2xl         24px
+ *   頁面標題         text-3xl         30px
+ *   Hero 大標        text-4xl         36px
+ *
+ * 原則：
+ *   - 最小可讀字級 = text-xs (12px)，不再用 text-[9px]~text-[11px]
+ *   - 卡片標題至少 text-base，卡片內文至少 text-sm
+ *   - 狀態提示至少 text-sm
+ *   - 按鈕文字至少 text-sm
+ */
+
 html {
   scroll-behavior: smooth;
   /* Opt-in to Next.js view-transition animations for supporting browsers */

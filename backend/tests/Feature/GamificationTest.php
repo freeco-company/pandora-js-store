@@ -27,7 +27,7 @@ class GamificationTest extends TestCase
     public function test_award_is_idempotent(): void
     {
         $customer = Customer::create([
-            'name' => 'A', 'email' => 'a@e.com', 'phone' => '0',
+            'name' => 'A', 'email' => 'a@e.com', 'phone' => '0912345678',
             'password' => bcrypt('x'),
         ]);
         $svc = app(AchievementService::class);
@@ -40,7 +40,7 @@ class GamificationTest extends TestCase
     public function test_award_rejects_unknown_code(): void
     {
         $customer = Customer::create([
-            'name' => 'A', 'email' => 'a@e.com', 'phone' => '0',
+            'name' => 'A', 'email' => 'a@e.com', 'phone' => '0912345678',
             'password' => bcrypt('x'),
         ]);
         $svc = app(AchievementService::class);
@@ -52,7 +52,7 @@ class GamificationTest extends TestCase
     public function test_bump_streak_increments_daily_and_awards_at_7(): void
     {
         $customer = Customer::create([
-            'name' => 'A', 'email' => 'a@e.com', 'phone' => '0',
+            'name' => 'A', 'email' => 'a@e.com', 'phone' => '0912345678',
             'password' => bcrypt('x'),
             'streak_days' => 6,
             'last_active_date' => now()->subDay()->toDateString(),
@@ -68,7 +68,7 @@ class GamificationTest extends TestCase
     public function test_bump_streak_resets_on_gap(): void
     {
         $customer = Customer::create([
-            'name' => 'A', 'email' => 'a@e.com', 'phone' => '0',
+            'name' => 'A', 'email' => 'a@e.com', 'phone' => '0912345678',
             'password' => bcrypt('x'),
             'streak_days' => 5,
             'last_active_date' => now()->subDays(3)->toDateString(),
@@ -82,7 +82,7 @@ class GamificationTest extends TestCase
     public function test_bump_streak_no_op_on_same_day(): void
     {
         $customer = Customer::create([
-            'name' => 'A', 'email' => 'a@e.com', 'phone' => '0',
+            'name' => 'A', 'email' => 'a@e.com', 'phone' => '0912345678',
             'password' => bcrypt('x'),
             'streak_days' => 3,
             'last_active_date' => now()->toDateString(),
@@ -103,10 +103,10 @@ class GamificationTest extends TestCase
 
         $res = $this->postJson('/api/orders', [
             'items' => [['product_id' => $product->id, 'quantity' => 1]],
-            'customer' => ['name' => 'X', 'email' => 'x@e.com', 'phone' => '000'],
+            'customer' => ['name' => 'X', 'email' => 'x@e.com', 'phone' => '0912345678'],
             'payment_method' => 'bank_transfer',
             'shipping_method' => 'home_delivery',
-            'shipping_name' => 'X', 'shipping_phone' => '000',
+            'shipping_name' => 'X', 'shipping_phone' => '0912345678',
             'shipping_address' => 'addr',
         ]);
 
@@ -124,10 +124,10 @@ class GamificationTest extends TestCase
 
         $res = $this->postJson('/api/orders', [
             'items' => [['product_id' => $product->id, 'quantity' => 2]],
-            'customer' => ['name' => 'X', 'email' => 'x@e.com', 'phone' => '000'],
+            'customer' => ['name' => 'X', 'email' => 'x@e.com', 'phone' => '0912345678'],
             'payment_method' => 'bank_transfer',
             'shipping_method' => 'home_delivery',
-            'shipping_name' => 'X', 'shipping_phone' => '000',
+            'shipping_name' => 'X', 'shipping_phone' => '0912345678',
             'shipping_address' => 'addr',
         ]);
 
@@ -144,10 +144,10 @@ class GamificationTest extends TestCase
 
         $res = $this->postJson('/api/orders', [
             'items' => [['product_id' => $product->id, 'quantity' => 3]],
-            'customer' => ['name' => 'X', 'email' => 'x@e.com', 'phone' => '000'],
+            'customer' => ['name' => 'X', 'email' => 'x@e.com', 'phone' => '0912345678'],
             'payment_method' => 'bank_transfer',
             'shipping_method' => 'home_delivery',
-            'shipping_name' => 'X', 'shipping_phone' => '000',
+            'shipping_name' => 'X', 'shipping_phone' => '0912345678',
             'shipping_address' => 'addr',
         ]);
 
@@ -164,10 +164,10 @@ class GamificationTest extends TestCase
 
         $res = $this->postJson('/api/orders', [
             'items' => [['product_id' => $product->id, 'quantity' => 1]],
-            'customer' => ['name' => 'X', 'email' => 'x@e.com', 'phone' => '000'],
+            'customer' => ['name' => 'X', 'email' => 'x@e.com', 'phone' => '0912345678'],
             'payment_method' => 'bank_transfer',
             'shipping_method' => 'home_delivery',
-            'shipping_name' => 'X', 'shipping_phone' => '000',
+            'shipping_name' => 'X', 'shipping_phone' => '0912345678',
             'shipping_address' => 'addr',
         ]);
 
@@ -185,10 +185,10 @@ class GamificationTest extends TestCase
 
         $res = $this->postJson('/api/orders', [
             'items' => [['product_id' => $product->id, 'quantity' => 1]],
-            'customer' => ['name' => 'X', 'email' => 'x@e.com', 'phone' => '000'],
+            'customer' => ['name' => 'X', 'email' => 'x@e.com', 'phone' => '0912345678'],
             'payment_method' => 'bank_transfer',
             'shipping_method' => 'home_delivery',
-            'shipping_name' => 'X', 'shipping_phone' => '000',
+            'shipping_name' => 'X', 'shipping_phone' => '0912345678',
             'shipping_address' => 'addr',
         ]);
 
@@ -203,7 +203,7 @@ class GamificationTest extends TestCase
     public function test_dashboard_returns_gamification_state(): void
     {
         $customer = Customer::create([
-            'name' => 'Actor', 'email' => 'actor@e.com', 'phone' => '0',
+            'name' => 'Actor', 'email' => 'actor@e.com', 'phone' => '0912345678',
             'password' => bcrypt('x'),
             'total_orders' => 2, 'total_spent' => 3000,
             'streak_days' => 5, 'last_active_date' => now()->subDay()->toDateString(),
@@ -227,7 +227,7 @@ class GamificationTest extends TestCase
     public function test_set_outfit_requires_ownership(): void
     {
         $customer = Customer::create([
-            'name' => 'A', 'email' => 'a@e.com', 'phone' => '0',
+            'name' => 'A', 'email' => 'a@e.com', 'phone' => '0912345678',
             'password' => bcrypt('x'),
         ]);
         $token = $customer->createToken('t')->plainTextToken;
@@ -252,7 +252,7 @@ class GamificationTest extends TestCase
     public function test_activation_mark_awards_browse(): void
     {
         $customer = Customer::create([
-            'name' => 'A', 'email' => 'a@e.com', 'phone' => '0',
+            'name' => 'A', 'email' => 'a@e.com', 'phone' => '0912345678',
             'password' => bcrypt('x'),
         ]);
         $token = $customer->createToken('t')->plainTextToken;
@@ -267,7 +267,7 @@ class GamificationTest extends TestCase
     private function assertActivationAwards(string $step, string $expectedCode): void
     {
         $customer = Customer::create([
-            'name' => 'A', 'email' => "a-{$step}@e.com", 'phone' => '0',
+            'name' => 'A', 'email' => "a-{$step}@e.com", 'phone' => '0912345678',
             'password' => bcrypt('x'),
         ]);
         $token = $customer->createToken('t')->plainTextToken;
@@ -307,7 +307,7 @@ class GamificationTest extends TestCase
     public function test_activation_mark_is_idempotent(): void
     {
         $customer = Customer::create([
-            'name' => 'A', 'email' => 'idem@e.com', 'phone' => '0',
+            'name' => 'A', 'email' => 'idem@e.com', 'phone' => '0912345678',
             'password' => bcrypt('x'),
         ]);
         $token = $customer->createToken('t')->plainTextToken;
@@ -324,7 +324,7 @@ class GamificationTest extends TestCase
     public function test_activation_rejects_unknown_step(): void
     {
         $customer = Customer::create([
-            'name' => 'A', 'email' => 'unknown@e.com', 'phone' => '0',
+            'name' => 'A', 'email' => 'unknown@e.com', 'phone' => '0912345678',
             'password' => bcrypt('x'),
         ]);
         $token = $customer->createToken('t')->plainTextToken;

@@ -50,6 +50,7 @@ export interface Customer {
   email: string;
   phone: string | null;
   membership_level: string;
+  auth_provider?: 'google' | 'line' | 'email';
 }
 
 // Product types
@@ -121,10 +122,19 @@ export interface CartItem {
   quantity: number;
 }
 
+export interface CartUnavailableItem {
+  product_id: number;
+  reason: 'not_found' | 'inactive' | 'out_of_stock' | 'insufficient_stock';
+  name: string;
+  available?: number;
+  requested?: number;
+}
+
 export interface CartCalculation {
   tier: 'regular' | 'combo' | 'vip';
   total: number;
   items: CartCalculationItem[];
+  unavailable?: CartUnavailableItem[];
 }
 
 export interface CartCalculationItem {
@@ -356,6 +366,7 @@ export interface CustomerProfile {
   phone: string | null;
   is_vip: boolean;
   membership_level: string | null;
+  auth_provider: 'google' | 'line' | 'email';
   total_orders: number;
   total_spent: number;
 }

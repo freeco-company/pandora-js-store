@@ -197,14 +197,17 @@ export function productSchema(product: {
   comboPrice?: number | null;
   vipPrice?: number | null;
   isActive: boolean;
+  stockStatus?: string | null;
   sku?: string | null;
   reviewCount?: number;
   reviewRating?: number;
 }) {
   const url = `${siteUrl}/products/${product.slug}`;
-  const availability = product.isActive
-    ? 'https://schema.org/InStock'
-    : 'https://schema.org/OutOfStock';
+  const availability = !product.isActive
+    ? 'https://schema.org/Discontinued'
+    : product.stockStatus === 'outofstock'
+      ? 'https://schema.org/OutOfStock'
+      : 'https://schema.org/InStock';
   const priceValidUntil = new Date(
     new Date().getFullYear(), 11, 31,
   ).toISOString().split('T')[0];

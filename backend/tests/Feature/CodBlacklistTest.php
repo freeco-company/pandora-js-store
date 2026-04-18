@@ -103,11 +103,11 @@ class CodBlacklistTest extends TestCase
 
         $res = $this->postJson('/api/orders', [
             'items' => [['product_id' => $product->id, 'quantity' => 1]],
-            'customer' => ['name' => 'Banned', 'email' => 'banned@e.com', 'phone' => '0912'],
+            'customer' => ['name' => 'Banned', 'email' => 'banned@e.com', 'phone' => '0912345678'],
             'payment_method' => 'cod',
             'shipping_method' => 'cvs_711',
-            'shipping_name' => 'Banned', 'shipping_phone' => '0912',
-            'shipping_address' => '台北市',
+            'shipping_name' => 'Banned', 'shipping_phone' => '0912345678',
+            'shipping_store_id' => 'TEST001', 'shipping_store_name' => '測試門市',
         ]);
 
         $res->assertStatus(422);

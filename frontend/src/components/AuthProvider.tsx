@@ -80,39 +80,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = useCallback(() => {
-    // Save current page so we can redirect back after login
     if (typeof window !== 'undefined') {
       sessionStorage.setItem('pandora-login-redirect', window.location.href);
+      // Direct navigation — backend returns 302 to Google OAuth
+      window.location.href = `${API_URL}/auth/google`;
     }
-
-    fetch(`${API_URL}/auth/google`, {
-      headers: { Accept: 'application/json' },
-    })
-      .then((res) => res.json())
-      .then((data: { url: string }) => {
-        window.location.href = data.url;
-      })
-      .catch(() => {
-        // fallback — shouldn't happen
-        console.error('Failed to get Google OAuth URL');
-      });
   }, []);
 
   const loginWithLine = useCallback(() => {
     if (typeof window !== 'undefined') {
       sessionStorage.setItem('pandora-login-redirect', window.location.href);
+      // Direct navigation — backend returns 302 to LINE OAuth
+      window.location.href = `${API_URL}/auth/line`;
     }
-
-    fetch(`${API_URL}/auth/line`, {
-      headers: { Accept: 'application/json' },
-    })
-      .then((res) => res.json())
-      .then((data: { url: string }) => {
-        window.location.href = data.url;
-      })
-      .catch(() => {
-        console.error('Failed to get LINE OAuth URL');
-      });
   }, []);
 
   const logout = useCallback(() => {

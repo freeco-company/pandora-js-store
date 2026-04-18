@@ -11,7 +11,7 @@ import { useCart } from './CartProvider';
 import { getPrice } from '@/lib/pricing';
 import { formatPrice } from '@/lib/format';
 
-export default function CartStickyCTA() {
+export default function CartStickyCTA({ hasUnavailable = false }: { hasUnavailable?: boolean }) {
   const { items, total, itemCount } = useCart();
 
   if (itemCount === 0) return null;
@@ -39,13 +39,19 @@ export default function CartStickyCTA() {
             </div>
           )}
         </div>
-        <Link
-          href="/checkout"
-          className="shrink-0 h-11 px-6 rounded-full bg-gradient-to-br from-[#9F6B3E] to-[#85572F] text-white font-black text-sm flex items-center gap-1.5 shadow-md shadow-[#9F6B3E]/20 active:scale-[0.98] transition-transform"
-        >
-          前往結帳
-          <span aria-hidden>→</span>
-        </Link>
+        {hasUnavailable ? (
+          <span className="shrink-0 h-11 px-6 rounded-full bg-gray-300 text-white font-black text-sm flex items-center gap-1.5 cursor-not-allowed">
+            請先移除無法購買的商品
+          </span>
+        ) : (
+          <Link
+            href="/checkout"
+            className="shrink-0 h-11 px-6 rounded-full bg-gradient-to-br from-[#9F6B3E] to-[#85572F] text-white font-black text-sm flex items-center gap-1.5 shadow-md shadow-[#9F6B3E]/20 active:scale-[0.98] transition-transform"
+          >
+            前往結帳
+            <span aria-hidden>→</span>
+          </Link>
+        )}
       </div>
     </div>
   );

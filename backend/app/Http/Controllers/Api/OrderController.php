@@ -39,16 +39,42 @@ class OrderController extends Controller
         $request->validate([
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|integer|exists:products,id',
-            'items.*.quantity' => 'required|integer|min:1',
-            'customer.name' => 'required|string',
-            'customer.email' => 'required|email',
-            'customer.phone' => 'required|string',
+            'items.*.quantity' => 'required|integer|min:1|max:99',
+            'customer.name' => 'required|string|max:100',
+            'customer.email' => 'required|email:rfc',
+            'customer.phone' => 'required|string|regex:/^09\d{8}$/',
             'payment_method' => 'required|in:ecpay_credit,cod,bank_transfer',
             'shipping_method' => 'required|in:cvs_711,cvs_family,home_delivery',
-            'shipping_name' => 'required|string',
+            'shipping_name' => 'required|string|max:100',
             'shipping_phone' => 'required|string',
+            'shipping_store_id' => 'required_if:shipping_method,cvs_711,cvs_family|nullable|string',
+            'shipping_store_name' => 'required_if:shipping_method,cvs_711,cvs_family|nullable|string',
             'coupon_code' => 'nullable|string',
+            'idempotency_key' => 'nullable|string|max:64',
         ]);
+
+        // Normalize email: trim + lowercase to prevent duplicate customers
+        $request->merge([
+            'customer' => array_merge($request->input('customer'), [
+                'email' => strtolower(trim($request->input('customer.email'))),
+            ]),
+        ]);
+
+        // Idempotency: reject duplicate submissions within 5 minutes
+        $idempotencyKey = $request->input('idempotency_key');
+        if ($idempotencyKey) {
+            $cacheKey = "order_idem:{$idempotencyKey}";
+            if (\Illuminate\Support\Facades\Cache::has($cacheKey)) {
+                $existingOrderNumber = \Illuminate\Support\Facades\Cache::get($cacheKey);
+                $existingOrder = Order::where('order_number', $existingOrderNumber)->first();
+                if ($existingOrder) {
+                    return response()->json([
+                        'message' => '訂單已建立',
+                        'order' => $existingOrder->load('items'),
+                    ], 200);
+                }
+            }
+        }
 
         // Block COD for blacklisted users
         if ($request->payment_method === 'cod') {
@@ -61,8 +87,21 @@ class OrderController extends Controller
             }
         }
 
-        // Re-calculate pricing server-side
+        // Re-calculate pricing server-side (also validates product availability)
         $pricing = $this->pricingService->calculate($request->items);
+
+        // Block order if any items are unavailable (deactivated, out of stock, etc.)
+        if (!empty($pricing['unavailable'])) {
+            $names = collect($pricing['unavailable'])->pluck('name')->join('、');
+            return response()->json([
+                'message' => "以下商品無法購買：{$names}。請移除後重新結帳。",
+                'unavailable' => $pricing['unavailable'],
+            ], 422);
+        }
+
+        if (empty($pricing['items'])) {
+            return response()->json(['message' => '購物車中沒有可購買的商品。'], 422);
+        }
 
         // Validate and apply coupon if provided
         $coupon = null;
@@ -99,45 +138,73 @@ class OrderController extends Controller
 
         $total = $pricing['total'] - $discount;
 
-        $order = DB::transaction(function () use ($request, $customer, $coupon, $pricing, $discount, $total) {
-            $order = Order::create([
-                'order_number' => 'PD' . now()->format('ymd') . strtoupper(Str::random(6)),
-                'customer_id' => $customer->id,
-                'coupon_id' => $coupon?->id,
-                'status' => 'pending',
-                'pricing_tier' => $pricing['tier'],
-                'subtotal' => $pricing['total'],
-                'shipping_fee' => 0, // Free shipping
-                'discount' => $discount,
-                'total' => $total,
-                'payment_method' => $request->payment_method,
-                'payment_status' => 'unpaid',
-                'shipping_method' => $request->shipping_method,
-                'shipping_name' => $request->shipping_name,
-                'shipping_phone' => $request->shipping_phone,
-                'shipping_address' => $request->shipping_address,
-                'shipping_store_id' => $request->shipping_store_id,
-                'shipping_store_name' => $request->shipping_store_name,
-                'note' => $request->note,
-            ]);
+        try {
+            $order = DB::transaction(function () use ($request, $customer, $coupon, $pricing, $discount, $total) {
+                // Lock and deduct stock for each item
+                foreach ($pricing['items'] as $item) {
+                    $product = Product::lockForUpdate()->find($item['product_id']);
+                    if ($product->stock_quantity && $item['quantity'] > $product->stock_quantity) {
+                        throw new \RuntimeException("「{$product->name}」庫存不足（剩 {$product->stock_quantity}）");
+                    }
+                    if ($product->stock_quantity) {
+                        $product->decrement('stock_quantity', $item['quantity']);
+                        if ($product->stock_quantity <= 0) {
+                            $product->update(['stock_status' => 'outofstock']);
+                        }
+                    }
+                }
 
-            if ($coupon) {
-                $coupon->increment('used_count');
-            }
+                // Lock coupon to prevent race condition on max_uses
+                if ($coupon) {
+                    $coupon = Coupon::lockForUpdate()->find($coupon->id);
+                    if ($coupon->max_uses && $coupon->used_count >= $coupon->max_uses) {
+                        throw new \RuntimeException('優惠碼已達使用上限。');
+                    }
+                    $coupon->increment('used_count');
+                }
 
-            foreach ($pricing['items'] as $item) {
-                $order->items()->create([
-                    'product_id' => $item['product_id'],
-                    'product_name' => $item['name'],
-                    'quantity' => $item['quantity'],
-                    'unit_price' => $item['unit_price'],
-                    'subtotal' => $item['subtotal'],
-                    'created_at' => now(),
+                $order = Order::create([
+                    'order_number' => 'PD' . now()->format('ymd') . strtoupper(Str::random(6)),
+                    'customer_id' => $customer->id,
+                    'coupon_id' => $coupon?->id,
+                    'status' => 'pending',
+                    'pricing_tier' => $pricing['tier'],
+                    'subtotal' => $pricing['total'],
+                    'shipping_fee' => 0,
+                    'discount' => $discount,
+                    'total' => $total,
+                    'payment_method' => $request->payment_method,
+                    'payment_status' => 'unpaid',
+                    'shipping_method' => $request->shipping_method,
+                    'shipping_name' => $request->shipping_name,
+                    'shipping_phone' => $request->shipping_phone,
+                    'shipping_address' => $request->shipping_address,
+                    'shipping_store_id' => $request->shipping_store_id,
+                    'shipping_store_name' => $request->shipping_store_name,
+                    'note' => $request->note,
                 ]);
-            }
 
-            return $order;
-        });
+                foreach ($pricing['items'] as $item) {
+                    $order->items()->create([
+                        'product_id' => $item['product_id'],
+                        'product_name' => $item['name'],
+                        'quantity' => $item['quantity'],
+                        'unit_price' => $item['unit_price'],
+                        'subtotal' => $item['subtotal'],
+                        'created_at' => now(),
+                    ]);
+                }
+
+                return $order;
+            });
+        } catch (\RuntimeException $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        }
+
+        // Cache idempotency key so duplicate submissions return the same order
+        if ($idempotencyKey) {
+            \Illuminate\Support\Facades\Cache::put("order_idem:{$idempotencyKey}", $order->order_number, now()->addMinutes(5));
+        }
 
         $order->load('items');
 

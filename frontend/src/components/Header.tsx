@@ -15,6 +15,7 @@ const NAV_LINKS = [
   { href: '/reviews', label: '好評推薦' },
   { href: '/articles', label: '專欄文章' },
   { href: '/about', label: '關於 FP' },
+  { href: '/join', label: '加入 FP' },
 ];
 
 export default function Header() {

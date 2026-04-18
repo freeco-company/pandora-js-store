@@ -37,6 +37,8 @@ function OrderCompleteContent() {
     .filter((a) => !earnedSet.has(a.code))
     .slice(0, 3);
 
+  const paymentMethod = searchParams.get('payment');
+
   return (
     <div className="relative">
       {/* Hero — confetti-style celebration */}
@@ -86,6 +88,59 @@ function OrderCompleteContent() {
       </section>
 
       <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 space-y-6 -mt-6 relative z-10">
+        {/* Bank transfer info — only shown for bank_transfer orders */}
+        {paymentMethod === 'bank_transfer' && (
+          <ScrollReveal variant="fade-up">
+            <div className="bg-white rounded-3xl border-2 border-[#9F6B3E]/30 p-5 sm:p-7 shadow-sm">
+              <div className="flex items-start gap-3 mb-4">
+                <div className="w-10 h-10 rounded-full bg-[#fdf7ef] flex items-center justify-center shrink-0">
+                  <SiteIcon name="shield" size={22} className="text-[#9F6B3E]" />
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-slate-800">請完成轉帳，我們立即為您出貨</h3>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    婕樂纖仙女館由<strong>法芮可有限公司</strong>合法經營，所有商品皆為 JEROSSE 官方正品授權。
+                  </p>
+                </div>
+              </div>
+
+              <div className="bg-[#fdf7ef] rounded-2xl p-4 space-y-2.5 mb-4">
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-500">銀行</span>
+                  <span className="font-black text-slate-800">富邦銀行（012）</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-500">帳號</span>
+                  <span className="font-black text-[#9F6B3E] tracking-wider">82110000082812</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-500">戶名</span>
+                  <span className="font-black text-slate-800">法芮可有限公司</span>
+                </div>
+                <div className="flex justify-between text-sm border-t border-[#e7d9cb] pt-2.5">
+                  <span className="text-slate-500">應付金額</span>
+                  <span className="font-black text-[#9F6B3E] text-lg">{searchParams.get('total') && !isNaN(Number(searchParams.get('total'))) ? `NT$${Number(searchParams.get('total')).toLocaleString()}` : '請參考訂單金額'}</span>
+                </div>
+              </div>
+
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText('82110000082812');
+                  alert('已複製帳號！');
+                }}
+                className="w-full py-2.5 rounded-full border-2 border-[#9F6B3E] text-[#9F6B3E] text-sm font-black hover:bg-[#fdf7ef] transition-colors mb-3"
+              >
+                複製帳號
+              </button>
+
+              <div className="flex items-start gap-2 text-[11px] text-slate-500 leading-relaxed">
+                <SiteIcon name="check-circle" size={14} className="text-green-500 shrink-0 mt-0.5" />
+                <p>轉帳完成後，我們會在 1 個工作天內確認款項並安排出貨。如有任何疑問，歡迎透過 <a href="https://lin.ee/62wj7qa" target="_blank" rel="noopener" className="text-[#9F6B3E] font-bold underline">LINE 客服</a> 聯繫我們。</p>
+              </div>
+            </div>
+          </ScrollReveal>
+        )}
+
         {/* Primary CTA */}
         <ScrollReveal variant="fade-up">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

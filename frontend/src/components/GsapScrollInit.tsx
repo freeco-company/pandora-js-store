@@ -6,10 +6,10 @@
  * and attaches scroll-driven animations. Works on any page.
  *
  * Classes:
- *   gs-reveal   — fadeUp 120px + blur
- *   gs-scale    — scale(0.6) + blur → 1.0
- *   gs-left     — slideIn from x:-120
- *   gs-right    — slideIn from x:120
+ *   gs-reveal   — fadeUp 60px + blur
+ *   gs-scale    — scale(0.8) + blur → 1.0
+ *   gs-left     — slideIn from x:-80
+ *   gs-right    — slideIn from x:80
  *   gs-lines    — children .gs-line revealed line-by-line
  *   gs-stagger  — children .gs-si staggered
  *   gs-counter  — counts from 0 to data-target
@@ -37,43 +37,43 @@ export default function GsapScrollInit() {
           });
         });
 
-        // Fade reveals
+        // Fade reveals — trigger-based, not scrub
         gsap.utils.toArray<HTMLElement>('.gs-reveal').forEach((el) => {
           gsap.fromTo(el,
-            { y: 100, opacity: 0, filter: 'blur(5px)' },
-            { y: 0, opacity: 1, filter: 'blur(0px)', ease: 'power3.out',
-              scrollTrigger: { trigger: el, start: 'top 88%', end: 'top 40%', scrub: 1 } },
+            { y: 60, opacity: 0, filter: 'blur(4px)' },
+            { y: 0, opacity: 1, filter: 'blur(0px)', duration: 1, ease: 'power3.out',
+              scrollTrigger: { trigger: el, start: 'top 95%', toggleActions: 'play none none none' } },
           );
         });
 
         // Scale
         gsap.utils.toArray<HTMLElement>('.gs-scale').forEach((el) => {
           gsap.fromTo(el,
-            { scale: 0.7, opacity: 0, filter: 'blur(8px)' },
-            { scale: 1, opacity: 1, filter: 'blur(0px)', ease: 'power2.out',
-              scrollTrigger: { trigger: el, start: 'top 85%', end: 'top 35%', scrub: 1.2 } },
+            { scale: 0.8, opacity: 0, filter: 'blur(6px)' },
+            { scale: 1, opacity: 1, filter: 'blur(0px)', duration: 1, ease: 'power2.out',
+              scrollTrigger: { trigger: el, start: 'top 95%', toggleActions: 'play none none none' } },
           );
         });
 
         // Slides
         gsap.utils.toArray<HTMLElement>('.gs-left').forEach((el) => {
-          gsap.fromTo(el, { x: -100, opacity: 0 },
-            { x: 0, opacity: 1, ease: 'power3.out',
-              scrollTrigger: { trigger: el, start: 'top 85%', end: 'top 40%', scrub: 1 } });
+          gsap.fromTo(el, { x: -80, opacity: 0 },
+            { x: 0, opacity: 1, duration: 1, ease: 'power3.out',
+              scrollTrigger: { trigger: el, start: 'top 95%', toggleActions: 'play none none none' } });
         });
         gsap.utils.toArray<HTMLElement>('.gs-right').forEach((el) => {
-          gsap.fromTo(el, { x: 100, opacity: 0 },
-            { x: 0, opacity: 1, ease: 'power3.out',
-              scrollTrigger: { trigger: el, start: 'top 85%', end: 'top 40%', scrub: 1 } });
+          gsap.fromTo(el, { x: 80, opacity: 0 },
+            { x: 0, opacity: 1, duration: 1, ease: 'power3.out',
+              scrollTrigger: { trigger: el, start: 'top 95%', toggleActions: 'play none none none' } });
         });
 
         // Line reveals
         gsap.utils.toArray<HTMLElement>('.gs-lines').forEach((el) => {
           const lines = el.querySelectorAll('.gs-line');
           gsap.fromTo(lines,
-            { y: 80, opacity: 0, rotateX: 30 },
-            { y: 0, opacity: 1, rotateX: 0, stagger: 0.08, ease: 'power3.out',
-              scrollTrigger: { trigger: el, start: 'top 82%', end: 'top 35%', scrub: 1 } },
+            { y: 50, opacity: 0 },
+            { y: 0, opacity: 1, stagger: 0.1, duration: 0.8, ease: 'power3.out',
+              scrollTrigger: { trigger: el, start: 'top 92%', toggleActions: 'play none none none' } },
           );
         });
 
@@ -81,9 +81,9 @@ export default function GsapScrollInit() {
         gsap.utils.toArray<HTMLElement>('.gs-stagger').forEach((container) => {
           const children = container.querySelectorAll('.gs-si');
           gsap.fromTo(children,
-            { y: 80, opacity: 0, filter: 'blur(3px)' },
-            { y: 0, opacity: 1, filter: 'blur(0px)', stagger: 0.1, ease: 'power3.out',
-              scrollTrigger: { trigger: container, start: 'top 78%', end: 'top 25%', scrub: 1.2 } },
+            { y: 50, opacity: 0, filter: 'blur(3px)' },
+            { y: 0, opacity: 1, filter: 'blur(0px)', stagger: 0.12, duration: 0.8, ease: 'power3.out',
+              scrollTrigger: { trigger: container, start: 'top 92%', toggleActions: 'play none none none' } },
           );
         });
 
@@ -93,7 +93,7 @@ export default function GsapScrollInit() {
           const obj = { val: 0 };
           gsap.to(obj, {
             val: target, duration: 1.5, ease: 'power2.out',
-            scrollTrigger: { trigger: el, start: 'top 80%', toggleActions: 'play none none none' },
+            scrollTrigger: { trigger: el, start: 'top 90%', toggleActions: 'play none none none' },
             onUpdate: () => { el.textContent = Math.round(obj.val).toLocaleString(); },
           });
         });
