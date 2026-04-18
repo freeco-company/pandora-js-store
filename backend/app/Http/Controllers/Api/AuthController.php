@@ -73,10 +73,23 @@ class AuthController extends Controller
 
     /**
      * Return the LINE OAuth redirect URL.
+     *
+     * LINE OAuth v2.1 requires a `state` parameter (unlike Google which
+     * allows truly stateless flows). We generate a random state, sign it
+     * with APP_KEY via HMAC so the callback can verify it without session
+     * storage, and pass it through the OAuth redirect.
      */
     public function redirectToLine(): JsonResponse
     {
-        $url = Socialite::driver('line')->stateless()->redirect()->getTargetUrl();
+        $state = bin2hex(random_bytes(16));
+        $signature = hash_hmac('sha256', $state, config('app.key'));
+        $statePayload = $state . '.' . $signature;
+
+        $url = Socialite::driver('line')
+            ->stateless()
+            ->with(['state' => $statePayload])
+            ->redirect()
+            ->getTargetUrl();
 
         return response()->json(['url' => $url]);
     }
@@ -89,6 +102,17 @@ class AuthController extends Controller
         $frontendUrl = config('services.ecpay.frontend_url', 'http://localhost:3000');
 
         try {
+            // Verify the HMAC-signed state to prevent CSRF
+            $stateParam = $request->query('state', '');
+            if (!str_contains($stateParam, '.')) {
+                throw new \RuntimeException('Invalid LINE OAuth state');
+            }
+            [$state, $signature] = explode('.', $stateParam, 2);
+            $expected = hash_hmac('sha256', $state, config('app.key'));
+            if (!hash_equals($expected, $signature)) {
+                throw new \RuntimeException('LINE OAuth state signature mismatch');
+            }
+
             $lineUser = Socialite::driver('line')->stateless()->user();
         } catch (\Exception $e) {
             return redirect()->to($frontendUrl . '/auth/line/callback?error=auth_failed');
