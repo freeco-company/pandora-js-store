@@ -70,7 +70,9 @@ class ProductController extends Controller
         $payload = Cache::remember("products:show:v{$this->version()}:{$slug}", self::CACHE_TTL, function () use ($slug) {
             // Try current slug first, then fall back to legacy slug.
             // If matched via legacy, frontend will permanentRedirect to canonical.
+            // Campaign products are only accessible through their campaign page.
             $product = Product::where('is_active', true)
+                ->whereDoesntHave('campaigns')
                 ->where(function ($q) use ($slug) {
                     $q->where('slug', $slug)->orWhere('slug_legacy', $slug);
                 })
