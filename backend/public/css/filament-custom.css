@@ -147,18 +147,17 @@
     margin-left: auto !important;
   }
 
-  /* Non-text columns (IconColumn / ToggleColumn / ImageColumn) — their
-   * inner wrappers default to block/full-width which leaves icons flush
-   * left inside the flex cell. Collapse them to auto width so the parent
-   * flex-end pushes them to the right edge. */
-  .fi-ta-table-stacked-on-mobile .fi-ta-cell-content > .fi-ta-icon-col,
-  .fi-ta-table-stacked-on-mobile .fi-ta-cell-content > .fi-ta-toggle-col,
-  .fi-ta-table-stacked-on-mobile .fi-ta-cell-content > .fi-ta-image-col,
-  .fi-ta-table-stacked-on-mobile .fi-ta-cell-content > .fi-ta-color-col,
-  .fi-ta-table-stacked-on-mobile .fi-ta-cell-content > .fi-ta-select-col {
-    width: auto !important;
-    margin-left: auto !important;
-    display: inline-flex !important;
+  /* Non-text columns (IconColumn / ToggleColumn / ImageColumn / ColorColumn) —
+   * vendor makes these full-width and justifies start. Override to align right
+   * on mobile so they sit in the same column as text values. */
+  .fi-ta-table-stacked-on-mobile .fi-ta-cell-content > .fi-ta-icon {
+    justify-content: flex-end !important;
+  }
+  .fi-ta-table-stacked-on-mobile .fi-ta-cell-content > .fi-ta-toggle,
+  .fi-ta-table-stacked-on-mobile .fi-ta-cell-content > .fi-ta-image,
+  .fi-ta-table-stacked-on-mobile .fi-ta-cell-content > .fi-ta-color {
+    text-align: right !important;
+    display: flex !important;
     justify-content: flex-end !important;
   }
 
@@ -170,31 +169,35 @@
   }
 
   /* Actions row: stretch the edit/delete button full-width like a normal
-   * bottom-of-card button instead of a tiny icon tucked in the corner. */
-  .fi-ta-table-stacked-on-mobile .fi-ta-actions-cell {
+   * bottom-of-card button instead of a tiny icon tucked in the corner.
+   * Filament has no dedicated .fi-ta-actions-cell class — match via :has(). */
+  .fi-ta-table-stacked-on-mobile .fi-ta-cell:has(.fi-ta-actions) {
     padding-top: 12px !important;
     margin-top: 4px !important;
     border-top: 1px solid #f0e6d8 !important;
     border-bottom: none !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
   }
-  .fi-ta-table-stacked-on-mobile .fi-ta-actions-cell .fi-ta-cell-label {
+  .fi-ta-table-stacked-on-mobile .fi-ta-cell:has(.fi-ta-actions) .fi-ta-cell-label {
     display: none !important;
   }
-  .fi-ta-table-stacked-on-mobile .fi-ta-actions-cell .fi-ta-cell-content {
+  .fi-ta-table-stacked-on-mobile .fi-ta-cell:has(.fi-ta-actions) .fi-ta-cell-content,
+  .fi-ta-table-stacked-on-mobile .fi-ta-cell > .fi-ta-actions {
     width: 100% !important;
-    flex: 1 1 100% !important;
     justify-content: stretch !important;
   }
-  .fi-ta-table-stacked-on-mobile .fi-ta-actions-cell .fi-ta-actions {
-    width: 100% !important;
+  .fi-ta-table-stacked-on-mobile .fi-ta-cell .fi-ta-actions {
     display: flex !important;
+    flex-wrap: nowrap !important;
     gap: 8px !important;
   }
-  .fi-ta-table-stacked-on-mobile .fi-ta-actions-cell .fi-ta-actions > * {
+  .fi-ta-table-stacked-on-mobile .fi-ta-cell .fi-ta-actions > * {
     flex: 1 1 0 !important;
+    min-width: 0 !important;
   }
-  .fi-ta-table-stacked-on-mobile .fi-ta-actions-cell .fi-ta-actions .fi-icon-btn,
-  .fi-ta-table-stacked-on-mobile .fi-ta-actions-cell .fi-ta-actions .fi-btn {
+  .fi-ta-table-stacked-on-mobile .fi-ta-cell .fi-ta-actions .fi-icon-btn,
+  .fi-ta-table-stacked-on-mobile .fi-ta-cell .fi-ta-actions .fi-btn {
     width: 100% !important;
     min-height: 40px !important;
     justify-content: center !important;
@@ -205,10 +208,10 @@
     font-weight: 600 !important;
     gap: 6px !important;
   }
-  /* Pull aria-label text into the button so icon-only actions look like
-   * normal labelled buttons on mobile. attr(aria-label) reads whatever
-   * Filament set (编辑/删除/檢視…) — works for any action type. */
-  .fi-ta-table-stacked-on-mobile .fi-ta-actions-cell .fi-ta-actions .fi-icon-btn::after {
+  /* Pull the action's label text into the icon button so it looks like a
+   * normal labelled button on mobile. attr(aria-label) works for any action
+   * (編輯/刪除/檢視…) and respects whatever Filament rendered. */
+  .fi-ta-table-stacked-on-mobile .fi-ta-cell .fi-ta-actions .fi-icon-btn::after {
     content: attr(aria-label);
     font-size: 13px;
   }
