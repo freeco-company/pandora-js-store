@@ -10,6 +10,38 @@ concurrency:
   cancel-in-progress: false    # never cancel a deploy mid-flight
 
 jobs:
+  notify-start:
+    name: Discord — deploy started
+    runs-on: ubuntu-latest
+    steps:
+      - name: Post start notification
+        env:
+          COMMIT_SHA: ${{ github.sha }}
+          ACTOR: ${{ github.actor }}
+          BRANCH: ${{ github.ref_name }}
+          MESSAGE: ${{ github.event.head_commit.message }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          TIMESTAMP: ${{ github.event.head_commit.timestamp }}
+          WEBHOOK: ${{ secrets.DISCORD_DEPLOY_WEBHOOK }}
+        run: |
+          PAYLOAD=$(jq -n \
+            --arg title   "🚀 Deploy started" \
+            --arg sha     "$COMMIT_SHA" \
+            --arg actor   "$ACTOR" \
+            --arg branch  "$BRANCH" \
+            --arg msg     "$MESSAGE" \
+            --arg run     "$RUN_URL" \
+            --arg ts      "$TIMESTAMP" \
+            '{
+              embeds: [{
+                title: $title,
+                description: ("**commit**: `" + $sha[0:7] + "`\n**by**: " + $actor + "\n**branch**: `" + $branch + "`\n**message**: " + ($msg | split("\n")[0]) + "\n**run**: <" + $run + ">"),
+                color: 3447003,
+                timestamp: $ts
+              }]
+            }')
+          curl -fsSL -H "Content-Type: application/json" -d "$PAYLOAD" "$WEBHOOK" || true
+
   deploy:
     name: Build + rsync + zero-downtime reload
     # No more `needs: test` — the standalone CI workflow already runs
