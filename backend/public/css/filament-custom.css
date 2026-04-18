@@ -82,23 +82,43 @@
 }
 
 /* ── Mobile stacked table: label ◂ ▸ value layout ────────────
- * Filament's stackedOnMobile() renders each cell as label-above-value
- * by default, wasting the right half of small screens. Override so
- * label and value share a single horizontal line.
- *
- * Applies only to tables that opted-in with ->stackedOnMobile()
- * (class fi-ta-table-stacked-on-mobile) and only below md.
+ * Filament's stackedOnMobile() default wastes the right half; below
+ * md we flex label left / value right on a single row, wrap each
+ * record as a visible rounded card, and add breathing room.
+ * Only applies to tables that opted-in (fi-ta-table-stacked-on-mobile).
  */
 @media (max-width: 767px) {
+  /* Each row becomes a card with clear visual boundary */
+  .fi-ta-table-stacked-on-mobile > tbody > tr {
+    display: block !important;
+    margin: 0 12px 12px !important;
+    padding: 14px 16px !important;
+    background: #ffffff !important;
+    border: 1px solid #e7d9cb !important;
+    border-radius: 12px !important;
+    box-shadow: 0 1px 3px rgba(159, 107, 62, 0.06) !important;
+  }
+
+  /* Cells: label left, value right, on a single line */
   .fi-ta-table-stacked-on-mobile .fi-ta-cell {
     display: flex !important;
     flex-direction: row !important;
     justify-content: space-between !important;
     align-items: center !important;
     gap: 12px !important;
-    padding: 8px 0 !important;
-    min-height: 36px;
+    padding: 7px 0 !important;
+    min-height: 34px;
+    border-bottom: 1px dashed #f0e6d8 !important;
+    text-align: left !important; /* override alignEnd() on cells */
   }
+  .fi-ta-table-stacked-on-mobile .fi-ta-cell:last-child {
+    border-bottom: none !important;
+    padding-bottom: 0 !important;
+  }
+  .fi-ta-table-stacked-on-mobile .fi-ta-cell:first-child {
+    padding-top: 0 !important;
+  }
+
   .fi-ta-table-stacked-on-mobile .fi-ta-cell-label {
     flex-shrink: 0 !important;
     min-width: 5.5rem;
@@ -106,28 +126,49 @@
     color: #7a7366;
     font-size: 12px;
     font-weight: 600;
-    line-height: 1.2;
+    line-height: 1.3;
     margin: 0 !important;
+    padding: 0 !important;
   }
   .fi-ta-table-stacked-on-mobile .fi-ta-cell-content {
     flex: 1 1 auto;
     min-width: 0;
-    text-align: right;
-    display: flex;
-    justify-content: flex-end;
-    align-items: center;
+    display: flex !important;
+    justify-content: flex-end !important;
+    align-items: center !important;
+    text-align: right !important;
   }
-  /* Inline editors (SelectColumn / ToggleColumn) occupy a sensible
-     share of the row — not the full remaining width. */
+  /* Neutralize Filament's alignEnd() wrapper — we control alignment */
+  .fi-ta-table-stacked-on-mobile .fi-ta-cell .fi-ta-text,
+  .fi-ta-table-stacked-on-mobile .fi-ta-cell [class*="text-end"],
+  .fi-ta-table-stacked-on-mobile .fi-ta-cell [class*="text-right"] {
+    text-align: right !important;
+    justify-content: flex-end !important;
+    margin-left: auto !important;
+  }
+
+  /* Inline editors keep a sensible width, not the whole row */
   .fi-ta-table-stacked-on-mobile .fi-ta-cell-content .fi-fo-select,
   .fi-ta-table-stacked-on-mobile .fi-ta-cell-content .fi-input-wrp {
     min-width: 9rem;
     max-width: 100%;
   }
-  /* Actions cell (edit/delete icons) aligns right without label */
+  /* Action icons (edit/delete) right-aligned, no wasted label space */
+  .fi-ta-table-stacked-on-mobile .fi-ta-actions-cell {
+    padding-top: 10px !important;
+  }
+  .fi-ta-table-stacked-on-mobile .fi-ta-actions-cell .fi-ta-cell-label {
+    display: none !important;
+  }
   .fi-ta-table-stacked-on-mobile .fi-ta-actions-cell .fi-ta-cell-content {
     width: 100%;
     justify-content: flex-end;
+  }
+
+  /* Kill default table cell padding that fights our card padding */
+  .fi-ta-table-stacked-on-mobile > tbody > tr > td {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
   }
 }
 
