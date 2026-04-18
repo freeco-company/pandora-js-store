@@ -1,5 +1,5 @@
 import type { MetadataRoute } from 'next';
-import { fetchApi, type Product, type Article, type ProductCategory } from '@/lib/api';
+import { fetchApi, imageUrl, type Product, type Article, type ProductCategory } from '@/lib/api';
 
 interface Campaign {
   id: number;
@@ -8,6 +8,29 @@ interface Campaign {
   start_at: string;
   end_at: string;
   is_running: boolean;
+}
+
+interface PaginatedArticles {
+  data: Article[];
+  current_page: number;
+  last_page: number;
+}
+
+/**
+ * Paginate through the /articles endpoint until all pages have been read.
+ * `per_page=100` is an API-side cap; using it minimizes round trips.
+ */
+async function fetchAllArticles(): Promise<Article[]> {
+  const all: Article[] = [];
+  let page = 1;
+  // Safety cap so a buggy API can't spin forever.
+  for (let i = 0; i < 20; i++) {
+    const result = await fetchApi<PaginatedArticles>(`/articles?per_page=100&page=${page}`);
+    all.push(...result.data);
+    if (page >= result.last_page) break;
+    page++;
+  }
+  return all;
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -27,43 +50,54 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${baseUrl}/terms`, lastModified: new Date(), changeFrequency: 'yearly', priority: 0.3 },
   ];
 
-  // Dynamic product pages
+  // Products — include hero + gallery images for Google Image search.
+  // Cap images at 10/URL (Google's effective limit) to avoid bloating the sitemap.
   let productPages: MetadataRoute.Sitemap = [];
   try {
     const products = await fetchApi<Product[]>('/products');
-    productPages = products.map((p) => ({
-      url: `${baseUrl}/products/${p.slug}`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly' as const,
-      priority: 0.8,
-    }));
+    productPages = products.map((p) => {
+      const imgs = [imageUrl(p.image), ...(p.gallery ?? []).map((g) => imageUrl(g))]
+        .filter((u): u is string => !!u)
+        .slice(0, 10);
+      return {
+        url: `${baseUrl}/products/${p.slug}`,
+        lastModified: new Date(),
+        changeFrequency: 'weekly' as const,
+        priority: 0.8,
+        ...(imgs.length > 0 ? { images: imgs } : {}),
+      };
+    });
   } catch {}
 
-  // Dynamic article pages
+  // Articles — paginate through ALL pages (~430+ entries).
   let articlePages: MetadataRoute.Sitemap = [];
   try {
-    const result = await fetchApi<{ data: Article[] }>('/articles?per_page=200');
-    articlePages = result.data.map((a) => ({
-      url: `${baseUrl}/articles/${a.slug}`,
-      lastModified: a.published_at ? new Date(a.published_at) : new Date(),
-      changeFrequency: 'monthly' as const,
-      priority: 0.6,
-    }));
+    const articles = await fetchAllArticles();
+    articlePages = articles.map((a) => {
+      const img = imageUrl(a.featured_image);
+      return {
+        url: `${baseUrl}/articles/${a.slug}`,
+        lastModified: a.published_at ? new Date(a.published_at) : new Date(),
+        changeFrequency: 'monthly' as const,
+        priority: 0.6,
+        ...(img ? { images: [img] } : {}),
+      };
+    });
   } catch {}
 
-  // Category pages
   let categoryPages: MetadataRoute.Sitemap = [];
   try {
     const categories = await fetchApi<ProductCategory[]>('/product-categories');
-    categoryPages = categories.map((c) => ({
-      url: `${baseUrl}/products/category/${c.slug}`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly' as const,
-      priority: 0.8,
-    }));
+    categoryPages = categories
+      .filter((c) => c.name !== '未分類' && (c.products_count ?? 0) > 0)
+      .map((c) => ({
+        url: `${baseUrl}/products/category/${c.slug}`,
+        lastModified: new Date(),
+        changeFrequency: 'weekly' as const,
+        priority: 0.8,
+      }));
   } catch {}
 
-  // Dynamic campaign pages
   let campaignPages: MetadataRoute.Sitemap = [];
   try {
     const campaigns = await fetchApi<Campaign[]>('/campaigns');
