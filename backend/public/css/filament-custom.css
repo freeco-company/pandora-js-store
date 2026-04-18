@@ -80,3 +80,82 @@
   .fi-ta-record, .fi-wi-stats-overview-stat, .fi-modal-window, .fi-notification { animation: none !important; }
   .fi-ta-record:hover, .fi-wi-stats-overview-stat:hover { transform: none !important; }
 }
+
+/* ─── Mobile table → card layout ───────────────────────────────
+ * Below 768px we visually transform table rows into stacked cards.
+ * Desktop (md+) keeps the normal table layout untouched.
+ *
+ * Column internals (TextColumn, SelectColumn, ToggleColumn, badges)
+ * already render as flex containers — stacking td vertically just
+ * works. We also hide the thead and widen ta-cells to full width.
+ */
+@media (max-width: 767px) {
+  /* Hide table header on mobile — card values are self-explanatory */
+  .fi-ta-content thead { display: none !important; }
+
+  /* Each row becomes a rounded card */
+  .fi-ta-content tbody tr.fi-ta-row {
+    display: block !important;
+    margin: 0 0 14px 0 !important;
+    padding: 14px 16px !important;
+    background: #ffffff !important;
+    border: 1px solid #e7d9cb !important;
+    border-radius: 14px !important;
+    box-shadow: 0 2px 8px rgba(159, 107, 62, 0.05) !important;
+  }
+  .fi-ta-content tbody tr.fi-ta-row:hover {
+    box-shadow: 0 4px 16px rgba(159, 107, 62, 0.12) !important;
+    border-color: #d4a373 !important;
+  }
+
+  /* Remove all table row bottom-borders (cards have their own) */
+  .fi-ta-content tbody tr.fi-ta-row + tr.fi-ta-row { border-top: 1px solid #e7d9cb !important; }
+
+  /* Cells stack vertically, each a labeled row */
+  .fi-ta-content tbody td.fi-ta-cell {
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    gap: 12px !important;
+    padding: 6px 0 !important;
+    border: none !important;
+    width: 100% !important;
+  }
+
+  /* First cell (usually the primary identifier) renders bigger, full-width */
+  .fi-ta-content tbody td.fi-ta-cell:first-child {
+    border-bottom: 1px dashed #e7d9cb !important;
+    padding-bottom: 10px !important;
+    margin-bottom: 6px !important;
+  }
+
+  /* Compact table wrapper — no border on the outer table, cards provide it */
+  .fi-ta-content .fi-ta-table,
+  .fi-ta-content {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+  .fi-ta-content tbody { display: block !important; background: transparent !important; }
+
+  /* Hide checkbox column on mobile cards (bulk select less useful on phone) */
+  .fi-ta-content tbody td.fi-ta-selection-cell,
+  .fi-ta-content thead th.fi-ta-selection-header-cell {
+    display: none !important;
+  }
+
+  /* Actions cell (edit/delete icon buttons) stays on right, no label prefix */
+  .fi-ta-content tbody td.fi-ta-actions-cell {
+    justify-content: flex-end !important;
+    padding-top: 8px !important;
+    margin-top: 6px !important;
+    border-top: 1px dashed #e7d9cb !important;
+  }
+
+  /* SelectColumn / ToggleColumn inline editors — give them breathing room */
+  .fi-ta-content tbody td .fi-fo-select,
+  .fi-ta-content tbody td .fi-fo-toggle {
+    max-width: 60% !important;
+  }
+}
