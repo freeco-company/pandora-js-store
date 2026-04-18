@@ -89,7 +89,7 @@ jobs:
       - name: Build (dry — no deploy)
         working-directory: frontend
         env:
-          NEXT_PUBLIC_API_URL: https://pandora-dev.js-store.com.tw/api
-          NEXT_PUBLIC_STORAGE_URL: https://pandora-dev.js-store.com.tw
-          NEXT_PUBLIC_SITE_URL: https://pandora-dev.js-store.com.tw
+          NEXT_PUBLIC_API_URL: https://pandora.js-store.com.tw/api
+          NEXT_PUBLIC_STORAGE_URL: https://pandora.js-store.com.tw
+          NEXT_PUBLIC_SITE_URL: https://pandora.js-store.com.tw
         run: NODE_OPTIONS='--max-old-space-size=4096' npm run build

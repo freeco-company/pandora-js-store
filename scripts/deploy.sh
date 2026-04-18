@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Deploy frontend + backend to pandora-dev server and run smoke tests.
+# Deploy frontend + backend to pandora server and run smoke tests.
 # Safe to re-run. Fails fast on any error.
 #
 # Env:

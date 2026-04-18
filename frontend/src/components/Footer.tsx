@@ -16,31 +16,6 @@ export default function Footer() {
 }
 
 function FooterInner() {
-  const [email, setEmail] = useState('');
-  const [subscribed, setSubscribed] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState('');
-
-  const handleSubscribe = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email || submitting) return;
-    setSubmitting(true);
-    setError('');
-    try {
-      const res = await fetch('/api/subscriptions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
-      });
-      if (!res.ok) throw new Error('subscribe failed');
-      setSubscribed(true);
-      setEmail('');
-    } catch {
-      setError('訂閱失敗，請稍後再試。');
-    } finally {
-      setSubmitting(false);
-    }
-  };
   return (
     <footer className="mt-auto pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-0" style={{ backgroundColor: '#1e1e1e' }}>
       {/* Trust strip — 官方授權 / 詐騙警語 / 合規聲明 */}
@@ -181,36 +156,7 @@ function FooterInner() {
           </div>
         </div>
 
-        {/* Email Subscription */}
-        <div className="border-t border-white/10 mt-8 pt-8">
-          <div className="max-w-md mx-auto text-center">
-            <h4 className="text-sm font-semibold text-white mb-2">訂閱最新消息</h4>
-            <p className="text-xs text-gray-400 mb-4">搶先獲得新品上架與優惠資訊</p>
-            {subscribed ? (
-              <p className="text-sm text-[#06C755] font-medium">訂閱成功！</p>
-            ) : error ? (
-              <p className="text-sm text-red-400 font-medium">{error}</p>
-            ) : (
-              <form onSubmit={handleSubscribe} className="flex gap-2">
-                <input
-                  type="email"
-                  required
-                  placeholder="輸入 Email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="flex-1 min-w-0 px-4 py-2 bg-white/10 border border-white/10 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:border-[#9F6B3E] transition-colors"
-                />
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="px-5 py-2 bg-[#9F6B3E] hover:bg-[#8a5c34] disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-colors whitespace-nowrap"
-                >
-                  訂閱
-                </button>
-              </form>
-            )}
-          </div>
-        </div>
+        {/* Email Subscription — hidden until newsletter system is integrated */}
 
         <div className="border-t border-white/10 mt-8 pt-8 text-center text-sm text-gray-500">
           <div>&copy; {new Date().getFullYear()} 婕樂纖仙女館 JEROSSE. All rights reserved.</div>

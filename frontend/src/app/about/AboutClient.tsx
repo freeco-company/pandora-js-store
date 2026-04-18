@@ -38,14 +38,13 @@ export default function AboutPage() {
           --gold-dim: #8a7340;
           --dark: #0d0b09;
           --dark-card: #151210;
-          /* 全頁面用日系圓角字體 */
-          font-family: 'Zen Maru Gothic', -apple-system, 'PingFang TC', 'Noto Sans TC', sans-serif;
           font-feature-settings: 'palt' 1;
           color: #fff;
         }
-        /* 中文標題：同字體加粗 */
-        .fp-warm {
-          font-family: 'Zen Maru Gothic', -apple-system, 'PingFang TC', sans-serif;
+        /* 內文段落 + 引言：日系圓角字體 */
+        .about-premium p,
+        .about-premium blockquote {
+          font-family: 'Zen Maru Gothic', -apple-system, 'PingFang TC', 'Noto Sans TC', sans-serif;
         }
         /* 英文標題：幾何圓角無襯線 */
         .fp-en {
@@ -310,7 +309,7 @@ export default function AboutPage() {
             {/* Story */}
             <div className="flex-1">
               <div className="gs-lines">
-                <h2 className="gs-line fp-warm text-4xl sm:text-5xl font-black tracking-tight text-shimmer inline-block">
+                <h2 className="gs-line text-4xl sm:text-5xl font-black tracking-tight text-shimmer inline-block">
                   朵朵
                 </h2>
                 <div className="gs-line mt-2">
@@ -366,7 +365,7 @@ export default function AboutPage() {
         <div className="relative max-w-4xl mx-auto px-6 sm:px-8 z-10">
           <div className="gs-reveal text-center mb-20">
             <span className="text-[11px] font-medium tracking-[0.5em] text-[var(--gold)] uppercase">Our Story</span>
-            <h2 className="fp-warm fp-heading text-3xl sm:text-5xl mt-4">
+            <h2 className="fp-heading text-3xl sm:text-5xl mt-4">
               <span className="text-shimmer">為什麼叫 Fairy Pandora？</span>
             </h2>
           </div>
@@ -455,7 +454,7 @@ export default function AboutPage() {
         <div className="relative max-w-4xl mx-auto px-6 sm:px-8 z-10">
           <div className="gs-reveal text-center mb-24">
             <span className="text-[11px] font-medium tracking-[0.5em] text-[var(--gold)] uppercase">Your Journey</span>
-            <h2 className="fp-warm fp-heading text-3xl sm:text-5xl mt-4">
+            <h2 className="fp-heading text-3xl sm:text-5xl mt-4">
               <span className="text-shimmer">從仙女到潘朵拉</span>
             </h2>
             <p className="text-sm text-white/35 mt-5 max-w-lg mx-auto leading-relaxed">
@@ -503,7 +502,7 @@ export default function AboutPage() {
                 <div className={`flex-1 pl-16 sm:pl-0 ${i % 2 === 0 ? 'sm:pr-20 sm:text-right' : 'sm:pl-20'}`}>
                   <div className={i % 2 === 0 ? 'gs-right' : 'gs-left'}>
                     <span className="text-[12px] font-light tracking-[0.3em] text-[var(--gold)]">STEP {s.step}</span>
-                    <h3 className="fp-warm text-3xl sm:text-4xl font-black text-white mt-2 tracking-tight">{s.title}</h3>
+                    <h3 className="text-3xl sm:text-4xl font-black text-white mt-2 tracking-tight">{s.title}</h3>
                     <span className="text-[10px] font-medium tracking-[0.3em] text-[var(--gold-dim)] uppercase">{s.subtitle}</span>
                     <p className="text-sm text-white/50 mt-5 leading-[1.9]">{s.desc}</p>
                     <p className="text-sm text-white/30 mt-3 leading-[1.9] italic">{s.detail}</p>
@@ -531,7 +530,7 @@ export default function AboutPage() {
         <div className="relative max-w-5xl mx-auto px-6 sm:px-8 z-10">
           <div className="gs-reveal text-center mb-20">
             <span className="text-[11px] font-medium tracking-[0.5em] text-[var(--gold)] uppercase">Support System</span>
-            <h2 className="fp-warm fp-heading text-3xl sm:text-5xl mt-4">
+            <h2 className="fp-heading text-3xl sm:text-5xl mt-4">
               <span className="text-shimmer">你不是一個人</span>
             </h2>
             <p className="text-sm text-white/45 mt-5 max-w-lg mx-auto leading-relaxed">
@@ -592,7 +591,7 @@ export default function AboutPage() {
             ].map((card) => (
               <TiltCard key={card.title} className="gs-si glow-border p-7 sm:p-8 rounded-2xl border border-[var(--gold)]/15 bg-[var(--dark-card)]">
                 <div className="mb-4">{card.icon}</div>
-                <h3 className="fp-warm text-lg font-black text-white/90">{card.title}</h3>
+                <h3 className="text-lg font-black text-white/90">{card.title}</h3>
                 <span className="text-[10px] font-medium tracking-[0.2em] text-[var(--gold-dim)] uppercase mt-1 block">{card.sub}</span>
                 <p className="text-sm text-white/40 mt-4 leading-[1.85]">{card.desc}</p>
               </TiltCard>
@@ -601,7 +600,7 @@ export default function AboutPage() {
 
           {/* Bottom highlight */}
           <div className="gs-reveal text-center">
-            <p className="fp-warm text-xl sm:text-2xl font-bold text-white/60 leading-relaxed">
+            <p className="text-xl sm:text-2xl font-bold text-white/60 leading-relaxed">
               在 FP，你買到的不只是產品 —<br />
               是一個<strong className="text-[var(--gold-light)]">真心希望你變好</strong>的團隊。
             </p>
@@ -610,101 +609,76 @@ export default function AboutPage() {
       </section>
 
       {/* ═══════════════════════════════════════════
-          6. VISION 願景 — 日式留白設計
+          6. VISION + PROMISE — 願景與承諾
       ═══════════════════════════════════════════ */}
-      <section className="py-32 sm:py-44 relative" style={{ background: '#12100e' }}>
+      <section className="py-28 sm:py-36 relative" style={{ background: '#12100e' }}>
         <FlowingGoldLines density={5} />
         <RippleBackground opacity={0.04} />
         <div className="relative max-w-5xl mx-auto px-6 sm:px-8 z-10">
 
-          {/* Vertical Japanese-style layout */}
-          <div className="gs-reveal flex flex-col items-center mb-20">
-            {/* Decorative vertical line + circle */}
-            <div className="w-px h-16 mb-4" style={{ background: 'linear-gradient(to bottom, transparent, var(--gold))' }} />
-            <div className="w-3 h-3 rounded-full border border-[var(--gold)]/40 mb-8" />
-            <span className="fp-en text-[10px] font-medium tracking-[0.6em] text-[var(--gold)] uppercase">Our Vision</span>
+          {/* Vision header */}
+          <div className="gs-reveal text-center mb-16">
+            <span className="fp-en text-[11px] font-medium tracking-[0.5em] text-[var(--gold)] uppercase">Our Vision & Promise</span>
+            <h2 className="fp-heading text-3xl sm:text-5xl mt-4">
+              <span className="text-shimmer">我們的信念</span>
+            </h2>
           </div>
 
-          {/* Big statement — stacked with spacing */}
-          <div className="text-center mb-24">
-            <div className="gs-reveal">
-              <p className="text-base sm:text-lg text-white/35 leading-relaxed max-w-md mx-auto mb-16">
-                台灣的健康食品市場充斥著誇大的廣告、<br />
-                模糊的成分標示、和「買了就不管你」的銷售模式。
+          {/* Vision statement + 3 promises side by side */}
+          <div className="flex flex-col lg:flex-row gap-12 lg:gap-16 items-start mb-20">
+            {/* Left: big statement */}
+            <div className="flex-1 gs-left">
+              <p className="text-sm sm:text-base text-white/35 leading-relaxed mb-8">
+                台灣的健康食品市場充斥著誇大的廣告、模糊的成分標示、和「買了就不管你」的銷售模式。我們相信，應該有一個地方是不一樣的。
               </p>
-            </div>
-
-            <div className="gs-scale">
-              <p className="text-white/30 text-sm mb-6">我們相信，應該有一個地方 —</p>
-              <div className="relative inline-block">
-                {/* Background glow behind text */}
-                <div className="absolute inset-0 -m-8 rounded-full opacity-[0.06]" style={{
+              <div className="relative">
+                <div className="absolute -inset-4 rounded-3xl opacity-[0.05]" style={{
                   background: 'radial-gradient(ellipse, var(--gold), transparent 70%)',
                 }} />
-                <h2 className="fp-warm relative text-shimmer text-4xl sm:text-6xl lg:text-7xl font-black leading-[1.5] tracking-[0.08em]">
-                  安心<br />放心<br />看得見
-                </h2>
-              </div>
-            </div>
-
-            <div className="gs-reveal mt-16">
-              <p className="text-base sm:text-lg text-white/40 leading-relaxed max-w-sm mx-auto">
-                FP 要做的不是最大的電商，<br />
-                而是<strong className="text-white/80 font-bold">最值得信任的那一個</strong>。
-              </p>
-            </div>
-          </div>
-
-          {/* Stats — horizontal with dividers */}
-          <div className="gs-stagger flex flex-col sm:flex-row items-center justify-center gap-0 max-w-3xl mx-auto">
-            {[
-              { val: '8+', unit: '年', label: '深耕健康產業' },
-              { val: '100', unit: '%', label: 'JEROSSE 官方正品' },
-              { val: '1', unit: 'hr', label: '平均客服回覆' },
-            ].map((s, i) => (
-              <div key={s.label} className="gs-si flex items-center">
-                {i > 0 && <div className="hidden sm:block w-px h-16 bg-[var(--gold)]/15 mx-10" />}
-                {i > 0 && <div className="sm:hidden w-16 h-px bg-[var(--gold)]/15 my-6" />}
-                <div className="text-center px-4">
-                  <div className="fp-en text-4xl sm:text-5xl font-black text-[var(--gold)]">
-                    {s.val}<span className="text-2xl text-[var(--gold-dim)]">{s.unit}</span>
-                  </div>
-                  <div className="text-[11px] text-white/30 mt-2 font-medium tracking-wider">{s.label}</div>
+                <div className="relative space-y-6">
+                  {[
+                    { word: '安心', desc: '每一件都是 JEROSSE 原廠出貨，正品保證。' },
+                    { word: '放心', desc: '不催促、不話術。你的節奏就是最好的節奏。' },
+                    { word: '看得見', desc: '三階梯定價透明公開，改變用時間證明。' },
+                  ].map((item, i) => (
+                    <div key={item.word} className="gs-reveal flex items-start gap-5">
+                      <span className="text-shimmer text-3xl sm:text-4xl font-black shrink-0 w-24 sm:w-28 text-right">{item.word}</span>
+                      <div className="pt-2">
+                        <div className="w-8 h-px bg-[var(--gold)]/30 mb-3" />
+                        <p className="text-sm text-white/40 leading-relaxed">{item.desc}</p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
-            ))}
-          </div>
+              <div className="gs-reveal mt-10">
+                <p className="text-base sm:text-lg text-white/50 leading-relaxed">
+                  FP 要做的不是最大的電商，<br />
+                  而是<strong className="text-white/80 font-bold">最值得信任的那一個</strong>。
+                </p>
+              </div>
+            </div>
 
-          {/* Bottom decorative */}
-          <div className="gs-reveal flex flex-col items-center mt-20">
-            <div className="w-3 h-3 rounded-full border border-[var(--gold)]/40 mb-4" />
-            <div className="w-px h-16" style={{ background: 'linear-gradient(to bottom, var(--gold), transparent)' }} />
-          </div>
-        </div>
-      </section>
-
-      {/* ═══════════════════════════════════════════
-          7. PROMISE 承諾
-      ═══════════════════════════════════════════ */}
-      <section className="py-24 sm:py-32" style={{ background: 'var(--dark)' }}>
-        <FlowingGoldLines density={2} />
-        <div className="relative max-w-4xl mx-auto px-6 sm:px-8 z-10">
-          <div className="gs-reveal text-center mb-14">
-            <span className="text-[11px] font-medium tracking-[0.5em] text-[var(--gold)] uppercase">Our Promise</span>
-            <h2 className="fp-warm fp-heading text-3xl sm:text-4xl text-[var(--gold-light)] mt-4">三個承諾</h2>
-          </div>
-          <div className="gs-stagger grid sm:grid-cols-3 gap-4">
-            {[
-              { num: '01', title: '正品保證', desc: 'JEROSSE 官方授權經銷，每一件原廠出貨。你買到的，跟品牌官網完全一樣。' },
-              { num: '02', title: '真心陪伴', desc: '不催促、不話術、不搞限時倒數。你的節奏就是最好的節奏，陪伴不是壓力。' },
-              { num: '03', title: '長期價值', desc: '三階梯定價越買越划算。營養師陪伴讓改變持續。我們要的不是你買一次，是你真的變好。' },
-            ].map((v) => (
-              <TiltCard key={v.num} className="gs-si glow-border p-8 sm:p-10 rounded-2xl border border-[var(--gold)]/15 bg-[var(--dark-card)]">
-                <span className="text-[12px] font-light text-[var(--gold)]/40 tracking-wider">{v.num}</span>
-                <h3 className="text-lg font-black text-[var(--gold)] mt-3">{v.title}</h3>
-                <p className="text-sm text-white/40 mt-3 leading-[1.85]">{v.desc}</p>
-              </TiltCard>
-            ))}
+            {/* Right / Bottom: stats */}
+            <div className="gs-right w-full lg:w-[280px] shrink-0">
+              <div className="glow-border rounded-3xl border border-[var(--gold)]/15 bg-[var(--dark-card)] p-6 sm:p-8">
+                {/* Mobile: 3-col grid / Desktop: vertical stack */}
+                <div className="grid grid-cols-3 lg:grid-cols-1 gap-4 lg:gap-6 text-center">
+                  {[
+                    { val: '8+', unit: '年', label: '深耕健康產業' },
+                    { val: '100', unit: '%', label: '官方正品' },
+                    { val: '1', unit: 'hr', label: '客服回覆' },
+                  ].map((s) => (
+                    <div key={s.label}>
+                      <div className="fp-en text-2xl lg:text-3xl font-black text-[var(--gold)]">
+                        {s.val}<span className="text-base lg:text-lg text-[var(--gold-dim)]">{s.unit}</span>
+                      </div>
+                      <div className="text-[9px] lg:text-[10px] text-white/30 mt-1 font-medium tracking-wider">{s.label}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -720,7 +694,7 @@ export default function AboutPage() {
             <Mascot stage="bloom" mood="excited" size={150} />
           </div>
           <div className="gs-reveal">
-            <h2 className="fp-warm text-3xl sm:text-4xl lg:text-5xl font-black leading-tight tracking-tight text-white/90">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black leading-tight tracking-tight text-white/90">
               準備好打開你的<br />
               <span className="fp-heading text-shimmer">潘朵拉盒子了嗎？</span>
             </h2>

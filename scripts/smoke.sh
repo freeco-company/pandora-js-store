@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # End-to-end smoke test for the live deploy.
-# Runs against TEST_URL (default: https://pandora-dev.js-store.com.tw)
+# Runs against TEST_URL (default: https://pandora.js-store.com.tw)
 # Checks HTTP status + expected content markers. Non-zero exit on any failure.
 #
 # Usage:
@@ -11,7 +11,7 @@
 
 set -u
 
-BASE="${TEST_URL:-https://pandora-dev.js-store.com.tw}"
+BASE="${TEST_URL:-https://pandora.js-store.com.tw}"
 PASS=0
 FAIL=0
 FAILURES=()
