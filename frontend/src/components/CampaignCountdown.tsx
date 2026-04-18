@@ -566,7 +566,6 @@ function CountdownSection({ campaign }: { campaign: Campaign }) {
             { l: '3%', t: '15%', iconName: 'shield', color: '#4A9D5F', text: '官方正品', bg: 'bg-white', delay: 0 },
             { l: '88%', t: '12%', iconName: 'target', color: '#C0392B', text: '限量搶購', bg: 'bg-white', delay: 0.8 },
             { l: '2%', t: '72%', iconName: 'ribbon', color: '#E0748C', text: '搭配更划算', bg: 'bg-white', delay: 0.4 },
-            { l: '85%', t: '78%', iconName: 'gift', color: '#C0392B', text: '母親節限定', bg: 'bg-white', delay: 1.2 },
             { l: '15%', t: '90%', iconName: 'truck', color: '#D4762C', text: '快速出貨', bg: 'bg-white', delay: 1.6 },
             { l: '75%', t: '5%', iconName: 'sparkle', color: '#E8A93B', text: 'VIP 優惠', bg: 'bg-white', delay: 0.6 },
           ].map((tag, i) => (
