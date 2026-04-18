@@ -17,7 +17,7 @@ class Order extends Model
         'booking_note', 'logistics_status_msg', 'logistics_created_at',
         'shipping_method', 'shipping_name', 'shipping_phone',
         'shipping_address', 'shipping_store_id', 'shipping_store_name',
-        'note', 'wp_order_id', 'abandoned_reminder_sent_at',
+        'note', 'wp_order_id', 'abandoned_reminder_sent_at', 'review_reminder_sent_at',
     ];
 
     protected $casts = [
@@ -27,6 +27,7 @@ class Order extends Model
         'total' => 'decimal:2',
         'logistics_created_at' => 'datetime',
         'abandoned_reminder_sent_at' => 'datetime',
+        'review_reminder_sent_at' => 'datetime',
     ];
 
     public function coupon()

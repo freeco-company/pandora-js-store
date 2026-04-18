@@ -39,6 +39,13 @@ Schedule::command('stock:notify')
     ->withoutOverlapping(10)
     ->appendOutputTo(storage_path('logs/stock-notify.log'));
 
+// Review reminder (7d) + auto-review (14d) — daily at 10:00
+Schedule::command('review:remind')
+    ->dailyAt('10:00')
+    ->timezone('Asia/Taipei')
+    ->withoutOverlapping(30)
+    ->appendOutputTo(storage_path('logs/review-remind.log'));
+
 // Abandoned-cart recovery mail — runs every 3 hours
 Schedule::command('cart:abandoned-mail')
     ->everyThreeHours()
