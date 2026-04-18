@@ -17,7 +17,7 @@ import {
   type LocalCartItem,
   type PricingTier,
 } from '@/lib/pricing';
-import { markActivation } from '@/lib/api';
+import { markActivation, getBundle } from '@/lib/api';
 import { trackAddToCart } from '@/components/Analytics';
 
 interface CartContextValue {
@@ -77,6 +77,50 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
     setHydrated(true);
   }, []);
+
+  // After hydration, refresh each bundle's payload from the API so that
+  // admin-side edits (price tweaks, added gifts, custom_gifts, description
+  // changes) flow through to carts that snapshotted older versions. Failures
+  // are silent — we keep the stored snapshot if the bundle 404s (e.g. campaign
+  // ended), and CartAvailabilityCheck will flag it separately.
+  useEffect(() => {
+    if (!hydrated) return;
+    const slugs = Array.from(
+      new Set(
+        items
+          .filter(isBundleItem)
+          .map((i) => i.bundle.slug)
+          .filter(Boolean),
+      ),
+    );
+    if (slugs.length === 0) return;
+    let cancelled = false;
+    (async () => {
+      const fresh = await Promise.all(
+        slugs.map((slug) =>
+          getBundle(slug)
+            .then((b) => [slug, b] as const)
+            .catch(() => [slug, null] as const),
+        ),
+      );
+      if (cancelled) return;
+      const bySlug = new Map(fresh.filter(([, b]) => b).map(([s, b]) => [s, b!]));
+      if (bySlug.size === 0) return;
+      setItems((prev) =>
+        prev.map((i) => {
+          if (!isBundleItem(i)) return i;
+          const next = bySlug.get(i.bundle.slug);
+          return next ? { ...i, bundle: next } : i;
+        }),
+      );
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // Only refresh once per hydration — subsequent addBundle/set already have
+    // fresh data. Deps intentionally minimal to avoid refetch loops.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hydrated]);
 
   // Save cart to localStorage on change
   useEffect(() => {
