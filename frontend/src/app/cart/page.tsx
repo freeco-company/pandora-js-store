@@ -209,14 +209,29 @@ export default function CartPage() {
                   </div>
                 )}
 
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#c0392b] text-white text-[10px] font-black">
-                    套組
-                  </span>
-                  <span className="font-black text-gray-900">{b.name}</span>
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="relative w-14 h-14 bg-white rounded-lg overflow-hidden shrink-0 border border-[#e7d9cb]">
+                    {b.image ? (
+                      <ImageWithFallback
+                        src={imageUrl(b.image)!}
+                        alt={b.name}
+                        fill
+                        sizes="56px"
+                        className="object-cover"
+                      />
+                    ) : (
+                      <LogoPlaceholder />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0 flex flex-col gap-1">
+                    <span className="inline-flex self-start items-center gap-1 px-2 py-0.5 rounded-full bg-[#c0392b] text-white text-[10px] font-black">
+                      套組
+                    </span>
+                    <span className="font-black text-gray-900 line-clamp-2">{b.name}</span>
+                  </div>
                   <button
                     onClick={() => setRemoveConfirmId({ type: 'bundle', id: b.id })}
-                    className="ml-auto text-xs text-gray-400 hover:text-red-500 transition-colors"
+                    className="text-xs text-gray-400 hover:text-red-500 transition-colors shrink-0 self-start"
                   >
                     移除
                   </button>
