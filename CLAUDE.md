@@ -68,6 +68,18 @@ cd frontend && npm run dev -- --port 3000
 
 push → `ssh freeco` → `git pull && php8.3 artisan migrate --force && config:cache && npm install && npm run build && pm2 reload`。前端 `package.json` 版本先 bump、`git tag vX.Y.Z`、GitHub release。
 
+## UTF-8 安全規則（商品描述處理）
+
+商品描述從 WP/WooCommerce 匯入，含大量中文。清理時**絕對禁止**：
+
+- **`str_replace("\xc2\xa0", '', $text)`** — `\xc2` 是許多 UTF-8 中文字的組成 byte，逐 byte 替換會破壞整份文件的中文編碼。只能用 `preg_replace('/&nbsp;/', ' ', $text)` 替換 HTML entity 形式。
+- **`isomorphic-dompurify`（jsdom）處理大量中文 HTML** — server-side SSR 時 jsdom 會破壞多位元組 UTF-8 字元。已改為 server 端用輕量 regex 清理（`sanitize.ts`），client 端才用 DOMPurify。
+- **任何 byte-level 的字串操作**（如 `str_replace` 搭配 raw `\x` bytes）用在中文內容上。一律用 `preg_replace` + 正確的 pattern 或 `mb_` 系列函數。
+
+清理商品描述的正確工具：`php artisan products:clean-descriptions`（`CleanProductDescriptions.php`）。修改前先在 local 跑 `--dry`，確認不會破壞編碼後才跑線上。
+
+**出事恢復流程**：DB 備份在 `/var/backups/pandora/*.sql.gz`（retention 7 天），可用 `gunzip` + 臨時 DB 還原特定欄位。
+
 ## Don'ts（硬性規則）
 
 - **Don't change 3-tier thresholds**（`VIP_THRESHOLD = 4000`、qty≥2 觸發 combo）— 兩邊要同步改，任何一邊漏改會造成結帳金額對不上。
