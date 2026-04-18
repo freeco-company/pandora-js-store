@@ -226,7 +226,7 @@ export default function CheckoutPage() {
       const payload = {
         items: [
           ...productItems.map((i) => ({ product_id: i.product.id, quantity: i.quantity, type: 'product' as const })),
-          ...bundleItems.map((i) => ({ campaign_id: i.bundle.id, quantity: i.quantity, type: 'bundle' as const })),
+          ...bundleItems.map((i) => ({ bundle_id: i.bundle.id, quantity: i.quantity, type: 'bundle' as const })),
         ],
         customer: {
           name: form.name,

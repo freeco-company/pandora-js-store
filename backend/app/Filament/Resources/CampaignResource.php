@@ -3,8 +3,8 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\CampaignResource\Pages;
+use App\Filament\Resources\CampaignResource\RelationManagers\BundlesRelationManager;
 use App\Models\Campaign;
-use App\Models\Product;
 use Filament\Forms;
 use Filament\Schemas\Schema;
 use Filament\Resources\Resource;
@@ -28,120 +28,70 @@ class CampaignResource extends Resource
     {
         return $form
             ->schema([
-                // Left column: main info + bundle builder
-                \Filament\Schemas\Components\Group::make()->schema([
-                    \Filament\Schemas\Components\Section::make('活動資訊')->schema([
+                \Filament\Schemas\Components\Section::make('活動資訊')
+                    ->description('活動是「時間框」— 裡面可以放多個套組。每個套組有自己的名稱、圖片、詳情頁（/bundles/{代稱}）。')
+                    ->schema([
                         Forms\Components\TextInput::make('name')
                             ->required()
                             ->label('活動名稱')
-                            ->placeholder('例：母親節套組')
-                            ->columnSpanFull(),
+                            ->placeholder('例：母親節活動'),
                         Forms\Components\TextInput::make('slug')
                             ->required()
                             ->unique(ignoreRecord: true)
                             ->label('網址代稱')
                             ->placeholder('mothers-day-2026')
-                            ->helperText('活動頁網址：/campaigns/{slug}'),
+                            ->helperText('活動頁網址：/campaigns/{代稱}'),
                         Forms\Components\Textarea::make('description')
                             ->label('活動說明')
                             ->rows(3)
                             ->columnSpanFull(),
-                    ])->columns(1),
-
-                    \Filament\Schemas\Components\Section::make('活動期間')->schema([
-                        Forms\Components\DateTimePicker::make('start_at')
-                            ->required()
-                            ->label('開始時間'),
-                        Forms\Components\DateTimePicker::make('end_at')
-                            ->required()
-                            ->after('start_at')
-                            ->label('結束時間'),
-                    ])->columns(2),
-
-                    \Filament\Schemas\Components\Section::make('購買商品（計價）')
-                        ->description('套組價 = 這區商品 VIP 價 × 數量。例如：3 × 益生菌。')
-                        ->schema([
-                            Forms\Components\Repeater::make('buy_items_ui')
-                                ->hiddenLabel()
-                                ->schema([
-                                    Forms\Components\Select::make('product_id')
-                                        ->label('商品')
-                                        ->options(fn () => Product::where('is_active', true)->orderBy('name')->pluck('name', 'id'))
-                                        ->searchable()
-                                        ->required(),
-                                    Forms\Components\TextInput::make('quantity')
-                                        ->label('數量')
-                                        ->numeric()
-                                        ->minValue(1)
-                                        ->default(1)
-                                        ->required(),
-                                ])
-                                ->columns(2)
-                                ->addActionLabel('+ 加入購買商品')
-                                ->dehydrated()
-                                ->reorderable(false)
-                                ->minItems(1),
-                        ]),
-
-                    \Filament\Schemas\Components\Section::make('贈送商品（免費）')
-                        ->description('送給顧客的贈品，不計入套組價。可以跟購買商品是同一個 SKU，例如買 3 送 1。')
-                        ->schema([
-                            Forms\Components\Repeater::make('gift_items_ui')
-                                ->hiddenLabel()
-                                ->schema([
-                                    Forms\Components\Select::make('product_id')
-                                        ->label('商品')
-                                        ->options(fn () => Product::where('is_active', true)->orderBy('name')->pluck('name', 'id'))
-                                        ->searchable()
-                                        ->required(),
-                                    Forms\Components\TextInput::make('quantity')
-                                        ->label('數量')
-                                        ->numeric()
-                                        ->minValue(1)
-                                        ->default(1)
-                                        ->required(),
-                                ])
-                                ->columns(2)
-                                ->addActionLabel('+ 加入贈送商品')
-                                ->dehydrated()
-                                ->reorderable(false),
-                        ]),
-                ])->columnSpan(2),
-
-                // Right column: settings + images
-                \Filament\Schemas\Components\Group::make()->schema([
-                    \Filament\Schemas\Components\Section::make('設定')->schema([
-                        Forms\Components\Toggle::make('is_active')
-                            ->default(true)
-                            ->label('啟用'),
-                        Forms\Components\TextInput::make('sort_order')
-                            ->numeric()
-                            ->default(0)
-                            ->label('排序'),
                     ]),
 
-                    \Filament\Schemas\Components\Section::make('圖片')->schema([
-                        Forms\Components\FileUpload::make('image')
-                            ->image()
-                            ->directory('campaigns')
-                            ->disk('public')
-                            ->label('活動主圖')
-                            ->helperText('活動頁 hero 圖'),
-                        Forms\Components\FileUpload::make('banner_image')
-                            ->image()
-                            ->directory('campaigns')
-                            ->disk('public')
-                            ->label('首頁倒數橫幅')
-                            ->helperText('活動進行中出現在首頁'),
-                    ]),
-                ])->columnSpan(1),
-            ])->columns(1); // Top-level: stack vertically for readability
+                \Filament\Schemas\Components\Section::make('活動期間')->schema([
+                    Forms\Components\DateTimePicker::make('start_at')
+                        ->required()
+                        ->label('開始時間'),
+                    Forms\Components\DateTimePicker::make('end_at')
+                        ->required()
+                        ->after('start_at')
+                        ->label('結束時間'),
+                ])->columns(2),
+
+                \Filament\Schemas\Components\Section::make('活動圖片')->schema([
+                    Forms\Components\FileUpload::make('image')
+                        ->image()
+                        ->directory('campaigns')
+                        ->disk('public')
+                        ->label('活動主圖')
+                        ->helperText('活動頁 hero 背景圖'),
+                    Forms\Components\FileUpload::make('banner_image')
+                        ->image()
+                        ->directory('campaigns')
+                        ->disk('public')
+                        ->label('首頁倒數橫幅')
+                        ->helperText('活動進行中出現在首頁'),
+                ])->columns(2),
+
+                \Filament\Schemas\Components\Section::make('設定')->schema([
+                    Forms\Components\Toggle::make('is_active')
+                        ->default(true)
+                        ->label('啟用'),
+                    Forms\Components\TextInput::make('sort_order')
+                        ->numeric()
+                        ->default(0)
+                        ->label('排序'),
+                ])->columns(2),
+
+                \Filament\Schemas\Components\Section::make('套組管理')
+                    ->description('活動建立後，儲存再回到編輯頁，即可在下方「套組」分頁新增、編輯個別套組。')
+                    ->schema([])
+                    ->visibleOn('edit'),
+            ])
+            ->columns(1);
     }
 
     public static function table(Table $table): Table
     {
-        // NOTE: Filament closure param names matter — they're injected by name.
-        // Valid names: $state, $record, $column, $livewire. Don't rename to $s.
         $statusOf = fn ($record): string => match (true) {
             $record->isRunning() => 'active',
             $record->hasEnded() => 'ended',
@@ -193,10 +143,10 @@ class CampaignResource extends Resource
                     ->sortable()
                     ->label('結束'),
 
-                Tables\Columns\TextColumn::make('products_count')
-                    ->counts('products')
+                Tables\Columns\TextColumn::make('bundles_count')
+                    ->counts('bundles')
                     ->alignEnd()
-                    ->label('商品數'),
+                    ->label('套組數'),
 
                 Tables\Columns\ToggleColumn::make('is_active')
                     ->label('啟用'),
@@ -218,7 +168,9 @@ class CampaignResource extends Resource
 
     public static function getRelations(): array
     {
-        return [];
+        return [
+            BundlesRelationManager::class,
+        ];
     }
 
     public static function getPages(): array

@@ -8,35 +8,46 @@ use Illuminate\Http\JsonResponse;
 
 class CampaignController extends Controller
 {
-    /** Currently running bundle promotions only. */
+    /** Currently running campaigns with their bundles. */
     public function index(): JsonResponse
     {
         $campaigns = Campaign::active()
-            ->with(['buyItems', 'giftItems'])
+            ->with(['bundles.buyItems', 'bundles.giftItems'])
             ->orderBy('start_at')
             ->get()
-            ->map(fn ($c) => $this->serializeBundle($c));
+            ->map(fn ($c) => $this->serialize($c));
 
         return response()->json($campaigns);
     }
 
-    /** Single bundle by slug — 404 outside the running window. */
+    /** Single campaign (with bundles) by slug — 404 when not running. */
     public function show(string $slug): JsonResponse
     {
         $campaign = Campaign::active()
             ->where('slug', $slug)
-            ->with(['buyItems', 'giftItems'])
+            ->with(['bundles.buyItems', 'bundles.giftItems'])
             ->firstOrFail();
 
-        return response()->json($this->serializeBundle($campaign));
+        return response()->json($this->serialize($campaign));
     }
 
-    /**
-     * Bundle-shaped response used by both /campaigns/[slug] (detail) and
-     * the cart calculator. Buy items feed into the price; gift items are
-     * displayed but free.
-     */
-    private function serializeBundle(Campaign $c): array
+    private function serialize(Campaign $c): array
+    {
+        return [
+            'id' => $c->id,
+            'name' => $c->name,
+            'slug' => $c->slug,
+            'description' => $c->description,
+            'image' => $c->image,
+            'banner_image' => $c->banner_image,
+            'start_at' => $c->start_at->toIso8601String(),
+            'end_at' => $c->end_at->toIso8601String(),
+            'is_running' => $c->isRunning(),
+            'bundles' => $c->bundles->map(fn ($b) => $this->serializeBundle($b))->values(),
+        ];
+    }
+
+    private function serializeBundle($b): array
     {
         $mapItem = fn ($p) => [
             'product' => [
@@ -53,19 +64,15 @@ class CampaignController extends Controller
         ];
 
         return [
-            'id' => $c->id,
-            'name' => $c->name,
-            'slug' => $c->slug,
-            'description' => $c->description,
-            'image' => $c->image,
-            'banner_image' => $c->banner_image,
-            'start_at' => $c->start_at->toIso8601String(),
-            'end_at' => $c->end_at->toIso8601String(),
-            'is_running' => $c->isRunning(),
-            'bundle_price' => $c->bundlePrice(),
-            'bundle_original_price' => $c->bundleOriginalPrice(),
-            'buy_items' => $c->buyItems->map($mapItem)->values(),
-            'gift_items' => $c->giftItems->map($mapItem)->values(),
+            'id' => $b->id,
+            'name' => $b->name,
+            'slug' => $b->slug,
+            'description' => $b->description,
+            'image' => $b->image,
+            'bundle_price' => $b->bundlePrice(),
+            'bundle_original_price' => $b->bundleOriginalPrice(),
+            'buy_items' => $b->buyItems->map($mapItem)->values(),
+            'gift_items' => $b->giftItems->map($mapItem)->values(),
         ];
     }
 }

@@ -121,8 +121,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setItems((prev) => prev.filter((i) => !(isProductItem(i) && i.product.id === productId)));
   }, []);
 
-  const removeBundle = useCallback((campaignId: number) => {
-    setItems((prev) => prev.filter((i) => !(isBundleItem(i) && i.bundle.id === campaignId)));
+  const removeBundle = useCallback((bundleId: number) => {
+    setItems((prev) => prev.filter((i) => !(isBundleItem(i) && i.bundle.id === bundleId)));
   }, []);
 
   const updateQuantity = useCallback((productId: number, quantity: number) => {
@@ -135,13 +135,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
     );
   }, []);
 
-  const updateBundleQuantity = useCallback((campaignId: number, quantity: number) => {
+  const updateBundleQuantity = useCallback((bundleId: number, quantity: number) => {
     if (quantity <= 0) {
-      setItems((prev) => prev.filter((i) => !(isBundleItem(i) && i.bundle.id === campaignId)));
+      setItems((prev) => prev.filter((i) => !(isBundleItem(i) && i.bundle.id === bundleId)));
       return;
     }
     setItems((prev) =>
-      prev.map((i) => (isBundleItem(i) && i.bundle.id === campaignId ? { ...i, quantity } : i)),
+      prev.map((i) => (isBundleItem(i) && i.bundle.id === bundleId ? { ...i, quantity } : i)),
     );
   }, []);
 

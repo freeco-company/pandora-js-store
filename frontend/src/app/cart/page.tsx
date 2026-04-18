@@ -66,7 +66,7 @@ export default function CartPage() {
     if (items.length === 0) { setUnavailable([]); return; }
     const payload = [
       ...productItems.map((i) => ({ product_id: i.product.id, quantity: i.quantity, type: 'product' as const })),
-      ...bundleItems.map((i) => ({ campaign_id: i.bundle.id, quantity: i.quantity, type: 'bundle' as const })),
+      ...bundleItems.map((i) => ({ bundle_id: i.bundle.id, quantity: i.quantity, type: 'bundle' as const })),
     ];
     calculateCart(payload)
       .then((res) => setUnavailable(res.unavailable ?? []))
@@ -76,7 +76,7 @@ export default function CartPage() {
   }, [items]);
 
   const unavailableProductIds = new Set(unavailable.filter((u) => u.product_id).map((u) => u.product_id!));
-  const unavailableBundleIds = new Set(unavailable.filter((u) => u.campaign_id).map((u) => u.campaign_id!));
+  const unavailableBundleIds = new Set(unavailable.filter((u) => u.bundle_id).map((u) => u.bundle_id!));
 
   useEffect(() => {
     const cartIds = new Set(productItems.map((i) => i.product.id));
@@ -196,7 +196,7 @@ export default function CartPage() {
             const subtotal = priceInfo?.subtotal ?? b.bundle_price * item.quantity;
             const hasDiscount = unitPrice < b.bundle_original_price;
             const isUnavailable = unavailableBundleIds.has(b.id);
-            const unavailableInfo = unavailable.find((u) => u.campaign_id === b.id);
+            const unavailableInfo = unavailable.find((u) => u.bundle_id === b.id);
 
             return (
               <div

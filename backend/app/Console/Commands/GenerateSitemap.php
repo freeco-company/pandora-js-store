@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\Article;
+use App\Models\Bundle;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use Illuminate\Console\Command;
@@ -84,6 +85,31 @@ class GenerateSitemap extends Command
                 }
             });
 
+        // Bundles — only list bundles whose parent campaign is currently
+        // running (others 404 anyway). `changefreq` is daily because
+        // countdown + availability change frequently during active runs.
+        $bundleCount = 0;
+        Bundle::query()
+            ->whereHas('campaign', fn ($q) => $q->active())
+            ->with('campaign')
+            ->orderBy('sort_order')
+            ->chunk(100, function ($bundles) use (&$xml, $baseUrl, &$bundleCount) {
+                foreach ($bundles as $bundle) {
+                    $images = $bundle->image
+                        ? [$this->absoluteImageUrl($bundle->image, $baseUrl)]
+                        : [];
+                    $xml .= $this->buildUrlEntry(
+                        $baseUrl . '/bundles/' . $bundle->slug,
+                        $bundle->updated_at->toDateString(),
+                        'daily',
+                        '0.9',
+                        $images,
+                        $bundle->name,
+                    );
+                    $bundleCount++;
+                }
+            });
+
         // Articles
         $articleCount = 0;
         Article::where('status', 'published')
@@ -118,7 +144,8 @@ class GenerateSitemap extends Command
                 ['Categories',   $categoryCount],
                 ['Products',     $productCount],
                 ['Articles',     $articleCount],
-                ['Total URLs',   count($staticPages) + $categoryCount + $productCount + $articleCount],
+                ['Bundles',      $bundleCount],
+                ['Total URLs',   count($staticPages) + $categoryCount + $productCount + $articleCount + $bundleCount],
             ]
         );
 

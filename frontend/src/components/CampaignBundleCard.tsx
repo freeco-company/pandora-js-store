@@ -43,7 +43,10 @@ function useCountdown(targetDate: string) {
 export default function CampaignBundleCard({ bundle }: { bundle: CampaignBundle }) {
   const { addBundle } = useCart();
   const { toast } = useToast();
-  const { total, days, hours, minutes, seconds } = useCountdown(bundle.end_at);
+  // Countdown uses the parent campaign's end_at (bundles inherit the
+  // campaign's time window — they appear/disappear together).
+  const endAt = bundle.campaign?.end_at ?? '';
+  const { total, days, hours, minutes, seconds } = useCountdown(endAt);
   const [adding, setAdding] = useState(false);
 
   const savings = bundle.bundle_original_price - bundle.bundle_price;

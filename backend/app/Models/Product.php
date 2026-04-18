@@ -48,21 +48,20 @@ class Product extends Model
         return $this->hasMany(Review::class);
     }
 
-    public function campaigns()
+    /** Bundles this product appears in (as buy or gift item). */
+    public function bundles()
     {
-        return $this->belongsToMany(Campaign::class, 'campaign_product')
+        return $this->belongsToMany(Bundle::class, 'bundle_product')
             ->withPivot('role', 'quantity', 'sort_order');
     }
 
     /**
-     * Products visible to customers. Campaigns are bundle-promotions —
-     * they don't hide the underlying products. A product participating
-     * in a campaign stays listed at its normal price; the bundle itself
-     * appears/disappears separately via the campaign page.
+     * Products visible to customers. Bundles are surfaced separately via
+     * /bundles/{slug}; products themselves are always listed at their
+     * regular 3-tier price regardless of bundle participation.
      */
     public function scopeVisible($query)
     {
         return $query->where('is_active', true);
     }
-
 }

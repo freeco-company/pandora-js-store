@@ -55,8 +55,45 @@ function OrderCompleteContent() {
         <FloatingShapes />
         <div className="relative max-w-3xl mx-auto px-5 sm:px-6 lg:px-8 py-14 sm:py-20 text-center">
           <ScrollReveal variant="zoom-in">
-            <div className="inline-flex w-20 h-20 bg-gradient-to-br from-[#9F6B3E] to-[#85572F] rounded-full items-center justify-center text-4xl mb-5 shadow-xl shadow-[#9F6B3E]/30 celebrate-pop">
-              <SiteIcon name="party" size={40} className="text-white" />
+            <div className="relative inline-flex w-24 h-24 bg-gradient-to-br from-[#9F6B3E] to-[#85572F] rounded-full items-center justify-center mb-5 shadow-xl shadow-[#9F6B3E]/30 celebrate-pop success-icon-wrap">
+              {/* Multi-color, animated party popper */}
+              <svg width="52" height="52" viewBox="0 0 40 40" fill="none" aria-hidden className="success-party-icon">
+                {/* Cone */}
+                <path d="M6 34L14 8L30 22Z" fill="#FFF3B0" />
+                <path d="M6 34L14 8L30 22Z" fill="url(#cone-grad)" opacity="0.9" />
+                <path d="M14 8L30 22" stroke="#FFE066" strokeWidth="1.5" strokeLinecap="round" opacity="0.8" />
+                {/* Sparkle center */}
+                <circle cx="17" cy="20" r="1.5" fill="#fff" opacity="0.9" />
+                <defs>
+                  <linearGradient id="cone-grad" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0" stopColor="#FFE066" />
+                    <stop offset="1" stopColor="#F5A623" />
+                  </linearGradient>
+                </defs>
+              </svg>
+              {/* Confetti particles bursting outward */}
+              {[
+                { x: -36, y: -28, c: '#E54B6E', d: 0.0 },
+                { x: 38, y: -20, c: '#4A9ECD', d: 0.15 },
+                { x: -44, y: 8, c: '#4A9D5F', d: 0.3 },
+                { x: 42, y: 18, c: '#FFE066', d: 0.45 },
+                { x: -24, y: 32, c: '#F27BA7', d: 0.6 },
+                { x: 30, y: 34, c: '#9F6B3E', d: 0.2 },
+                { x: -6, y: -40, c: '#7AC74F', d: 0.4 },
+                { x: 10, y: 40, c: '#E8A93B', d: 0.55 },
+              ].map((p, i) => (
+                <span
+                  key={i}
+                  aria-hidden
+                  className="success-confetti"
+                  style={{
+                    ['--dx' as string]: `${p.x}px`,
+                    ['--dy' as string]: `${p.y}px`,
+                    backgroundColor: p.c,
+                    animationDelay: `${p.d}s`,
+                  }}
+                />
+              ))}
             </div>
           </ScrollReveal>
           <ScrollReveal variant="fade-up" delay={150}>
@@ -85,6 +122,41 @@ function OrderCompleteContent() {
             100% { transform: scale(1) rotate(0); opacity: 1; }
           }
           .celebrate-pop { animation: celebrate-pop 0.7s cubic-bezier(0.2, 0.9, 0.3, 1.2) forwards; }
+
+          /* Party popper icon — wiggles briefly then settles */
+          @keyframes success-party-wiggle {
+            0%   { transform: rotate(-8deg) scale(0.9); }
+            30%  { transform: rotate(8deg) scale(1.1); }
+            60%  { transform: rotate(-4deg) scale(1); }
+            100% { transform: rotate(-8deg) scale(1); }
+          }
+          .success-party-icon {
+            animation: success-party-wiggle 2.4s ease-in-out 0.6s infinite;
+            transform-origin: 30% 70%;
+          }
+
+          /* Confetti bursting outward from center, fading as they fly */
+          @keyframes success-confetti-fly {
+            0%   { transform: translate(0, 0) scale(0) rotate(0); opacity: 0; }
+            20%  { opacity: 1; }
+            100% {
+              transform: translate(var(--dx), var(--dy)) scale(1.1) rotate(720deg);
+              opacity: 0;
+            }
+          }
+          .success-confetti {
+            position: absolute;
+            left: 50%; top: 50%;
+            width: 7px; height: 10px;
+            border-radius: 2px;
+            opacity: 0;
+            pointer-events: none;
+            animation: success-confetti-fly 2.2s cubic-bezier(0.16, 1, 0.3, 1) 0.4s infinite;
+          }
+
+          @media (prefers-reduced-motion: reduce) {
+            .success-party-icon, .success-confetti { animation: none; }
+          }
         `}</style>
       </section>
 

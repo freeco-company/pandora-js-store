@@ -109,9 +109,9 @@ export interface ProductCategory {
 }
 
 /**
- * Bundle promotion: "buy N of product A, get M of product B free".
- * Displayed as a single card on /campaigns/[slug] and as one line item
- * in the cart. Price = sum of buy items at VIP × quantity.
+ * Campaign = time-bound wrapper with N bundles under it.
+ * Bundles are the purchasable unit with name, image, buy/gift items,
+ * and live at /bundles/{slug}.
  */
 export interface CampaignBundleItem {
   product: Product;
@@ -124,14 +124,33 @@ export interface CampaignBundle {
   slug: string;
   description: string | null;
   image: string | null;
-  banner_image: string | null;
-  start_at: string;
-  end_at: string;
-  is_running: boolean;
   bundle_price: number;           // sum of buy items' VIP × qty
   bundle_original_price: number;  // sum of buy items' retail × qty
   buy_items: CampaignBundleItem[];
   gift_items: CampaignBundleItem[];
+  /** Present on /api/bundles/{slug} responses */
+  campaign?: {
+    id: number;
+    name: string;
+    slug: string;
+    description: string | null;
+    start_at: string;
+    end_at: string;
+    is_running: boolean;
+  };
+}
+
+export interface Campaign {
+  id: number;
+  name: string;
+  slug: string;
+  description: string | null;
+  image: string | null;
+  banner_image: string | null;
+  start_at: string;
+  end_at: string;
+  is_running: boolean;
+  bundles: CampaignBundle[];
 }
 
 export interface Article {
@@ -160,9 +179,9 @@ export interface CartProductPayload {
   type?: 'product';
 }
 
-/** Bundle item in a cart payload — represents N copies of a campaign bundle. */
+/** Bundle item in a cart payload — represents N copies of a bundle. */
 export interface CartBundlePayload {
-  campaign_id: number;
+  bundle_id: number;
   quantity: number;
   type: 'bundle';
 }
@@ -171,7 +190,7 @@ export type CartItem = CartProductPayload | CartBundlePayload;
 
 export interface CartUnavailableItem {
   product_id?: number;
-  campaign_id?: number;
+  bundle_id?: number;
   reason: 'not_found' | 'inactive' | 'out_of_stock' | 'insufficient_stock' | 'bundle_not_found' | 'bundle_expired';
   name: string;
   available?: number;
@@ -198,7 +217,7 @@ export interface CartCalculationItem {
 }
 
 export interface CartBundleCalculation {
-  campaign_id: number;
+  bundle_id: number;
   name: string;
   slug: string;
   image: string | null;
@@ -240,11 +259,16 @@ export const calculateCart = (items: CartItem[]) =>
     body: JSON.stringify({ items }),
   });
 
+/** Campaign with nested bundles (for /campaigns/[slug] overview). */
 export const getCampaign = (slug: string) =>
-  getPublic<CampaignBundle>(`/campaigns/${slug}`, { tags: ['campaigns', `campaign:${slug}`] });
+  getPublic<Campaign>(`/campaigns/${slug}`, { tags: ['campaigns', `campaign:${slug}`] });
 
 export const getCampaigns = () =>
-  getPublic<CampaignBundle[]>(`/campaigns`, { tags: ['campaigns'] });
+  getPublic<Campaign[]>(`/campaigns`, { tags: ['campaigns'] });
+
+/** Single bundle detail with parent campaign info (for /bundles/[slug]). */
+export const getBundle = (slug: string) =>
+  getPublic<CampaignBundle>(`/bundles/${slug}`, { tags: ['bundles', `bundle:${slug}`] });
 
 // Banner types
 export interface Banner {

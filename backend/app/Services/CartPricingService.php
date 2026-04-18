@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\Campaign;
+use App\Models\Bundle;
 use App\Models\Product;
 use Illuminate\Support\Collection;
 
@@ -15,14 +15,14 @@ class CartPricingService
      *
      * Incoming items are a mix of:
      *   - product items: ['product_id' => N, 'quantity' => N]
-     *   - bundle items:  ['campaign_id' => N, 'quantity' => N, 'type' => 'bundle']
+     *   - bundle items:  ['bundle_id' => N, 'quantity' => N, 'type' => 'bundle']
      *
      * Pricing rules:
      *   1. Product items — 3-tier ladder (regular / combo ≥2 / VIP ≥4000)
      *   2. Bundle in cart → every product item also upgrades to VIP tier
      *   3. Bundle price = sum(buy items VIP × qty) × bundle_qty, fixed
      *
-     * A bundle whose campaign is no longer running is returned in
+     * A bundle whose parent campaign is no longer running is returned in
      * `unavailable` with reason `bundle_expired` (cart UI should remove).
      */
     public function calculate(array $cartItems): array
@@ -69,27 +69,27 @@ class CartPricingService
         })->filter()->values();
 
         // ── Resolve bundle items ────────────────────────────────────
-        $bundleIds = $bundleInputs->pluck('campaign_id')->filter()->unique()->values();
-        $campaigns = $bundleIds->isNotEmpty()
-            ? Campaign::with(['buyItems', 'giftItems'])->whereIn('id', $bundleIds)->get()->keyBy('id')
+        $bundleIds = $bundleInputs->pluck('bundle_id')->filter()->unique()->values();
+        $bundlesMap = $bundleIds->isNotEmpty()
+            ? Bundle::with(['campaign', 'buyItems', 'giftItems'])->whereIn('id', $bundleIds)->get()->keyBy('id')
             : collect();
 
-        $bundles = $bundleInputs->map(function ($item) use ($campaigns, &$unavailable) {
-            $campaign = $campaigns->get($item['campaign_id']);
-            if (!$campaign) {
-                $unavailable[] = ['campaign_id' => $item['campaign_id'], 'reason' => 'bundle_not_found', 'name' => '未知套組'];
+        $bundles = $bundleInputs->map(function ($item) use ($bundlesMap, &$unavailable) {
+            $bundle = $bundlesMap->get($item['bundle_id']);
+            if (!$bundle) {
+                $unavailable[] = ['bundle_id' => $item['bundle_id'], 'reason' => 'bundle_not_found', 'name' => '未知套組'];
                 return null;
             }
-            if (!$campaign->isRunning()) {
-                $unavailable[] = ['campaign_id' => $campaign->id, 'reason' => 'bundle_expired', 'name' => $campaign->name];
+            if (!$bundle->isAvailable()) {
+                $unavailable[] = ['bundle_id' => $bundle->id, 'reason' => 'bundle_expired', 'name' => $bundle->name];
                 return null;
             }
             $qty = max(1, (int) ($item['quantity'] ?? 1));
             return [
-                'campaign_id' => $campaign->id,
-                'campaign' => $campaign,
+                'bundle_id' => $bundle->id,
+                'bundle' => $bundle,
                 'quantity' => $qty,
-                'unit_price' => $campaign->bundlePrice(),
+                'unit_price' => $bundle->bundlePrice(),
             ];
         })->filter()->values();
 
@@ -166,22 +166,22 @@ class CartPricingService
                 ];
             })->values()->toArray(),
             'bundles' => $bundles->map(function ($b) {
-                $campaign = $b['campaign'];
+                $bundle = $b['bundle'];
                 return [
-                    'campaign_id' => $b['campaign_id'],
-                    'name' => $campaign->name,
-                    'slug' => $campaign->slug,
-                    'image' => $campaign->image,
+                    'bundle_id' => $b['bundle_id'],
+                    'name' => $bundle->name,
+                    'slug' => $bundle->slug,
+                    'image' => $bundle->image,
                     'quantity' => $b['quantity'],
                     'unit_price' => $b['unit_price'],
                     'subtotal' => $b['unit_price'] * $b['quantity'],
-                    'buy_items' => $campaign->buyItems->map(fn ($p) => [
+                    'buy_items' => $bundle->buyItems->map(fn ($p) => [
                         'product_id' => $p->id,
                         'name' => $p->name,
                         'image' => $p->image,
                         'quantity' => (int) $p->pivot->quantity,
                     ])->values()->toArray(),
-                    'gift_items' => $campaign->giftItems->map(fn ($p) => [
+                    'gift_items' => $bundle->giftItems->map(fn ($p) => [
                         'product_id' => $p->id,
                         'name' => $p->name,
                         'image' => $p->image,

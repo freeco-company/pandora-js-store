@@ -40,7 +40,7 @@ class OrderController extends Controller
             'items' => 'required|array|min:1',
             'items.*.type' => 'nullable|string|in:product,bundle',
             'items.*.product_id' => 'required_unless:items.*.type,bundle|nullable|integer|exists:products,id',
-            'items.*.campaign_id' => 'required_if:items.*.type,bundle|nullable|integer|exists:campaigns,id',
+            'items.*.bundle_id' => 'required_if:items.*.type,bundle|nullable|integer|exists:bundles,id',
             'items.*.quantity' => 'required|integer|min:1|max:99',
             'customer.name' => 'required|string|max:100',
             'customer.email' => 'required|email:rfc',

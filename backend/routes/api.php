@@ -96,6 +96,9 @@ Route::get('/products/{slug}/reviews', [ReviewController::class, 'index']);
 // Back-in-stock notify
 Route::post('/products/{slug}/notify-stock', [StockNotificationController::class, 'subscribe'])->middleware('throttle:strict');
 
-// Campaigns (活動管理)
+// Campaigns (活動) with nested bundles
 Route::get('/campaigns', [CampaignController::class, 'index']);
 Route::get('/campaigns/{slug}', [CampaignController::class, 'show']);
+
+// Bundle detail — /api/bundles/{slug}. 404 when parent campaign not running.
+Route::get('/bundles/{slug}', [\App\Http\Controllers\Api\BundleController::class, 'show']);

@@ -9,30 +9,9 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import Link from 'next/link';
-import { API_URL, imageUrl } from '@/lib/api';
+import { API_URL, imageUrl, type Campaign, type CampaignBundle } from '@/lib/api';
 import ImageWithFallback, { LogoPlaceholder } from './ImageWithFallback';
 import SiteIcon from '@/components/SiteIcon';
-
-interface CampaignProduct {
-  id: number;
-  name: string;
-  slug: string;
-  image: string | null;
-  price: number;
-  campaign_price: number | null;
-}
-
-interface Campaign {
-  id: number;
-  name: string;
-  slug: string;
-  description: string;
-  banner_image: string | null;
-  start_at: string;
-  end_at: string;
-  is_running: boolean;
-  products: CampaignProduct[];
-}
 
 function useCountdown(endAt: string) {
   const calc = useCallback(() => {
@@ -125,8 +104,8 @@ function CountdownSection({ campaign }: { campaign: Campaign }) {
   if (total <= 0) return null;
 
   const bestPrice =
-    campaign.products.length > 0
-      ? Math.min(...campaign.products.map((p) => p.campaign_price ?? p.price))
+    campaign.bundles.length > 0
+      ? Math.min(...campaign.bundles.map((b) => b.bundle_price))
       : null;
 
   const active = phase !== 'idle';
@@ -462,16 +441,16 @@ function CountdownSection({ campaign }: { campaign: Campaign }) {
           ))}
         </div>
 
-        {/* Products — fly in from center staggered */}
-        {campaign.products.length > 0 && (
+        {/* Bundles — fly in from center staggered, link to /bundles/[slug] */}
+        {campaign.bundles.length > 0 && (
           <div className="grid grid-cols-2 sm:flex sm:justify-center gap-3 sm:gap-4">
-            {campaign.products.slice(0, 4).map((p, i) => {
-              const saved = p.price - (p.campaign_price ?? p.price);
-              const pct = saved > 0 ? Math.round((saved / p.price) * 100) : 0;
+            {campaign.bundles.slice(0, 4).map((b: CampaignBundle, i: number) => {
+              const saved = b.bundle_original_price - b.bundle_price;
+              const pct = saved > 0 ? Math.round((saved / b.bundle_original_price) * 100) : 0;
               return (
                 <Link
-                  key={p.id}
-                  href={`/products/${p.slug}`}
+                  key={b.id}
+                  href={`/bundles/${b.slug}`}
                   className="sm:w-[220px] group relative bg-white rounded-3xl border border-[#e7d9cb]/60 shadow-md shadow-[#9F6B3E]/[0.04] hover:shadow-xl hover:shadow-[#9F6B3E]/[0.12] hover:-translate-y-2 transition-all duration-500"
                   style={{
                     opacity: 0,
@@ -479,10 +458,10 @@ function CountdownSection({ campaign }: { campaign: Campaign }) {
                   }}
                 >
                   <div className="relative aspect-square overflow-hidden rounded-t-3xl bg-gradient-to-br from-[#fdf7ef] to-[#f7eee3]">
-                    {p.image ? (
+                    {b.image ? (
                       <ImageWithFallback
-                        src={imageUrl(p.image)!}
-                        alt={p.name}
+                        src={imageUrl(b.image)!}
+                        alt={b.name}
                         fill
                         sizes="220px"
                         className="object-cover transition-transform duration-700 group-hover:scale-105"
@@ -491,7 +470,6 @@ function CountdownSection({ campaign }: { campaign: Campaign }) {
                       <LogoPlaceholder />
                     )}
                   </div>
-                  {/* Discount cloud badge — outside image div, overflows card */}
                   {pct > 0 && (
                     <div
                       className="absolute -top-5 -right-4 z-20"
@@ -510,15 +488,15 @@ function CountdownSection({ campaign }: { campaign: Campaign }) {
                   )}
                   <div className="p-3.5">
                     <div className="text-sm font-bold text-gray-700 line-clamp-1 mb-2 group-hover:text-[#9F6B3E] transition-colors">
-                      {p.name}
+                      {b.name}
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-xl font-black text-[#c0392b]">
-                        ${(p.campaign_price ?? p.price).toLocaleString()}
+                        ${b.bundle_price.toLocaleString()}
                       </span>
                       {saved > 0 && (
                         <span className="text-[11px] text-gray-400 line-through">
-                          ${p.price.toLocaleString()}
+                          ${b.bundle_original_price.toLocaleString()}
                         </span>
                       )}
                     </div>

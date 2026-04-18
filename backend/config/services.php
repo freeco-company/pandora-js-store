@@ -53,18 +53,26 @@ return [
     ],
 
     'ecpay' => [
+        // Payment (金流) credentials
         'merchant_id' => env('ECPAY_MERCHANT_ID'),
         'hash_key' => env('ECPAY_HASH_KEY'),
         'hash_iv' => env('ECPAY_HASH_IV'),
         'mode' => env('ECPAY_MODE', 'sandbox'),
         'frontend_url' => env('FRONTEND_URL', 'https://pandora.js-store.com.tw'),
+
+        // Logistics (物流) credentials — on some ECPay accounts logistics
+        // has its own MerchantID/HashKey/HashIV (separate application).
+        // If not set, fall back to payment creds (works when the same
+        // account covers both products).
+        'logistics_merchant_id' => env('ECPAY_LOGISTICS_MERCHANT_ID', env('ECPAY_MERCHANT_ID')),
+        'logistics_hash_key' => env('ECPAY_LOGISTICS_HASH_KEY', env('ECPAY_HASH_KEY')),
+        'logistics_hash_iv' => env('ECPAY_LOGISTICS_HASH_IV', env('ECPAY_HASH_IV')),
+
         // Sender info for CVS logistics (Express/Create). Required on every
         // shipment — ECPay rejects empty sender fields.
         'sender_name' => env('ECPAY_SENDER_NAME', '法芮可有限公司'),
         'sender_cellphone' => env('ECPAY_SENDER_CELLPHONE'),
         // Auto-trigger CVS shipment creation on order paid / COD created.
-        // Leave unset during first-time testing; flip to true once the
-        // first few manual sandbox shipments succeed.
         'logistics_auto' => (bool) env('ECPAY_LOGISTICS_AUTO', false),
     ],
 
