@@ -58,6 +58,57 @@ class ReviewController extends Controller
     }
 
     /**
+     * Aggregate reviews across all products (for /reviews landing page).
+     */
+    public function aggregate(): JsonResponse
+    {
+        $data = Cache::remember('reviews:aggregate', 600, function () {
+            $reviews = Review::where('is_visible', true)
+                ->with('product:id,name,slug,image')
+                ->orderByDesc('created_at')
+                ->get();
+
+            $totalCount = $reviews->count();
+            $avgRating = $totalCount > 0 ? round($reviews->avg('rating'), 1) : 0;
+
+            // Per-product summary
+            $byProduct = $reviews->groupBy('product_id')->map(function ($group) {
+                $product = $group->first()->product;
+                return [
+                    'product_id' => $product?->id,
+                    'product_name' => $product?->name,
+                    'product_slug' => $product?->slug,
+                    'product_image' => $product?->image,
+                    'count' => $group->count(),
+                    'average_rating' => round($group->avg('rating'), 1),
+                ];
+            })->sortByDesc('count')->values()->all();
+
+            // Recent reviews with product info (latest 30)
+            $recent = $reviews->take(30)->map(fn ($r) => [
+                'id' => $r->id,
+                'rating' => $r->rating,
+                'content' => $r->content,
+                'reviewer_name' => $r->reviewer_name,
+                'is_verified_purchase' => $r->is_verified_purchase,
+                'product_name' => $r->product?->name,
+                'product_slug' => $r->product?->slug,
+                'created_at' => $r->created_at->toISOString(),
+            ])->values()->all();
+
+            return [
+                'total_count' => $totalCount,
+                'average_rating' => $avgRating,
+                'products' => $byProduct,
+                'recent_reviews' => $recent,
+            ];
+        });
+
+        return response()->json($data)
+            ->header('Cache-Control', 'public, max-age=60, s-maxage=300');
+    }
+
+    /**
      * Get products the customer has purchased (completed orders) but not yet reviewed.
      */
     public function reviewable(Request $request): JsonResponse

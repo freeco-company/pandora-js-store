@@ -40,14 +40,18 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   try {
     const product = await getProduct(slug);
+    // Build SEO-rich fallback title/desc when seo_meta is missing
+    const categoryName = product.categories[0]?.name || '';
+    const fallbackTitle = `${product.name}｜${categoryName ? categoryName + '｜' : ''}婕樂纖官方授權`;
+    const fallbackDesc = `${product.name} 官方正品。${product.short_description ? product.short_description.slice(0, 80) : ''}。任選兩件享搭配價，滿$4,000升級VIP優惠。婕樂纖仙女館官方授權經銷。`;
     return {
-      title: product.seo_meta?.title || product.name,
-      description: product.seo_meta?.description || product.short_description,
+      title: product.seo_meta?.title || fallbackTitle,
+      description: product.seo_meta?.description || fallbackDesc,
       alternates: { canonical: `/products/${product.slug}` },
       openGraph: {
         type: 'website',
-        title: product.name,
-        description: product.short_description,
+        title: product.seo_meta?.title || fallbackTitle,
+        description: product.seo_meta?.description || fallbackDesc,
         images: product.seo_meta?.og_image
           ? [imageUrl(product.seo_meta.og_image)!]
           : product.image

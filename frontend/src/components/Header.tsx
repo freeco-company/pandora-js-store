@@ -12,9 +12,9 @@ import SiteIcon from './SiteIcon';
 const NAV_LINKS = [
   { href: '/', label: '首頁' },
   { href: '/products', label: '全館商品' },
+  { href: '/reviews', label: '好評推薦' },
   { href: '/articles', label: '專欄文章' },
   { href: '/about', label: '關於 FP' },
-  { href: '/join', label: '加入我們' },
 ];
 
 export default function Header() {

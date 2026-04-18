@@ -1,5 +1,5 @@
 import type { MetadataRoute } from 'next';
-import { fetchApi, type Product, type Article } from '@/lib/api';
+import { fetchApi, type Product, type Article, type ProductCategory } from '@/lib/api';
 
 interface Campaign {
   id: number;
@@ -19,6 +19,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${baseUrl}/articles`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.7 },
     { url: `${baseUrl}/about`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.7 },
     { url: `${baseUrl}/join`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.7 },
+    { url: `${baseUrl}/reviews`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },
+    { url: `${baseUrl}/where-to-buy`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.8 },
     { url: `${baseUrl}/faq`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.6 },
     { url: `${baseUrl}/privacy`, lastModified: new Date(), changeFrequency: 'yearly', priority: 0.3 },
     { url: `${baseUrl}/return-policy`, lastModified: new Date(), changeFrequency: 'yearly', priority: 0.3 },
@@ -49,6 +51,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }));
   } catch {}
 
+  // Category pages
+  let categoryPages: MetadataRoute.Sitemap = [];
+  try {
+    const categories = await fetchApi<ProductCategory[]>('/product-categories');
+    categoryPages = categories.map((c) => ({
+      url: `${baseUrl}/products/category/${c.slug}`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly' as const,
+      priority: 0.8,
+    }));
+  } catch {}
+
   // Dynamic campaign pages
   let campaignPages: MetadataRoute.Sitemap = [];
   try {
@@ -63,5 +77,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       }));
   } catch {}
 
-  return [...staticPages, ...productPages, ...articlePages, ...campaignPages];
+  return [...staticPages, ...categoryPages, ...productPages, ...articlePages, ...campaignPages];
 }
