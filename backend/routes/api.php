@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\PopupController;
 use App\Http\Controllers\Api\ProductController;
+use App\Http\Controllers\Api\ReviewController;
 use Illuminate\Support\Facades\Route;
 
 // Auth (Google + LINE OAuth)
@@ -62,6 +63,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/customer/activation', [CustomerController::class, 'markActivation']);
     Route::get('/customer/orders', [OrderController::class, 'customerOrders']);
 
+    // Reviews (authenticated)
+    Route::get('/customer/reviewable', [ReviewController::class, 'reviewable']);
+    Route::post('/customer/reviews', [ReviewController::class, 'store'])->middleware('throttle:strict');
+
     // Profile + address book
     Route::get('/customer/profile', [CustomerProfileController::class, 'show']);
     Route::put('/customer/profile', [CustomerProfileController::class, 'update']);
@@ -80,6 +85,9 @@ Route::get('/logistics/cvs/pick/{token}', [LogisticsController::class, 'pick']);
 // 綠界這兩條 callback 都是 server-to-server POST，沒有 CSRF
 Route::post('/logistics/ecpay/reply', [LogisticsController::class, 'ecpayReply'])->withoutMiddleware(['web']);
 Route::post('/logistics/ecpay/status', [LogisticsController::class, 'ecpayStatus'])->withoutMiddleware(['web']);
+
+// Reviews (public)
+Route::get('/products/{slug}/reviews', [ReviewController::class, 'index']);
 
 // Back-in-stock notify
 Route::post('/products/{slug}/notify-stock', [StockNotificationController::class, 'subscribe'])->middleware('throttle:strict');

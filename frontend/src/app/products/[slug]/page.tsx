@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound, permanentRedirect } from 'next/navigation';
-import { getProduct, getProducts, imageUrl } from '@/lib/api';
+import { getProduct, getProducts, getProductReviews, imageUrl } from '@/lib/api';
 import { formatPrice } from '@/lib/format';
 import AddToCartButton from '@/components/AddToCartButton';
 import { HealthFoodBadge } from '@/components/HealthFoodBadge';
@@ -15,6 +15,8 @@ import ShareButtons from '@/components/ShareButtons';
 import CrossSellAddOn from '@/components/CrossSellAddOn';
 import SiteIcon from '@/components/SiteIcon';
 import CampaignPricing from '@/components/CampaignPricing';
+import ProductReviews from '@/components/ProductReviews';
+import ReviewForm from '@/components/ReviewForm';
 import { sanitizeHtml } from '@/lib/sanitize';
 import type { Product } from '@/lib/api';
 import { breadcrumbSchema, productSchema, jsonLdScript } from '@/lib/jsonld';
@@ -129,6 +131,14 @@ export default async function ProductDetailPage({ params }: Props) {
     // Ignore
   }
 
+  // Fetch reviews
+  let reviewsData = null;
+  try {
+    reviewsData = await getProductReviews(product.slug);
+  } catch {
+    // Reviews unavailable — degrade gracefully
+  }
+
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://pandora.js-store.com.tw';
   const prodJsonLd = productSchema({
     name: product.name,
@@ -140,6 +150,8 @@ export default async function ProductDetailPage({ params }: Props) {
     vipPrice: product.vip_price,
     isActive: product.is_active,
     sku: product.slug,
+    reviewCount: reviewsData?.total_count,
+    reviewRating: reviewsData?.average_rating,
   });
   const breadcrumbs = breadcrumbSchema([
     { name: '首頁', url: '/' },
@@ -349,6 +361,12 @@ export default async function ProductDetailPage({ params }: Props) {
           </div>
         </section>
       )}
+
+      {/* Reviews */}
+      {reviewsData && <ProductReviews data={reviewsData} />}
+      <div className="max-w-3xl mx-auto">
+        <ReviewForm productId={product.id} productSlug={product.slug} />
+      </div>
 
     </div>
 

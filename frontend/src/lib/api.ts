@@ -192,6 +192,45 @@ export const getPopups = () => getPublic<Popup[]>('/popups', { revalidate: 900, 
 export const searchProducts = (q: string) =>
   fetchApi<Product[]>(`/products?q=${encodeURIComponent(q)}`);
 
+// Reviews
+export interface ReviewItem {
+  id: number;
+  rating: number;
+  content: string | null;
+  reviewer_name: string;
+  is_verified_purchase: boolean;
+  created_at: string;
+}
+
+export interface ProductReviewsData {
+  average_rating: number;
+  total_count: number;
+  distribution: Record<number, number>;
+  reviews: ReviewItem[];
+}
+
+export interface ReviewableItem {
+  order_id: number;
+  order_number: string;
+  product_id: number;
+  product_name: string;
+  product_slug: string;
+  product_image: string | null;
+  completed_at: string;
+}
+
+export const getProductReviews = (slug: string) =>
+  getPublic<ProductReviewsData>(`/products/${slug}/reviews`, { revalidate: 300, tags: ['reviews', `reviews:${slug}`] });
+
+export const getReviewableProducts = (token: string) =>
+  authedFetch<ReviewableItem[]>('/customer/reviewable', token);
+
+export const submitReview = (token: string, data: { product_id: number; order_id: number; rating: number; content?: string }) =>
+  authedFetch<{ message: string; review: ReviewItem } & CelebrationKeys>('/customer/reviews', token, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+
 
 // ─── Gamification ────────────────────────────────────────────────────────────
 

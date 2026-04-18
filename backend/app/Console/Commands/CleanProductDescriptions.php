@@ -50,7 +50,6 @@ class CleanProductDescriptions extends Command
             $original = $product->short_description;
             $clean = strip_tags($original);
             $clean = html_entity_decode($clean, ENT_QUOTES, 'UTF-8');
-            $clean = str_replace(["\xc2\xa0", 'Â'], '', $clean);
             $clean = preg_replace('/\n{3,}/', "\n\n", $clean);
             $clean = trim($clean);
             if ($clean !== $original && !$dry) {
@@ -108,8 +107,7 @@ class CleanProductDescriptions extends Command
         // Remove <hr>
         $html = preg_replace('/<hr\s*\/?>/i', '', $html);
 
-        // Remove &nbsp; / Â
-        $html = str_replace(["\xc2\xa0", 'Â'], '', $html);
+        // Remove &nbsp; (as HTML entity only — never touch raw bytes to avoid corrupting UTF-8)
         $html = preg_replace('/&nbsp;/', ' ', $html);
 
         // ── Fix links ──

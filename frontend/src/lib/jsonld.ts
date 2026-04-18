@@ -198,6 +198,8 @@ export function productSchema(product: {
   vipPrice?: number | null;
   isActive: boolean;
   sku?: string | null;
+  reviewCount?: number;
+  reviewRating?: number;
 }) {
   const url = `${siteUrl}/products/${product.slug}`;
   const availability = product.isActive
@@ -271,6 +273,15 @@ export function productSchema(product: {
     brand: { '@type': 'Brand', name: 'JEROSSE 婕樂纖' },
     sku: product.sku || product.slug,
     offers,
+    ...(product.reviewCount && product.reviewRating ? {
+      aggregateRating: {
+        '@type': 'AggregateRating',
+        ratingValue: product.reviewRating,
+        reviewCount: product.reviewCount,
+        bestRating: 5,
+        worstRating: 1,
+      },
+    } : {}),
   };
 }
 

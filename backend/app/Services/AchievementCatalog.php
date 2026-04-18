@@ -33,6 +33,9 @@ class AchievementCatalog
     public const EXPLORE_BEAUTY = 'explore_beauty';
     public const EXPLORE_ALL = 'explore_all';
 
+    // Reviews
+    public const FIRST_REVIEW = 'first_review';
+
     // Engagement
     public const FIRST_COUPON = 'first_coupon';
     public const STREAK_7 = 'streak_7';
@@ -72,6 +75,8 @@ class AchievementCatalog
             self::EXPLORE_HEALTH => ['emoji' => '🍃', 'name' => '保健探索', 'description' => '購買健康保健商品', 'tier' => 'bronze'],
             self::EXPLORE_BEAUTY => ['emoji' => '🌺', 'name' => '美容探索', 'description' => '購買美容保養商品', 'tier' => 'bronze'],
             self::EXPLORE_ALL => ['emoji' => '🌈', 'name' => '全品類達人', 'description' => '三大品類皆有購買', 'tier' => 'gold'],
+
+            self::FIRST_REVIEW => ['emoji' => '✍️', 'name' => '首評達成', 'description' => '留下第一則商品評論', 'tier' => 'silver'],
 
             self::FIRST_COUPON => ['emoji' => '🎟️', 'name' => '省錢仙女', 'description' => '首次使用優惠碼', 'tier' => 'bronze'],
             self::STREAK_7 => ['emoji' => '🔥', 'name' => '七日連訪', 'description' => '連續 7 天造訪', 'tier' => 'silver'],
