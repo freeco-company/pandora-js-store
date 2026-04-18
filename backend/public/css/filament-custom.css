@@ -81,3 +81,53 @@
   .fi-ta-record:hover, .fi-wi-stats-overview-stat:hover { transform: none !important; }
 }
 
+/* ── Mobile stacked table: label ◂ ▸ value layout ────────────
+ * Filament's stackedOnMobile() renders each cell as label-above-value
+ * by default, wasting the right half of small screens. Override so
+ * label and value share a single horizontal line.
+ *
+ * Applies only to tables that opted-in with ->stackedOnMobile()
+ * (class fi-ta-table-stacked-on-mobile) and only below md.
+ */
+@media (max-width: 767px) {
+  .fi-ta-table-stacked-on-mobile .fi-ta-cell {
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    gap: 12px !important;
+    padding: 8px 0 !important;
+    min-height: 36px;
+  }
+  .fi-ta-table-stacked-on-mobile .fi-ta-cell-label {
+    flex-shrink: 0 !important;
+    min-width: 5.5rem;
+    max-width: 40%;
+    color: #7a7366;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.2;
+    margin: 0 !important;
+  }
+  .fi-ta-table-stacked-on-mobile .fi-ta-cell-content {
+    flex: 1 1 auto;
+    min-width: 0;
+    text-align: right;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+  }
+  /* Inline editors (SelectColumn / ToggleColumn) occupy a sensible
+     share of the row — not the full remaining width. */
+  .fi-ta-table-stacked-on-mobile .fi-ta-cell-content .fi-fo-select,
+  .fi-ta-table-stacked-on-mobile .fi-ta-cell-content .fi-input-wrp {
+    min-width: 9rem;
+    max-width: 100%;
+  }
+  /* Actions cell (edit/delete icons) aligns right without label */
+  .fi-ta-table-stacked-on-mobile .fi-ta-actions-cell .fi-ta-cell-content {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}
+
