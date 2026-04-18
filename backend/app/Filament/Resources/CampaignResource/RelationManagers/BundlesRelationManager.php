@@ -144,8 +144,12 @@ class BundlesRelationManager extends RelationManager
             ])
             ->defaultSort('sort_order')
             ->headerActions([
+                // NOTE: don't strip buy_items_ui / gift_items_ui in mutateFormDataUsing
+                // — Filament keeps the mutated $data and hands that same array to
+                // after(), so stripping there means syncBundlePivot sees empty
+                // arrays and the pivot never writes. Laravel silently discards
+                // unknown attributes on fill(), so they're harmless to leave in.
                 \Filament\Actions\CreateAction::make()
-                    ->mutateFormDataUsing(fn (array $data): array => self::stripPivotState($data))
                     ->after(function ($record, array $data) {
                         self::syncBundlePivot($record, $data['buy_items_ui'] ?? [], $data['gift_items_ui'] ?? []);
                     }),
@@ -153,7 +157,6 @@ class BundlesRelationManager extends RelationManager
             ->actions([
                 \Filament\Actions\EditAction::make()
                     ->mutateRecordDataUsing(fn (array $data, $record): array => self::hydratePivotState($data, $record))
-                    ->mutateFormDataUsing(fn (array $data): array => self::stripPivotState($data))
                     ->after(function ($record, array $data) {
                         self::syncBundlePivot($record, $data['buy_items_ui'] ?? [], $data['gift_items_ui'] ?? []);
                     }),
@@ -171,12 +174,6 @@ class BundlesRelationManager extends RelationManager
             'product_id' => $p->id,
             'quantity' => (int) $p->pivot->quantity,
         ])->values()->toArray();
-        return $data;
-    }
-
-    private static function stripPivotState(array $data): array
-    {
-        unset($data['buy_items_ui'], $data['gift_items_ui']);
         return $data;
     }
 
