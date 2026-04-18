@@ -161,7 +161,7 @@ class LogisticsTest extends TestCase
             'RtnCode' => 2030,
             'RtnMsg' => '商品已送達門市',
         ];
-        $data['CheckMacValue'] = app(\App\Services\EcpayService::class)->generateCheckMac($data);
+        $data['CheckMacValue'] = app(\App\Services\EcpayService::class)->generateCheckMac($data, 'md5');
 
         $res = $this->post('/api/logistics/ecpay/status', $data);
         $res->assertOk();
@@ -180,7 +180,7 @@ class LogisticsTest extends TestCase
             'RtnCode' => 2031,
             'RtnMsg' => '消費者已取件',
         ];
-        $data['CheckMacValue'] = app(\App\Services\EcpayService::class)->generateCheckMac($data);
+        $data['CheckMacValue'] = app(\App\Services\EcpayService::class)->generateCheckMac($data, 'md5');
 
         $this->post('/api/logistics/ecpay/status', $data)->assertOk();
         $this->assertSame('completed', $order->fresh()->status);
@@ -201,7 +201,7 @@ class LogisticsTest extends TestCase
             'RtnCode' => 2032,
             'RtnMsg' => '商品已退回原門市',
         ];
-        $data['CheckMacValue'] = app(\App\Services\EcpayService::class)->generateCheckMac($data);
+        $data['CheckMacValue'] = app(\App\Services\EcpayService::class)->generateCheckMac($data, 'md5');
 
         $this->post('/api/logistics/ecpay/status', $data)->assertOk();
         $this->assertSame('cod_no_pickup', $order->fresh()->status);

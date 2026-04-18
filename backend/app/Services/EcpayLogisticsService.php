@@ -96,7 +96,8 @@ class EcpayLogisticsService
             'ReturnStoreID' => '',
         ];
 
-        $params['CheckMacValue'] = $this->payment->generateCheckMac($params);
+        // Logistics API uses MD5, NOT SHA256 (payment's default).
+        $params['CheckMacValue'] = $this->payment->generateCheckMac($params, 'md5');
 
         Log::info('ECPay logistics create request', [
             'order' => $order->order_number,

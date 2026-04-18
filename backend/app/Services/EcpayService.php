@@ -68,15 +68,20 @@ class EcpayService
         ];
     }
 
-    public function verifyCallback(array $data): bool
+    public function verifyCallback(array $data, string $algo = 'sha256'): bool
     {
         $checkMac = $data['CheckMacValue'] ?? '';
         unset($data['CheckMacValue']);
 
-        return strtoupper($this->generateCheckMac($data)) === strtoupper($checkMac);
+        return strtoupper($this->generateCheckMac($data, $algo)) === strtoupper($checkMac);
     }
 
-    public function generateCheckMac(array $params): string
+    /**
+     * Payment (AioCheckOut V5) uses sha256 with EncryptType=1.
+     * Logistics (Express/Create, Map/Status callbacks) uses md5 — no EncryptType.
+     * The encoding/sorting steps are identical; only the hash algorithm differs.
+     */
+    public function generateCheckMac(array $params, string $algo = 'sha256'): string
     {
         ksort($params, SORT_NATURAL | SORT_FLAG_CASE);
 
@@ -101,7 +106,7 @@ class EcpayService
             '%29' => ')',
         ]);
 
-        return strtoupper(hash('sha256', $checkStr));
+        return strtoupper(hash($algo, $checkStr));
     }
 
     private function formatItemName(Order $order): string

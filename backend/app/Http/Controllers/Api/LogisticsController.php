@@ -139,7 +139,7 @@ HTML;
     public function ecpayReply(Request $request, EcpayService $ecpay): string
     {
         $data = $request->all();
-        if (! $ecpay->verifyCallback($data)) {
+        if (! $ecpay->verifyCallback($data, 'md5')) {
             return '0|CheckMacValue Error';
         }
         Log::info('ECPay logistics reply callback', ['data' => $data]);
@@ -159,7 +159,7 @@ HTML;
     public function ecpayStatus(Request $request, EcpayService $ecpay): string
     {
         $data = $request->all();
-        if (! $ecpay->verifyCallback($data)) {
+        if (! $ecpay->verifyCallback($data, 'md5')) {
             return '0|CheckMacValue Error';
         }
 
