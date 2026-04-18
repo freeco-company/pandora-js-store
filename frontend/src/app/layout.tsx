@@ -93,6 +93,17 @@ export default function RootLayout({
         )}
       </head>
       <body className="min-h-full flex flex-col bg-white text-gray-900">
+        {/* GTM noscript fallback — must be right after <body> */}
+        {process.env.NEXT_PUBLIC_GTM_ID && (
+          <noscript>
+            <iframe
+              src={`https://www.googletagmanager.com/ns.html?id=${process.env.NEXT_PUBLIC_GTM_ID}`}
+              height="0"
+              width="0"
+              style={{ display: 'none', visibility: 'hidden' }}
+            />
+          </noscript>
+        )}
         <a
           href="#main-content"
           className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:px-4 focus:py-2 focus:bg-[#9F6B3E] focus:text-white focus:rounded-lg"
