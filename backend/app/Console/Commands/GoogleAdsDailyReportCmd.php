@@ -21,8 +21,9 @@ class GoogleAdsDailyReportCmd extends Command
 
     protected $description = 'Fetch yesterday Google Ads metrics and post a summary to Discord';
 
-    public function handle(GoogleAdsService $ads, DiscordNotifier $_unused): int
+    public function handle(): int
     {
+        $ads = GoogleAdsService::fromConfig();
         if (! $ads->isConfigured()) {
             $this->warn('Google Ads API not configured (check .env). Skipping.');
             return self::SUCCESS;
