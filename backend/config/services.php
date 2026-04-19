@@ -52,9 +52,13 @@ return [
     ],
 
     'discord' => [
-        'compliance_webhook' => env('DISCORD_COMPLIANCE_WEBHOOK'),
-        'orders_webhook'     => env('DISCORD_ORDERS_WEBHOOK'),
-        'ads_webhook'        => env('DISCORD_ADS_WEBHOOK'),
+        'compliance_webhook'   => env('DISCORD_COMPLIANCE_WEBHOOK'),
+        'orders_webhook'       => env('DISCORD_ORDERS_WEBHOOK'),
+        'ads_webhook'          => env('DISCORD_ADS_WEBHOOK'),
+        // Strategy channel — for Claude-generated analysis. Separate from
+        // ads_webhook (which carries raw daily numbers) so the two streams
+        // don't noise each other. Falls back to ads_webhook if unset.
+        'ads_strategy_webhook' => env('DISCORD_ADS_STRATEGY_WEBHOOK'),
     ],
 
     /*

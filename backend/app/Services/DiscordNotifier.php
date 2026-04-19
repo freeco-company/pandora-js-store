@@ -38,6 +38,21 @@ class DiscordNotifier
         );
     }
 
+    /**
+     * Webhook for Claude-generated strategy analysis. Kept separate from
+     * ads() so the raw-numbers channel stays clean. Falls back to ads()
+     * channel if unset so it still works on partially-configured envs.
+     */
+    public static function adsStrategy(): self
+    {
+        return new self(
+            config('services.discord.ads_strategy_webhook')
+                ?: config('services.discord.ads_webhook')
+                ?: config('services.discord.orders_webhook')
+                ?: config('services.discord.compliance_webhook')
+        );
+    }
+
     public function isEnabled(): bool
     {
         return ! empty($this->webhook);
