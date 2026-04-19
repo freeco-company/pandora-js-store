@@ -47,6 +47,7 @@
             <td style="padding: 10px 16px; border-bottom: 1px solid #f0e8df; color: #7a5836; font-size: 13px;">價格方案</td>
             <td style="padding: 10px 16px; border-bottom: 1px solid #f0e8df; color: #1f1a15; font-size: 14px;">
                 @switch($order->pricing_tier)
+                    @case('regular')
                     @case('retail') 原價 @break
                     @case('combo') <span style="color: #9F6B3E; font-weight: bold;">1+1 搭配價</span> @break
                     @case('vip') <span style="color: #9F6B3E; font-weight: bold;">VIP 優惠價</span> @break

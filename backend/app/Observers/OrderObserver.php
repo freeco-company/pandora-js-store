@@ -2,9 +2,13 @@
 
 namespace App\Observers;
 
+use App\Http\Controllers\Api\OrderController;
+use App\Mail\OrderPaymentConfirmed;
 use App\Models\Blacklist;
 use App\Models\Order;
 use App\Services\DiscordNotifier;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 /**
  * Order lifecycle hooks:
@@ -64,5 +68,45 @@ class OrderObserver
             fields: [],
             color: 0x4A9D5F,
         );
+    }
+
+    /**
+     * When payment_status transitions to 'paid':
+     *   - bank_transfer: send the "payment confirmed" email and run celebrations
+     *     (celebrations were deferred at order creation so we don't have to
+     *     revoke achievements if a transfer never arrives).
+     *   - ecpay_credit / cod: celebrations already handled elsewhere
+     *     (PaymentController callback / OrderController::store), so only the
+     *     bank_transfer path needs this hook.
+     */
+    public function updated(Order $order): void
+    {
+        if (! $order->wasChanged('payment_status')) return;
+        if ($order->payment_status !== 'paid') return;
+        if ($order->getOriginal('payment_status') === 'paid') return;
+        if ($order->payment_method !== 'bank_transfer') return;
+
+        $order->loadMissing('customer', 'items');
+
+        try {
+            app(OrderController::class)->runCelebrations($order);
+        } catch (\Throwable $e) {
+            Log::error('Failed to run celebrations on bank-transfer payment confirm', [
+                'order_number' => $order->order_number,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        $email = $order->customer?->email;
+        if ($email) {
+            try {
+                Mail::to($email)->send(new OrderPaymentConfirmed($order));
+            } catch (\Throwable $e) {
+                Log::error('Failed to send payment-confirmed email', [
+                    'order_number' => $order->order_number,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
     }
 }

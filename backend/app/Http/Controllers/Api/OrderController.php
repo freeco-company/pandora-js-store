@@ -261,15 +261,17 @@ class OrderController extends Controller
         // Email is NOT overwritten (it's the identity, especially for Google OAuth users)
         $this->syncCustomerFromOrder($customer, $request, $order);
 
-        // Credit-card orders are NOT paid yet — payment happens on the ECPay
-        // hosted page. Don't award achievements / referral EXP until the
-        // ECPay callback confirms RtnCode=1 (see PaymentController + the
-        // runCelebrations helper below). COD / bank transfer still count as
-        // "placed-order" events and celebrate immediately.
+        // Celebrations (achievements / referral reward / outfit unlocks) only
+        // fire once payment is confirmed — otherwise we'd have to revoke when
+        // a bank transfer never arrives. COD celebrates immediately because
+        // intent is firm (shipment ships before cash is collected).
+        //   - ecpay_credit: ECPay callback with RtnCode=1 triggers runCelebrations
+        //   - bank_transfer: OrderObserver triggers on payment_status→paid
+        //   - cod: celebrate now
         $awardedCodes = [];
         $newOutfits = [];
         $serendipity = null;
-        if ($order->payment_method !== 'ecpay_credit') {
+        if ($order->payment_method === 'cod') {
             [$awardedCodes, $newOutfits, $serendipity] = $this->runCelebrations($order);
         }
 

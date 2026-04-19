@@ -104,7 +104,7 @@ class GamificationTest extends TestCase
         $res = $this->postJson('/api/orders', [
             'items' => [['product_id' => $product->id, 'quantity' => 1]],
             'customer' => ['name' => 'X', 'email' => 'x@e.com', 'phone' => '0912345678'],
-            'payment_method' => 'bank_transfer',
+            'payment_method' => 'cod',
             'shipping_method' => 'home_delivery',
             'shipping_name' => 'X', 'shipping_phone' => '0912345678',
             'shipping_address' => 'addr',
@@ -125,7 +125,7 @@ class GamificationTest extends TestCase
         $res = $this->postJson('/api/orders', [
             'items' => [['product_id' => $product->id, 'quantity' => 2]],
             'customer' => ['name' => 'X', 'email' => 'x@e.com', 'phone' => '0912345678'],
-            'payment_method' => 'bank_transfer',
+            'payment_method' => 'cod',
             'shipping_method' => 'home_delivery',
             'shipping_name' => 'X', 'shipping_phone' => '0912345678',
             'shipping_address' => 'addr',
@@ -145,7 +145,7 @@ class GamificationTest extends TestCase
         $res = $this->postJson('/api/orders', [
             'items' => [['product_id' => $product->id, 'quantity' => 3]],
             'customer' => ['name' => 'X', 'email' => 'x@e.com', 'phone' => '0912345678'],
-            'payment_method' => 'bank_transfer',
+            'payment_method' => 'cod',
             'shipping_method' => 'home_delivery',
             'shipping_name' => 'X', 'shipping_phone' => '0912345678',
             'shipping_address' => 'addr',
@@ -165,7 +165,7 @@ class GamificationTest extends TestCase
         $res = $this->postJson('/api/orders', [
             'items' => [['product_id' => $product->id, 'quantity' => 1]],
             'customer' => ['name' => 'X', 'email' => 'x@e.com', 'phone' => '0912345678'],
-            'payment_method' => 'bank_transfer',
+            'payment_method' => 'cod',
             'shipping_method' => 'home_delivery',
             'shipping_name' => 'X', 'shipping_phone' => '0912345678',
             'shipping_address' => 'addr',
@@ -186,7 +186,7 @@ class GamificationTest extends TestCase
         $res = $this->postJson('/api/orders', [
             'items' => [['product_id' => $product->id, 'quantity' => 1]],
             'customer' => ['name' => 'X', 'email' => 'x@e.com', 'phone' => '0912345678'],
-            'payment_method' => 'bank_transfer',
+            'payment_method' => 'cod',
             'shipping_method' => 'home_delivery',
             'shipping_name' => 'X', 'shipping_phone' => '0912345678',
             'shipping_address' => 'addr',
