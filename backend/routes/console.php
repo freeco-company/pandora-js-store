@@ -52,6 +52,33 @@ Schedule::command('cart:abandoned-mail')
     ->withoutOverlapping(20)
     ->appendOutputTo(storage_path('logs/abandoned-cart.log'));
 
+// CVS pickup reminder — daily 09:00. Nudges customers whose CVS parcels
+// have been sitting at the store for 5 days (CVS auto-returns at day 7).
+// One nudge per parcel via pickup_reminder_sent_at.
+Schedule::command('cvs:pickup-reminder')
+    ->dailyAt('09:00')
+    ->timezone('Asia/Taipei')
+    ->withoutOverlapping(20)
+    ->appendOutputTo(storage_path('logs/cvs-pickup-reminder.log'));
+
+// Bundle wishlist alert — every 6h. When a campaign bundle is about to
+// expire (< 24h) and contains a wishlisted product, ping the customer.
+// Dedupe via bundle_wishlist_alerts so they're never nudged twice for the
+// same bundle.
+Schedule::command('bundle:wishlist-alert')
+    ->everySixHours()
+    ->withoutOverlapping(15)
+    ->appendOutputTo(storage_path('logs/bundle-wishlist-alert.log'));
+
+// SEO weekly snapshot — Mondays 06:00. Captures Core Web Vitals for the
+// 3 representative URL templates so the Filament dashboard can show trends.
+// No-ops if PAGESPEED_API_KEY is unset.
+Schedule::command('seo:weekly-snapshot')
+    ->weeklyOn(1, '06:00')
+    ->timezone('Asia/Taipei')
+    ->withoutOverlapping(30)
+    ->appendOutputTo(storage_path('logs/seo-snapshot.log'));
+
 // ── 本機開發專用：每天 03:00 從正式站 pull DB 覆蓋本地 ──
 // 指令內建 PHP_OS_FAMILY === 'Darwin' 守門，Linux 正式機跑 schedule:run
 // 也會被 guard 拒絕執行，不會循環同步自己。

@@ -16,11 +16,17 @@ class OutfitService
         $newly = [];
 
         $achievementCount = $customer->achievements()->count();
+        // Lazy — only computed if a catalog entry actually requires it
+        $referralCount = null;
 
         $catalog = array_merge(OutfitCatalog::all(), OutfitCatalog::backdrops());
 
         foreach ($catalog as $code => $meta) {
-            if ($this->meetsRequirement($customer, $meta['unlock'], $achievementCount)) {
+            if ($meta['unlock']['type'] === 'referrals' && $referralCount === null) {
+                $referralCount = Customer::where('referred_by_customer_id', $customer->id)
+                    ->where('referral_reward_granted', true)->count();
+            }
+            if ($this->meetsRequirement($customer, $meta['unlock'], $achievementCount, $referralCount ?? 0)) {
                 if ($this->tryUnlock($customer, $code)) {
                     $newly[] = $code;
                 }
@@ -30,13 +36,14 @@ class OutfitService
         return $newly;
     }
 
-    private function meetsRequirement(Customer $customer, array $req, int $achievementCount): bool
+    private function meetsRequirement(Customer $customer, array $req, int $achievementCount, int $referralCount = 0): bool
     {
         return match ($req['type']) {
             'orders' => $customer->total_orders >= $req['value'],
             'spend' => $customer->total_spent >= $req['value'],
             'streak' => $customer->streak_days >= $req['value'],
             'achievements' => $achievementCount >= $req['value'],
+            'referrals' => $referralCount >= $req['value'],
             default => false,
         };
     }

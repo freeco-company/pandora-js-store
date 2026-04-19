@@ -17,9 +17,11 @@ import SiteIcon from '@/components/SiteIcon';
 import ProductReviews from '@/components/ProductReviews';
 import ReviewForm from '@/components/ReviewForm';
 import ProductFaq from '@/components/ProductFaq';
+import ProductSocialProof from '@/components/ProductSocialProof';
+import WishlistButton from '@/components/WishlistButton';
 import { sanitizeHtml } from '@/lib/sanitize';
 import type { Product } from '@/lib/api';
-import { breadcrumbSchema, faqSchema, productFaqs, productSchema, jsonLdScript } from '@/lib/jsonld';
+import { breadcrumbSchema, faqSchema, productFaqs, productSchema, reviewsSchema, jsonLdScript } from '@/lib/jsonld';
 import { SITE_URL } from '@/lib/site';
 
 export const revalidate = 3600;
@@ -163,6 +165,23 @@ export default async function ProductDetailPage({ params }: Props) {
     hfCertClaim: product.hf_cert_claim,
   });
   const faqJsonLd = faqs.length > 0 ? faqSchema(faqs) : null;
+  // Top 5 individual reviews for rich-result eligibility — only emit reviews
+  // that actually have body text (Google rejects empty review bodies).
+  const reviewJsonLd = reviewsData?.reviews
+    ? reviewsSchema(
+        product.name,
+        product.slug,
+        reviewsData.reviews
+          .filter((r): r is typeof r & { content: string } => !!r.content && r.content.trim().length > 0)
+          .slice(0, 5)
+          .map((r) => ({
+            rating: r.rating,
+            body: r.content,
+            customer_name: r.reviewer_name,
+            created_at: r.created_at,
+          })),
+      )
+    : [];
   const breadcrumbs = breadcrumbSchema([
     { name: '首頁', url: '/' },
     { name: '全館商品', url: '/products' },
@@ -177,9 +196,12 @@ export default async function ProductDetailPage({ params }: Props) {
     <script
       type="application/ld+json"
       dangerouslySetInnerHTML={{
-        __html: faqJsonLd
-          ? jsonLdScript(prodJsonLd, breadcrumbs, faqJsonLd)
-          : jsonLdScript(prodJsonLd, breadcrumbs),
+        __html: jsonLdScript(
+          prodJsonLd,
+          breadcrumbs,
+          ...(faqJsonLd ? [faqJsonLd] : []),
+          ...reviewJsonLd,
+        ),
       }}
     />
     <div className="max-w-[1290px] mx-auto px-5 sm:px-6 lg:px-8 py-6 sm:py-10 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-10">
@@ -224,9 +246,14 @@ export default async function ProductDetailPage({ params }: Props) {
             </div>
           )}
 
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">
-            {product.name}
-          </h1>
+          <div className="flex items-start gap-3 mb-3">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 flex-1 min-w-0">
+              {product.name}
+            </h1>
+            <WishlistButton productId={product.id} variant="inline" className="shrink-0 mt-0.5" />
+          </div>
+
+          <ProductSocialProof slug={product.slug} />
 
           {product.short_description && (
             <ShortDescription text={product.short_description} />

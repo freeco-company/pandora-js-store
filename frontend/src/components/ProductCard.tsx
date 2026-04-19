@@ -9,6 +9,7 @@ import { ProductBadges } from './HealthFoodBadge';
 import { useCart } from './CartProvider';
 import { flyToCart } from '@/lib/animations';
 import { useToast } from './Toast';
+import WishlistButton from './WishlistButton';
 
 export default function ProductCard({ product }: { product: Product }) {
   const { addToCart } = useCart();
@@ -102,6 +103,10 @@ export default function ProductCard({ product }: { product: Product }) {
           )}
         </div>
       </Link>
+      {/* Wishlist heart — sits over the image, above the card link, so taps don't navigate */}
+      <div className="absolute top-2 right-2 z-[2]">
+        <WishlistButton productId={product.id} variant="card" />
+      </div>
 
       <div className="p-2.5 sm:p-3">
         <div className="mb-1">

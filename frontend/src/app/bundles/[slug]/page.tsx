@@ -5,6 +5,7 @@ import FloatingShapes from '@/components/FloatingShapes';
 import ScrollReveal from '@/components/ScrollReveal';
 import SiteIcon from '@/components/SiteIcon';
 import CampaignBundleCard from '@/components/CampaignBundleCard';
+import { BundleViewTracker } from '@/components/BundleTracker';
 import { jsonLdScript, breadcrumbSchema } from '@/lib/jsonld';
 import { SITE_URL } from '@/lib/site';
 
@@ -65,6 +66,7 @@ export default async function BundlePage({ params }: { params: Promise<{ slug: s
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: jsonLdScript(offerSchema, breadcrumbs) }}
       />
+      <BundleViewTracker bundle={bundle} />
 
       {/* Hero — 大圖 (object-contain 避免裁切) + 資訊並排 */}
       <section className="relative bg-gradient-to-br from-[#9F6B3E] via-[#c9935a] to-[#85572F] text-white overflow-hidden">

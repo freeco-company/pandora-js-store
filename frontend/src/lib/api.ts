@@ -392,7 +392,9 @@ export interface CustomerDashboard extends CelebrationKeys {
   customer: CustomerGamificationState;
   achievements: {
     earned: Array<{ code: string; awarded_at: string }>;
-    catalog: Record<string, { emoji: string; name: string; description: string; tier: string }>;
+    catalog: Record<string, AchievementDef>;
+    /** Map of code → current/target for measurable achievements (binary ones omitted). */
+    progress: Record<string, { current: number; target: number }>;
   };
   outfits: {
     owned: Array<{ code: string; unlocked_at: string }>;
@@ -406,6 +408,18 @@ export interface OutfitDef {
   slot?: string;
   emoji: string;
   unlock: { type: 'orders' | 'spend' | 'streak' | 'achievements'; value: number };
+}
+
+export interface AchievementDef {
+  emoji: string;
+  name: string;
+  description: string;
+  tier: 'bronze' | 'silver' | 'gold' | string;
+  /** Present only for measurable achievements; absent on binary ones. */
+  progress?: {
+    type: 'order_count' | 'spend_total' | 'vip_order_count' | 'streak_days' | 'referral_count' | 'category_count';
+    target: number;
+  };
 }
 
 async function authedFetch<T>(endpoint: string, token: string, options?: RequestInit): Promise<T> {

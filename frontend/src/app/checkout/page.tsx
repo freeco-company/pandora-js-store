@@ -214,13 +214,28 @@ export default function CheckoutPage() {
       i.type === 'bundle' && 'bundle' in i
     );
 
-    trackBeginCheckout(
-      finalTotal,
-      productItems.map((i) => {
+    const gtmItems = [
+      ...productItems.map((i) => {
         const p = itemPrices.find((ip) => ip.key === `p:${i.product.id}`);
-        return { id: i.product.id, name: i.product.name, price: p?.unitPrice ?? i.product.price, qty: i.quantity };
+        return {
+          item_id: String(i.product.id),
+          item_name: i.product.name,
+          price: p?.unitPrice ?? i.product.price,
+          quantity: i.quantity,
+          item_category: 'product',
+        };
       }),
-    );
+      ...bundleItems.map((i) => ({
+        item_id: `bundle_${i.bundle.id}`,
+        item_name: i.bundle.name,
+        price: i.bundle.bundle_price,
+        quantity: i.quantity,
+        item_category: 'bundle',
+        ...(i.bundle.campaign?.name ? { item_brand: i.bundle.campaign.name } : {}),
+      })),
+    ];
+
+    trackBeginCheckout(finalTotal, gtmItems);
 
     try {
       const payload = {
@@ -252,15 +267,7 @@ export default function CheckoutPage() {
         body: JSON.stringify(payload),
       });
 
-      trackPurchase(
-        order.order_number,
-        finalTotal,
-        productItems.map((i) => {
-          const p = itemPrices.find((ip) => ip.key === `p:${i.product.id}`);
-          return { id: i.product.id, name: i.product.name, price: p?.unitPrice ?? i.product.price, qty: i.quantity };
-        }),
-        form.payment_method,
-      );
+      trackPurchase(order.order_number, finalTotal, gtmItems, form.payment_method);
 
       celebrateMany(order._achievements, order._outfits);
       if (order._serendipity) showSerendipity(order._serendipity);

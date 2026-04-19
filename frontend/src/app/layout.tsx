@@ -3,6 +3,7 @@ import './globals.css';
 import { CartProvider } from '@/components/CartProvider';
 import { ToastProvider } from '@/components/Toast';
 import { AuthProvider } from '@/components/AuthProvider';
+import { WishlistProvider } from '@/components/WishlistProvider';
 import ActivationTracker from '@/components/ActivationTracker';
 import { CelebrationProvider } from '@/components/Celebration';
 import { SerendipityProvider } from '@/components/Serendipity';
@@ -124,6 +125,7 @@ export default function RootLayout({
         <CartProvider>
           <ToastProvider>
             <AuthProvider>
+              <WishlistProvider>
               <CelebrationProvider>
                 <SerendipityProvider>
                   <MobileMenuProvider>
@@ -145,6 +147,7 @@ export default function RootLayout({
                   </MobileMenuProvider>
                 </SerendipityProvider>
               </CelebrationProvider>
+              </WishlistProvider>
             </AuthProvider>
           </ToastProvider>
         </CartProvider>

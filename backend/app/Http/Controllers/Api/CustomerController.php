@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Services\AchievementCatalog;
+use App\Services\AchievementProgressCalculator;
 use App\Services\AchievementService;
 use App\Services\OutfitCatalog;
 use App\Services\OutfitService;
@@ -17,6 +18,7 @@ class CustomerController extends Controller
         private AchievementService $achievements,
         private OutfitService $outfits,
         private SerendipityService $serendipity,
+        private AchievementProgressCalculator $progress,
     ) {}
 
     /**
@@ -65,6 +67,7 @@ class CustomerController extends Controller
             'achievements' => [
                 'earned' => $earned,
                 'catalog' => AchievementCatalog::all(),
+                'progress' => $this->progress->forCustomer($customer),
             ],
             'outfits' => [
                 'owned' => $ownedOutfits,

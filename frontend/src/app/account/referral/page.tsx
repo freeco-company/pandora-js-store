@@ -80,6 +80,53 @@ export default function ReferralPage() {
         <StatCard label="首單完成" value={`${data.referrals_success} 位`} emoji="check-circle" />
       </section>
 
+      {/* Mascot reward milestones — every successful referral feeds XP into 芽芽 */}
+      <section className="bg-white rounded-3xl border border-[#e7d9cb] p-5 sm:p-6">
+        <div className="flex items-center gap-2 mb-1">
+          <SiteIcon name="trophy" size={18} className="text-[#9F6B3E]" />
+          <h2 className="text-base font-black text-slate-800">芽芽里程碑</h2>
+        </div>
+        <p className="text-[11px] text-slate-500 mb-4">每位成功推薦的朋友都會幫芽芽長大，並解鎖以下成就</p>
+
+        <ul className="space-y-3">
+          {[
+            { target: 1,  name: '第一位推薦者', desc: '+25 XP · 銀牌成就', tier: 'silver' },
+            { target: 3,  name: '仙女推廣大使', desc: '+50 XP · 金牌成就', tier: 'gold' },
+            { target: 10, name: '仙女 KOL',     desc: '+50 XP · 金牌成就', tier: 'gold' },
+          ].map((m) => {
+            const current = Math.min(data.referrals_success, m.target);
+            const earned = current >= m.target;
+            const pct = (current / m.target) * 100;
+            return (
+              <li key={m.target} className={`p-3 rounded-2xl border ${earned ? 'border-[#9F6B3E] bg-[#fdf7ef]' : 'border-[#e7d9cb] bg-white'}`}>
+                <div className="flex items-baseline justify-between gap-2 mb-1.5">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className={`text-sm font-black ${earned ? 'text-[#9F6B3E]' : 'text-slate-700'} truncate`}>
+                      {m.name}
+                    </span>
+                    {earned && <span className="text-[10px] font-black px-1.5 py-0.5 rounded-full bg-[#9F6B3E] text-white shrink-0">已達成</span>}
+                  </div>
+                  <span className="text-xs font-black text-slate-500 tabular-nums shrink-0">
+                    {current}/{m.target}
+                  </span>
+                </div>
+                <div className="h-1.5 rounded-full bg-slate-100 overflow-hidden">
+                  <div
+                    className={`h-full transition-all duration-500 ${earned ? 'bg-[#9F6B3E]' : 'bg-[#c0392b]'}`}
+                    style={{ width: `${pct}%` }}
+                  />
+                </div>
+                <p className="text-[10px] text-slate-500 mt-1.5">{m.desc}</p>
+              </li>
+            );
+          })}
+        </ul>
+
+        <p className="text-[10px] text-slate-400 mt-3 leading-relaxed">
+          每滿 100 XP 芽芽升 1 級。新成就會解鎖更多服裝與背景，到 <Link href="/account/mascot" className="underline text-[#9F6B3E]">芽芽之家</Link> 看看。
+        </p>
+      </section>
+
       {/* How it works */}
       <section className="bg-white rounded-3xl border border-[#e7d9cb] p-5 sm:p-6">
         <h2 className="text-base font-black text-slate-800 mb-4"><SiteIcon name="gift" size={16} className="inline" /> 運作方式</h2>

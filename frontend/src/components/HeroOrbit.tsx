@@ -26,6 +26,7 @@ const ORB_GRADIENTS: Record<string, string> = {
   starry:  'radial-gradient(circle at 30% 30%, #e8eaf6, #7986cb 45%, #3949ab 80%, #1a237e 100%)',
   rainbow: 'radial-gradient(circle at 30% 30%, #ffffff, #fad0c4 35%, #a1c4fd 65%, #667eea 100%)',
   beach:   'radial-gradient(circle at 30% 30%, #ffffff, #80deea 45%, #26c6da 80%, #0097a7 100%)',
+  friend_picnic: 'radial-gradient(circle at 30% 30%, #fff, #fcd8e5 40%, #f8b5c8 75%, #c56c97 100%)',
 };
 
 const ORB_SHADOWS: Record<string, string> = {
@@ -36,6 +37,7 @@ const ORB_SHADOWS: Record<string, string> = {
   starry:  '0 30px 80px -20px rgba(26,35,126,0.5), inset 0 0 80px rgba(200,200,255,0.3)',
   rainbow: '0 30px 80px -20px rgba(102,126,234,0.4), inset 0 0 80px rgba(255,255,255,0.4)',
   beach:   '0 30px 80px -20px rgba(0,151,167,0.4), inset 0 0 80px rgba(255,255,255,0.4)',
+  friend_picnic: '0 30px 80px -20px rgba(197,108,151,0.45), inset 0 0 80px rgba(255,255,255,0.45)',
 };
 
 interface Props {
@@ -53,16 +55,28 @@ export default function HeroOrbit({ size = 420, className = '' }: Props) {
   useEffect(() => {
     if (!token || !isLoggedIn) return;
     let cancelled = false;
-    getCustomerDashboard(token).then((d) => {
+    // Defer the dashboard fetch out of the LCP window — it's a hero
+    // decoration, not interactive content, so blocking the main thread
+    // for it on first paint is unnecessary.
+    const w = window as Window & { requestIdleCallback?: (cb: () => void) => number };
+    const schedule = w.requestIdleCallback ?? ((cb: () => void) => setTimeout(cb, 800));
+    const handle = schedule(() => {
       if (cancelled) return;
-      setMascotState({
-        stage: stageFromStreak(d.customer.streak_days),
-        mood: d.customer.streak_days >= 3 ? 'excited' : 'happy',
-        outfit: d.customer.current_outfit,
-        backdrop: d.customer.current_backdrop,
-      });
-    }).catch(() => {});
-    return () => { cancelled = true; };
+      getCustomerDashboard(token).then((d) => {
+        if (cancelled) return;
+        setMascotState({
+          stage: stageFromStreak(d.customer.streak_days),
+          mood: d.customer.streak_days >= 3 ? 'excited' : 'happy',
+          outfit: d.customer.current_outfit,
+          backdrop: d.customer.current_backdrop,
+        });
+      }).catch(() => {});
+    });
+    return () => {
+      cancelled = true;
+      const cw = window as Window & { cancelIdleCallback?: (h: number) => void };
+      cw.cancelIdleCallback?.(handle as number);
+    };
   }, [token, isLoggedIn]);
 
   const router = useRouter();

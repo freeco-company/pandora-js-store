@@ -8,6 +8,7 @@ import SiteIcon from '@/components/SiteIcon';
 import { jsonLdScript } from '@/lib/jsonld';
 import { SITE_URL } from '@/lib/site';
 import { formatPrice } from '@/lib/format';
+import { BundleListTracker } from '@/components/BundleTracker';
 
 export const dynamic = 'force-dynamic';
 
@@ -108,6 +109,7 @@ export default async function CampaignPage({ params }: { params: Promise<{ slug:
           </div>
         ) : (
           <>
+            <BundleListTracker bundles={campaign.bundles} listName={`campaign:${slug}`} />
             <h2 className="text-xl sm:text-2xl font-black text-[#3d2e22] mb-6">
               活動限時優惠（{campaign.bundles.length} 組）
             </h2>

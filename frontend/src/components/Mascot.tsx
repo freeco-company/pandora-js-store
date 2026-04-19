@@ -379,6 +379,30 @@ function OutfitOverlay({ code, stage }: { code: string; stage: MascotStage }) {
           ))}
         </g>
       );
+    case 'friendship_charm':
+      // Gold chain across the neck with a pink + gold heart pendant.
+      // Heart-beat pulse via inline animateTransform — runs only when the
+      // mascot wears it, so we don't pay for the animation otherwise.
+      return (
+        <g transform={`translate(50, ${sy})`}>
+          {/* Chain — slight U */}
+          <path d="M-7 -1q7 4 14 0" stroke="#E8C76B" strokeWidth="0.8" fill="none" strokeLinecap="round" />
+          <path d="M-7 -1q7 4 14 0" stroke="#FFE08A" strokeWidth="0.3" fill="none" strokeLinecap="round" />
+          {/* Twin hearts — pink left, gold right, gently overlap */}
+          <g transform="translate(-1.5 3)">
+            <path d="M0 0c-1-1.2-3-0.7-3 0.8 0 1.5 1.7 2.7 3 3.6 1.3-0.9 3-2.1 3-3.6 0-1.5-2-2-3-0.8z" fill="#F27BA7" />
+            <animateTransform attributeName="transform" type="translate" values="-1.5 3; -1.5 2.6; -1.5 3" dur="1.4s" repeatCount="indefinite" additive="sum" />
+          </g>
+          <g transform="translate(2.5 3.5)">
+            <path d="M0 0c-1-1.2-3-0.7-3 0.8 0 1.5 1.7 2.7 3 3.6 1.3-0.9 3-2.1 3-3.6 0-1.5-2-2-3-0.8z" fill="#F6B94E" />
+            <animateTransform attributeName="transform" type="translate" values="2.5 3.5; 2.5 3.1; 2.5 3.5" dur="1.4s" begin="0.2s" repeatCount="indefinite" additive="sum" />
+          </g>
+          {/* Tiny sparkle */}
+          <circle cx="6" cy="0" r="0.4" fill="#FFE08A">
+            <animate attributeName="opacity" values="0;1;0" dur="2s" repeatCount="indefinite" />
+          </circle>
+        </g>
+      );
     default:
       return null;
   }
@@ -392,6 +416,33 @@ function Backdrop({ code }: { code: string }) {
     starry: 'linear-gradient(180deg, #1a237e 0%, #3949ab 100%)',
     rainbow: 'linear-gradient(180deg, #ff9a9e 0%, #fad0c4 50%, #a1c4fd 100%)',
     beach: 'linear-gradient(180deg, #80deea 0%, #fff9c4 100%)',
+    // Sunset picnic vibe — referral-only backdrop. Soft pink → coral → lavender
+    // sky with floating heart confetti drifting upward.
+    friend_picnic: 'linear-gradient(180deg, #fcd8e5 0%, #f8b5c8 55%, #c56c97 100%)',
   };
-  return <div className="w-full h-full" style={{ background: GRADIENTS[code] || GRADIENTS.meadow }} />;
+  const isFriendPicnic = code === 'friend_picnic';
+  return (
+    <div className="w-full h-full relative overflow-hidden" style={{ background: GRADIENTS[code] || GRADIENTS.meadow }}>
+      {isFriendPicnic && (
+        <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 100 100" aria-hidden>
+          {/* Drifting heart confetti — staggered fall + fade loop */}
+          {[
+            { x: 12, delay: 0, op: 0.7 },
+            { x: 30, delay: 1.3, op: 0.5 },
+            { x: 55, delay: 0.6, op: 0.6 },
+            { x: 75, delay: 2.0, op: 0.8 },
+            { x: 88, delay: 0.9, op: 0.5 },
+          ].map((h, i) => (
+            <g key={i} transform={`translate(${h.x} 100)`} opacity={h.op}>
+              <path d="M0 0c-1.5-1.8-4-1-4 1.2 0 2 2.5 3.6 4 4.8 1.5-1.2 4-2.8 4-4.8 0-2.2-2.5-3-4-1.2z" fill="#fff" />
+              <animateTransform attributeName="transform" type="translate" values={`${h.x} 100; ${h.x} -10`} dur="9s" begin={`${h.delay}s`} repeatCount="indefinite" />
+              <animate attributeName="opacity" values={`0;${h.op};${h.op};0`} dur="9s" begin={`${h.delay}s`} repeatCount="indefinite" />
+            </g>
+          ))}
+          {/* Soft sun */}
+          <circle cx="80" cy="22" r="9" fill="#FFE7B3" opacity="0.7" />
+        </svg>
+      )}
+    </div>
+  );
 }

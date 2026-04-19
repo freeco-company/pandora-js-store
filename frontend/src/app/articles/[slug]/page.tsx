@@ -180,7 +180,10 @@ export default async function ArticleDetailPage({ params }: Props) {
           {article.title}
         </h1>
         {article.excerpt && (
-          <p className="mt-4 text-lg text-gray-600 leading-relaxed">
+          <p
+            data-speakable
+            className="mt-4 text-lg text-gray-600 leading-relaxed"
+          >
             {article.excerpt}
           </p>
         )}

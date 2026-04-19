@@ -45,6 +45,10 @@ return [
         'client_id' => env('LINE_CHANNEL_ID'),
         'client_secret' => env('LINE_CHANNEL_SECRET'),
         'redirect' => env('LINE_REDIRECT_URI', 'https://pandora.js-store.com.tw/api/auth/line/callback'),
+        // LINE Messaging API channel access token — separate from the Login channel above.
+        // Required for pushing messages (e.g. abandoned-cart reminders) to a userId.
+        // Login + Messaging channels must be in the same Provider for the userId to match.
+        'messaging_access_token' => env('LINE_MESSAGING_ACCESS_TOKEN'),
     ],
 
     'discord' => [

@@ -18,7 +18,7 @@ import {
   type PricingTier,
 } from '@/lib/pricing';
 import { markActivation, getBundle } from '@/lib/api';
-import { trackAddToCart } from '@/components/Analytics';
+import { trackAddToCart, trackBundleAddToCart } from '@/components/Analytics';
 
 interface CartContextValue {
   items: LocalCartItem[];
@@ -168,6 +168,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
       }
       return [...prev, { type: 'bundle', bundle, quantity }];
     });
+
+    trackBundleAddToCart(bundle, quantity);
 
     try {
       const token = typeof window !== 'undefined' ? localStorage.getItem('pandora-auth-token') : null;

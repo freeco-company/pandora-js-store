@@ -219,9 +219,18 @@ class GamificationTest extends TestCase
             ->assertJsonPath('customer.streak_days', 6)
             ->assertJsonStructure([
                 'customer' => ['streak_days', 'total_orders', 'total_spent', 'activation_progress'],
-                'achievements' => ['earned', 'catalog'],
+                'achievements' => ['earned', 'catalog', 'progress'],
                 'outfits' => ['owned', 'catalog', 'backdrops'],
-            ]);
+            ])
+            // Customer has 2 orders + 3000 spent + 6-day streak after the bump:
+            // ORDER_3 (target 3) → 2/3, SPEND_5K (target 5000) → 3000/5000,
+            // STREAK_7 (target 7) → 6/7. Progress map should reflect these.
+            ->assertJsonPath('achievements.progress.order_3.current', 2)
+            ->assertJsonPath('achievements.progress.order_3.target', 3)
+            ->assertJsonPath('achievements.progress.spend_5k.current', 3000)
+            ->assertJsonPath('achievements.progress.streak_7.current', 6)
+            // Binary achievements (no progress key) must be absent
+            ->assertJsonMissingPath('achievements.progress.first_browse');
     }
 
     public function test_set_outfit_requires_ownership(): void

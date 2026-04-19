@@ -185,6 +185,45 @@ export default function OutfitIcon({ name, size = 32, className = '', static: is
           })}
         </svg>
       );
+    case 'friendship-charm':
+      // Two interlocking hearts dangle from a gold chain — symbol of the
+      // referral bond. Heart-beat animation pulls the eye to the rare item.
+      return (
+        <svg className={cls} style={s} viewBox="0 0 40 40" fill="none" aria-hidden data-anim={anim('beat')}>
+          <defs>
+            <linearGradient id="charm-chain" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0" stopColor="#E8C76B" />
+              <stop offset="0.5" stopColor="#FFE08A" />
+              <stop offset="1" stopColor="#E8C76B" />
+            </linearGradient>
+            <radialGradient id="charm-heart-pink" cx="0.35" cy="0.35">
+              <stop offset="0" stopColor="#FFC2D8" />
+              <stop offset="0.6" stopColor="#F27BA7" />
+              <stop offset="1" stopColor="#B03E6D" />
+            </radialGradient>
+            <radialGradient id="charm-heart-gold" cx="0.35" cy="0.35">
+              <stop offset="0" stopColor="#FFF1B5" />
+              <stop offset="0.6" stopColor="#F6B94E" />
+              <stop offset="1" stopColor="#A56F1A" />
+            </radialGradient>
+          </defs>
+          {/* Gold chain — slight U-curve */}
+          <path d="M5 12q15 8 30 0" stroke="url(#charm-chain)" strokeWidth="1.4" fill="none" strokeLinecap="round" />
+          {/* Tiny clasp */}
+          <circle cx="20" cy="17.5" r="1.1" fill="#E8C76B" />
+          {/* Two interlocking hearts */}
+          <g transform="translate(15.5 26) rotate(-12)">
+            <path d="M0 -4c-2.5-2.8-7-1.6-7 1.8 0 3.6 4 6.5 7 8.6 3-2.1 7-5 7-8.6 0-3.4-4.5-4.6-7-1.8z" fill="url(#charm-heart-pink)" />
+            <path d="M-4 -4c-1-1-2.5-0.5-2.5 0.8 0 1 1 2 2.5 3" stroke="#fff" strokeWidth="0.8" strokeLinecap="round" fill="none" opacity="0.7" />
+          </g>
+          <g transform="translate(24.5 28) rotate(14)">
+            <path d="M0 -4c-2.5-2.8-7-1.6-7 1.8 0 3.6 4 6.5 7 8.6 3-2.1 7-5 7-8.6 0-3.4-4.5-4.6-7-1.8z" fill="url(#charm-heart-gold)" />
+            <path d="M-4 -4c-1-1-2.5-0.5-2.5 0.8 0 1 1 2 2.5 3" stroke="#fff" strokeWidth="0.8" strokeLinecap="round" fill="none" opacity="0.7" />
+          </g>
+          {/* Sparkle */}
+          <path d="M32 22l0.6 1.6 1.6 0.6-1.6 0.6-0.6 1.6-0.6-1.6-1.6-0.6 1.6-0.6z" fill="#FFE08A" opacity="0.9" />
+        </svg>
+      );
 
     // ── Backdrops ───────────────────────────────────────────
     case 'meadow':
@@ -291,6 +330,42 @@ export default function OutfitIcon({ name, size = 32, className = '', static: is
           <circle cx="8" cy="32" r="0.8" fill="#D4A373" />
           <circle cx="18" cy="36" r="0.8" fill="#D4A373" />
           <circle cx="30" cy="34" r="0.8" fill="#D4A373" />
+        </svg>
+      );
+    case 'friend-picnic':
+      // Sunset-pink-purple sky + 2 small mascot silhouettes side-by-side
+      // on a checkered picnic blanket. Floating hearts twinkle above.
+      return (
+        <svg className={cls} style={s} viewBox="0 0 40 40" fill="none" aria-hidden data-anim={anim('shimmer')}>
+          <defs>
+            <linearGradient id="picnic-sky" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stopColor="#FCD8E5" />
+              <stop offset="0.55" stopColor="#F8B5C8" />
+              <stop offset="1" stopColor="#C56C97" />
+            </linearGradient>
+            <linearGradient id="picnic-blanket" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stopColor="#E54B50" />
+              <stop offset="1" stopColor="#B03E6D" />
+            </linearGradient>
+          </defs>
+          <rect width="40" height="40" fill="url(#picnic-sky)" />
+          <circle cx="32" cy="9" r="3.5" fill="#FFE7B3" opacity="0.85" />
+          {/* Floating hearts */}
+          <path d="M9 9c-1.2-1.2-3-0.4-3 1 0 1.2 1.6 2.5 3 3.5 1.4-1 3-2.3 3-3.5 0-1.4-1.8-2.2-3-1z" fill="#fff" opacity="0.7" />
+          <path d="M22 5c-0.8-0.8-2-0.3-2 0.7 0 0.8 1.1 1.7 2 2.3 0.9-0.6 2-1.5 2-2.3 0-1-1.2-1.5-2-0.7z" fill="#fff" opacity="0.5" />
+          {/* Picnic blanket — checkered */}
+          <rect x="2" y="28" width="36" height="12" fill="url(#picnic-blanket)" />
+          <path d="M2 31h36M2 35h36M10 28v12M20 28v12M30 28v12" stroke="#fff" strokeWidth="0.6" opacity="0.45" />
+          {/* Two mascot silhouettes — sprout-shape */}
+          <ellipse cx="14" cy="24" rx="5" ry="6" fill="#5C9D5C" />
+          <path d="M14 18c0-3 2-4 2-5.5 0-1-2-1-2 1.5z" fill="#7AB368" />
+          <ellipse cx="26" cy="24" rx="5" ry="6" fill="#5C9D5C" />
+          <path d="M26 18c0-3-2-4-2-5.5 0-1 2-1 2 1.5z" fill="#7AB368" />
+          {/* Eye dots */}
+          <circle cx="12.5" cy="24" r="0.8" fill="#1c1c1c" />
+          <circle cx="15.5" cy="24" r="0.8" fill="#1c1c1c" />
+          <circle cx="24.5" cy="24" r="0.8" fill="#1c1c1c" />
+          <circle cx="27.5" cy="24" r="0.8" fill="#1c1c1c" />
         </svg>
       );
 

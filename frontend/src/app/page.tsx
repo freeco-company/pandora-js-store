@@ -10,7 +10,6 @@ import Counter from '@/components/Counter';
 import Parallax from '@/components/Parallax';
 import FloatingShapes from '@/components/FloatingShapes';
 import LogoLoader from '@/components/LogoLoader';
-import HeroOrbit from '@/components/HeroOrbit';
 import { organizationSchema, websiteSchema, howToSchema, localBusinessSchema, jsonLdScript } from '@/lib/jsonld';
 import { categoryVisual } from '@/lib/category-visual';
 import SiteIcon from '@/components/SiteIcon';
@@ -21,6 +20,11 @@ const HealthBeautyNarrative = dynamic(() => import('@/components/HealthBeautyNar
 const HomePopupModal = dynamic(() => import('@/components/HomePopupModal'));
 const CampaignCountdown = dynamic(() => import('@/components/CampaignCountdown'));
 const GsapScrollInit = dynamic(() => import('@/components/GsapScrollInit'));
+// HeroOrbit: not LCP element (decorative side art), drops auth + dashboard
+// fetch + Mascot SVGs out of the initial bundle
+const HeroOrbit = dynamic(() => import('@/components/HeroOrbit'), {
+  loading: () => <div style={{ width: '100%', aspectRatio: '1' }} aria-hidden />,
+});
 
 export const revalidate = 3600;
 
@@ -111,18 +115,17 @@ export default async function HomePage() {
               </div>
 
               <div className="mb-6">
-                <TextReveal
-                  as="h1"
-                  text="婕樂纖仙女館"
-                  className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-[#9F6B3E]"
-                  stagger={70}
-                />
+                {/* H1 renders instantly — it's the LCP candidate. The animated
+                    sub-line below is the visual flair. */}
+                <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-[#9F6B3E]">
+                  婕樂纖仙女館
+                </h1>
                 <TextReveal
                   as="p"
                   text="由內而外，綻放光彩"
                   className="text-xl sm:text-2xl text-gray-800 mt-3 font-bold"
                   stagger={50}
-                  delay={400}
+                  delay={200}
                 />
               </div>
 

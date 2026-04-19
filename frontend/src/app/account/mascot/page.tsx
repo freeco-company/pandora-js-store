@@ -245,6 +245,7 @@ export default function MascotHomePage() {
                 })),
               ]}
               current={currentOutfit}
+              progressFor={(meta) => outfitProgress(meta, data)}
               onTap={(v) => setPreviewOutfit(v)}
             />
           )}
@@ -260,30 +261,17 @@ export default function MascotHomePage() {
                 })),
               ]}
               current={currentBackdrop}
+              progressFor={(meta) => outfitProgress(meta, data)}
               onTap={(v) => setPreviewBackdrop(v)}
             />
           )}
 
           {tab === 'achievements' && (
-            <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
-              {Object.entries(data.achievements.catalog).map(([code, def]) => {
-                const earned = earnedCodes.has(code);
-                return (
-                  <div
-                    key={code}
-                    title={def.description}
-                    className={`aspect-square rounded-2xl p-2 flex flex-col items-center justify-center text-center transition-all ${
-                      earned ? 'bg-white border border-[#e7d9cb] shadow-sm' : 'bg-slate-100 opacity-55'
-                    }`}
-                  >
-                    <div className={`text-3xl mb-1 ${earned ? '' : 'grayscale opacity-60'}`}><OutfitIcon name={def.emoji} size={32} static={!earned} /></div>
-                    <div className={`text-[10px] font-black leading-tight ${earned ? 'text-slate-800' : 'text-slate-400'}`}>
-                      {def.name}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+            <AchievementsGrid
+              catalog={data.achievements.catalog}
+              earnedCodes={earnedCodes}
+              progress={data.achievements.progress}
+            />
           )}
         </div>
       </section>
@@ -298,25 +286,72 @@ interface PickerItem {
   previewValue: string | null;
 }
 
+/**
+ * Compute current/target progress for an outfit/backdrop unlock requirement.
+ * Returns null for the "no item" entries that have no unlock spec.
+ * Reuses the dashboard payload — no extra API call.
+ */
+function outfitProgress(
+  meta: { unlock?: { type: string; value: number } },
+  data: CustomerDashboard,
+): { current: number; target: number } | null {
+  if (!meta.unlock) return null;
+  const target = meta.unlock.value;
+  const raw = (() => {
+    switch (meta.unlock.type) {
+      case 'orders': return data.customer.total_orders;
+      case 'spend': return data.customer.total_spent;
+      case 'streak': return data.customer.streak_days;
+      case 'achievements': return data.achievements.earned.length;
+      default: return 0;
+    }
+  })();
+  return { current: Math.min(raw, target), target };
+}
+
+/** Inline progress bar — small enough to sit inside a square tile. */
+function ProgressBar({ current, target }: { current: number; target: number }) {
+  const pct = target > 0 ? Math.min(100, (current / target) * 100) : 0;
+  const near = pct >= 66 && pct < 100;
+  return (
+    <div className="w-full">
+      <div className="h-1 rounded-full bg-slate-200 overflow-hidden">
+        <div
+          className={`h-full transition-all duration-500 ${near ? 'bg-[#c0392b]' : 'bg-[#9F6B3E]'}`}
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
 function PickerGrid({
   items,
   current,
+  progressFor,
   onTap,
 }: {
   items: PickerItem[];
   current: string | null | undefined;
+  progressFor?: (meta: PickerItem['meta']) => { current: number; target: number } | null;
   onTap: (v: string | null) => void;
 }) {
   return (
     <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
       {items.map((item) => {
         const isCurrent = current === item.previewValue;
+        const prog = !item.owned && progressFor ? progressFor(item.meta) : null;
         const unlockText = item.meta.unlock
           ? item.meta.unlock.type === 'orders' ? `${item.meta.unlock.value} 筆訂單`
           : item.meta.unlock.type === 'spend' ? `消費 $${item.meta.unlock.value.toLocaleString()}`
           : item.meta.unlock.type === 'streak' ? `連登 ${item.meta.unlock.value} 天`
           : item.meta.unlock.type === 'achievements' ? `${item.meta.unlock.value} 個成就`
           : ''
+          : '';
+        const progressText = prog
+          ? item.meta.unlock?.type === 'spend'
+            ? `$${prog.current.toLocaleString()}/$${prog.target.toLocaleString()}`
+            : `${prog.current}/${prog.target}`
           : '';
 
         return (
@@ -335,7 +370,7 @@ function PickerGrid({
                 ? isCurrent
                   ? `${item.meta.name}（目前預覽）`
                   : `預覽 ${item.meta.name}`
-                : `${item.meta.name}（未解鎖 — ${unlockText}）`
+                : `${item.meta.name}（未解鎖 — ${progressText || unlockText}）`
             }
           >
             {!item.owned && (
@@ -356,10 +391,101 @@ function PickerGrid({
             <span className={`text-[10px] font-black leading-tight ${isCurrent ? 'text-white' : item.owned ? 'text-slate-800' : 'text-slate-400'}`}>
               {item.meta.name}
             </span>
-            {!item.owned && unlockText && (
-              <span className="text-[8px] font-bold text-slate-400 leading-tight">{unlockText}</span>
+            {!item.owned && (progressText || unlockText) && (
+              <span className="text-[8px] font-bold text-slate-500 leading-tight">
+                {progressText || unlockText}
+              </span>
             )}
+            {prog && <ProgressBar current={prog.current} target={prog.target} />}
           </button>
+        );
+      })}
+    </div>
+  );
+}
+
+/**
+ * Achievements grid — re-orders so "near completion" unearned achievements
+ * surface first, then other unearned, then earned at the bottom.
+ * The reordering is a soft motivational nudge: the user sees what's
+ * within reach immediately.
+ */
+function AchievementsGrid({
+  catalog,
+  earnedCodes,
+  progress,
+}: {
+  catalog: CustomerDashboard['achievements']['catalog'];
+  earnedCodes: Set<string>;
+  progress: CustomerDashboard['achievements']['progress'];
+}) {
+  const entries = Object.entries(catalog);
+
+  const sorted = [...entries].sort(([codeA, defA], [codeB, defB]) => {
+    const earnedA = earnedCodes.has(codeA);
+    const earnedB = earnedCodes.has(codeB);
+    if (earnedA !== earnedB) return earnedA ? 1 : -1; // unearned first
+
+    // Both unearned — sort by progress desc (closer to done = higher in list)
+    if (!earnedA && !earnedB) {
+      const pctA = progress[codeA] ? progress[codeA].current / progress[codeA].target : -1;
+      const pctB = progress[codeB] ? progress[codeB].current / progress[codeB].target : -1;
+      if (pctA !== pctB) return pctB - pctA;
+    }
+    // Stable fallback by tier importance: gold > silver > bronze
+    const rank = { gold: 0, silver: 1, bronze: 2 } as Record<string, number>;
+    return (rank[defA.tier] ?? 9) - (rank[defB.tier] ?? 9);
+  });
+
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+      {sorted.map(([code, def]) => {
+        const earned = earnedCodes.has(code);
+        const prog = !earned ? progress[code] : null;
+        const near = prog && prog.target > 0 && prog.current / prog.target >= 0.66 && prog.current < prog.target;
+
+        return (
+          <div
+            key={code}
+            title={def.description}
+            className={`relative rounded-2xl p-3 flex flex-col items-center text-center gap-1.5 transition-all ${
+              earned
+                ? 'bg-white border border-[#e7d9cb] shadow-sm'
+                : near
+                ? 'bg-gradient-to-br from-[#fdf3ec] to-white border-2 border-[#c0392b]/40 shadow-sm'
+                : 'bg-slate-100 opacity-70'
+            }`}
+          >
+            {near && (
+              <span className="absolute -top-2 -right-1 px-2 py-0.5 rounded-full bg-[#c0392b] text-white text-[9px] font-black shadow-md">
+                快達成
+              </span>
+            )}
+            <div className={`mb-0.5 ${earned ? '' : 'grayscale opacity-70'}`}>
+              <OutfitIcon name={def.emoji} size={32} static={!earned} />
+            </div>
+            <div className={`text-[11px] font-black leading-tight ${earned ? 'text-slate-800' : 'text-slate-600'}`}>
+              {def.name}
+            </div>
+            <div className="text-[10px] text-slate-500 leading-tight line-clamp-2 px-1">
+              {def.description}
+            </div>
+            {prog && (
+              <div className="w-full mt-auto pt-1 space-y-1">
+                <div className="text-[9px] font-black text-[#9F6B3E]">
+                  {def.progress?.type === 'spend_total'
+                    ? `$${prog.current.toLocaleString()} / $${prog.target.toLocaleString()}`
+                    : `${prog.current} / ${prog.target}`}
+                </div>
+                <ProgressBar current={prog.current} target={prog.target} />
+              </div>
+            )}
+            {earned && (
+              <div className="text-[9px] font-black text-[#9F6B3E] mt-auto pt-1">
+                已達成
+              </div>
+            )}
+          </div>
         );
       })}
     </div>

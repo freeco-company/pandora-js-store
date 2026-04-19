@@ -58,6 +58,9 @@ Route::get('/popups', [PopupController::class, 'index']);
 // Lightweight page-view tracking for dashboard daily-visitors widget
 Route::post('/track/view', [\App\Http\Controllers\Api\PageViewController::class, 'store']);
 
+// Real social proof — cumulative sales + recent viewers for product pages.
+Route::get('/products/{slug}/social-proof', [\App\Http\Controllers\Api\SocialProofController::class, 'show']);
+
 // AI traffic counter — called by Next.js proxy when AI bot UA or AI-origin
 // referer is detected. Aggregates by (date, bot_type, source).
 Route::post('/track/ai-visit', [\App\Http\Controllers\Api\AiVisitController::class, 'store'])
@@ -82,6 +85,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/customer/addresses', [CustomerProfileController::class, 'addressStore']);
     Route::put('/customer/addresses/{address}', [CustomerProfileController::class, 'addressUpdate']);
     Route::delete('/customer/addresses/{address}', [CustomerProfileController::class, 'addressDestroy']);
+
+    // Wishlist
+    Route::get('/wishlist', [\App\Http\Controllers\Api\WishlistController::class, 'index']);
+    Route::post('/wishlist', [\App\Http\Controllers\Api\WishlistController::class, 'store']);
+    Route::post('/wishlist/sync', [\App\Http\Controllers\Api\WishlistController::class, 'sync']);
+    Route::delete('/wishlist/{productId}', [\App\Http\Controllers\Api\WishlistController::class, 'destroy']);
 });
 
 // ECPay 物流 CVS 超商地圖選店（需開放 POST 給 ECPay callback）

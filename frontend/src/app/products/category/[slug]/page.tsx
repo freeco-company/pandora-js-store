@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation';
 import { getProducts, getProductCategories, imageUrl } from '@/lib/api';
 import type { Product } from '@/lib/api';
 import ProductBrowser from '@/components/ProductBrowser';
-import { breadcrumbSchema, jsonLdScript } from '@/lib/jsonld';
+import { breadcrumbSchema, collectionPageSchema, jsonLdScript } from '@/lib/jsonld';
 import { SITE_URL } from '@/lib/site';
 
 export const revalidate = 3600;
@@ -109,12 +109,18 @@ export default async function CategoryPage({ params }: Props) {
       image: p.image ? imageUrl(p.image) : undefined,
     })),
   };
+  const collectionPage = collectionPageSchema({
+    url: `/products/category/${slug}`,
+    name: meta.h1,
+    description: meta.description,
+    numberOfItems: products.length,
+  });
 
   return (
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: jsonLdScript(breadcrumbs, itemList) }}
+        dangerouslySetInnerHTML={{ __html: jsonLdScript(collectionPage, breadcrumbs, itemList) }}
       />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         {/* Category header with SEO-rich intro text */}

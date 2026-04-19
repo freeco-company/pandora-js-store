@@ -270,6 +270,15 @@ export default function AccountPage() {
 
       {/* Settings / account management links */}
       <section className="bg-white rounded-3xl border border-[#e7d9cb] overflow-hidden divide-y divide-[#e7d9cb]">
+        <Link href="/account/wishlist" className="flex items-center gap-3 px-5 py-4 active:bg-[#fdf7ef]">
+          <div className="w-9 h-9 rounded-xl bg-[#fdf7ef] flex items-center justify-center shrink-0">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="#c0392b" stroke="none" aria-hidden>
+              <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/>
+            </svg>
+          </div>
+          <div className="flex-1 text-sm font-black text-slate-800">我的收藏</div>
+          {chevron}
+        </Link>
         <Link href="/account/referral" className="flex items-center gap-3 px-5 py-4 active:bg-[#fdf7ef]">
           <div className="w-9 h-9 rounded-xl bg-[#fdf7ef] flex items-center justify-center shrink-0"><Icons.Gift className="w-5 h-5 text-[#e74c3c]" /></div>
           <div className="flex-1 text-sm font-black text-slate-800">推薦好友</div>

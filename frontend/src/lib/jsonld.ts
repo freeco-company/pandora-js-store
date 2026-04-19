@@ -398,6 +398,91 @@ export function productFaqs(product: {
 }
 
 /**
+ * CollectionPage — wraps ItemList for category landing pages so Google
+ * understands the URL is a curated collection (not a single product),
+ * and can attribute the listed products to this canonical page.
+ *
+ * Pair with itemList on the same page.
+ */
+export function collectionPageSchema(opts: {
+  url: string;            // absolute or relative
+  name: string;
+  description?: string;
+  numberOfItems?: number;
+}) {
+  const url = opts.url.startsWith('http') ? opts.url : `${siteUrl}${opts.url}`;
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    '@id': `${url}#collection`,
+    url,
+    name: opts.name,
+    ...(opts.description ? { description: opts.description } : {}),
+    inLanguage: 'zh-TW',
+    isPartOf: { '@id': `${siteUrl}/#website` },
+    ...(opts.numberOfItems !== undefined ? { numberOfItems: opts.numberOfItems } : {}),
+  };
+}
+
+/**
+ * Per-review schema for the top N reviews on a product page.
+ * Returns an array — caller spreads into the page's @graph payload.
+ *
+ * Google requires reviews to match visible content. Emit only what the
+ * page actually renders.
+ */
+export function reviewsSchema(
+  productName: string,
+  productSlug: string,
+  reviews: Array<{
+    rating: number;
+    title?: string | null;
+    body: string;
+    customer_name?: string | null;
+    created_at: string;
+  }>,
+) {
+  const productUrl = `${siteUrl}/products/${productSlug}`;
+  return reviews.map((r) => ({
+    '@context': 'https://schema.org',
+    '@type': 'Review',
+    itemReviewed: {
+      '@type': 'Product',
+      name: productName,
+      url: productUrl,
+    },
+    reviewRating: {
+      '@type': 'Rating',
+      ratingValue: r.rating,
+      bestRating: 5,
+      worstRating: 1,
+    },
+    author: {
+      '@type': 'Person',
+      name: r.customer_name || '匿名仙女',
+    },
+    datePublished: r.created_at,
+    ...(r.title ? { name: r.title } : {}),
+    reviewBody: r.body,
+  }));
+}
+
+/**
+ * Speakable — marks the headline + lead paragraph as Google-Assistant
+ * readable for article pages. Improves the chance of TTS surface in
+ * Google Assistant / smart speakers, and AI overview citations.
+ *
+ * The cssSelector list MUST match selectors actually present on the page.
+ */
+export function speakableSchema(selectors: string[] = ['h1', '[data-speakable]']) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'SpeakableSpecification',
+    cssSelector: selectors,
+  };
+}
+
+/**
  * Article schema helper — includes dateModified for freshness signal.
  */
 export function articleSchema(article: {
@@ -425,6 +510,11 @@ export function articleSchema(article: {
       logo: { '@type': 'ImageObject', url: `${siteUrl}/favicon.svg` },
     },
     mainEntityOfPage: { '@type': 'WebPage', '@id': `${siteUrl}/articles/${article.slug}` },
+    // Speakable — H1 + the rendered lead paragraph (data-speakable attr in template)
+    speakable: {
+      '@type': 'SpeakableSpecification',
+      cssSelector: ['h1', '[data-speakable]'],
+    },
   };
 }
 

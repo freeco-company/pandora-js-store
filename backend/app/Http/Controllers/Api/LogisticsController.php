@@ -189,6 +189,12 @@ HTML;
         if ($newStatus) {
             $updates['status'] = $newStatus;
         }
+        // First time the parcel arrives at the store — anchor for "5 days
+        // since arrival" pickup-reminder cron. Only set once: status can
+        // momentarily flip back if there are duplicate callbacks.
+        if ($rtnCode === 2030 && $order->shipped_at === null) {
+            $updates['shipped_at'] = now();
+        }
         $order->update($updates);
 
         Log::info('ECPay logistics status', [

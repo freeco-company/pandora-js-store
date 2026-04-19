@@ -28,3 +28,4 @@ Allow: /
 
 Sitemap: https://pandora.js-store.com.tw/sitemap.xml
 Sitemap: https://pandora.js-store.com.tw/sitemap-images.xml
+Sitemap: https://pandora.js-store.com.tw/sitemap-news.xml

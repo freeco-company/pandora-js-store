@@ -5,7 +5,7 @@ namespace App\Services;
 class OutfitCatalog
 {
     /**
-     * Outfit catalog. Unlock types: 'orders', 'spend', 'streak', 'achievements'.
+     * Outfit catalog. Unlock types: 'orders', 'spend', 'streak', 'achievements', 'referrals'.
      * Slot: head, face, neck, crown.
      */
     public static function all(): array
@@ -23,6 +23,9 @@ class OutfitCatalog
 
             'scarf'       => ['name' => '圍巾',     'slot' => 'neck', 'emoji' => 'scarf', 'unlock' => ['type' => 'spend', 'value' => 1000]],
             'pearl'       => ['name' => '珍珠項鍊', 'slot' => 'neck', 'emoji' => 'pearl', 'unlock' => ['type' => 'spend', 'value' => 10000]],
+
+            // Referral-exclusive — only path is inviting friends, can't be bought
+            'friendship_charm' => ['name' => '友情愛心', 'slot' => 'neck', 'emoji' => 'friendship-charm', 'unlock' => ['type' => 'referrals', 'value' => 1]],
         ];
     }
 
@@ -35,6 +38,9 @@ class OutfitCatalog
             'starry'   => ['name' => '星空',   'emoji' => 'star', 'unlock' => ['type' => 'streak', 'value' => 7]],
             'rainbow'  => ['name' => '彩虹',   'emoji' => 'rainbow', 'unlock' => ['type' => 'achievements', 'value' => 10]],
             'beach'    => ['name' => '海邊',   'emoji' => 'compass', 'unlock' => ['type' => 'spend', 'value' => 3000]],
+
+            // Referral-exclusive
+            'friend_picnic' => ['name' => '仙女野餐', 'emoji' => 'friend-picnic', 'unlock' => ['type' => 'referrals', 'value' => 3]],
         ];
     }
 
