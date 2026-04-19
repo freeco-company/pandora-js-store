@@ -105,8 +105,14 @@ jobs:
 
       # ── Rsync frontend source + pre-built .next ──────────────────
       - name: Rsync frontend (source + .next build output)
+        # --delete: remove files on server that are no longer in repo.
+        # Critical to prevent stale public/ and .next/ chunks shadowing
+        # current code (e.g. a pre-launch public/robots.txt that lingered
+        # after being removed from repo kept serving the old pandora-dev
+        # sitemap URL for weeks). Excludes protect server-only state:
+        # node_modules (installed on server), .env* (prod secrets), .git/.
         run: |
-          rsync -az \
+          rsync -az --delete \
             --exclude='node_modules/' --exclude='.git/' \
             --exclude='.env*' \
             frontend/ root@${{ secrets.SERVER_HOST }}:/var/www/pandora/frontend/

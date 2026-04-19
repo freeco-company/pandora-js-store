@@ -1,0 +1,30 @@
+User-agent: *
+Allow: /
+Disallow: /cart
+Disallow: /checkout
+Disallow: /order-complete
+Disallow: /order-lookup
+Disallow: /admin
+Disallow: /api/
+Disallow: /account
+Disallow: /auth/
+Disallow: /login
+Disallow: /register
+
+User-agent: GPTBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+Sitemap: https://pandora.js-store.com.tw/sitemap.xml
+Sitemap: https://pandora.js-store.com.tw/sitemap-images.xml
