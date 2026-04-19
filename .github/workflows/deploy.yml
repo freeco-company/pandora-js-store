@@ -135,6 +135,18 @@ jobs:
             php artisan config:cache
             php artisan route:cache
             php artisan migrate --force
+
+            # Storage permissions: rsync from CI carries the runner's UID
+            # (1001) into storage/, but php-fpm runs as www-data — every
+            # admin upload via Filament/Livewire would fail with
+            # UnableToCreateDirectory until we re-chown after rsync.
+            # Also pre-create runtime dirs Livewire/Filament needs.
+            mkdir -p storage/app/public/livewire-tmp \
+                     storage/framework/cache \
+                     storage/framework/sessions \
+                     storage/framework/views
+            chown -R www-data:www-data storage bootstrap/cache
+            chmod -R 775 storage bootstrap/cache
           EOF
 
       # ── Frontend: just npm install + pm2 reload (no build!) ──────
