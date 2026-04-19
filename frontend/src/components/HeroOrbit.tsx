@@ -210,6 +210,7 @@ export default function HeroOrbit({ size = 420, className = '' }: Props) {
       <button
         type="button"
         onClick={() => tap('vip', '滿 $4,000 解鎖 VIP 價', '/products')}
+        aria-label="VIP 價：滿 NT$4,000 解鎖"
         className={`absolute bg-white/90 backdrop-blur shadow-lg flex items-center justify-center hero-orbit-d rounded-full cursor-pointer transition-transform duration-300 ${tapped === 'vip' ? 'scale-125' : 'active:scale-90'}`}
         style={{
           width: smBadge, height: smBadge,

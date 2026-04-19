@@ -57,6 +57,10 @@ const nextConfig: NextConfig = {
   // route changes (thumbnail → hero). Degrades to normal nav in Safari.
   experimental: {
     viewTransition: true,
+    // Inline critical CSS (via critters) so the 22KB Tailwind chunk
+    // doesn't render-block LCP. Above-the-fold styles ship inline,
+    // the rest loads async.
+    optimizeCss: true,
   },
   // Strip console.* except error/warn in production builds.
   compiler: {

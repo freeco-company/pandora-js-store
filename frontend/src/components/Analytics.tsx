@@ -188,8 +188,12 @@ export default function Analytics() {
 
   return (
     <>
-      {/* Google Tag Manager — loads GA4, Ads, Meta Pixel, LINE Tag, etc. */}
-      <Script id="gtm-init" strategy="afterInteractive">
+      {/* Google Tag Manager — lazyOnload so it doesn't block LCP/TBT.
+          GTM injects ~265KB; loading after the window load event drops
+          mobile Lighthouse perf score by ~15-20 points if loaded eagerly.
+          Events fire to window.dataLayer regardless — GTM processes the
+          queue on init, so add_to_cart / purchase / etc never get lost. */}
+      <Script id="gtm-init" strategy="lazyOnload">
         {`
           (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
           new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
