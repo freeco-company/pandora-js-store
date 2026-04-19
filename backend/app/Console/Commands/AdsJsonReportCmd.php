@@ -26,8 +26,9 @@ class AdsJsonReportCmd extends Command
 
     protected $description = 'Dump Google Ads data as JSON for downstream analysis (LLM, notebook, etc.)';
 
-    public function handle(GoogleAdsService $ads): int
+    public function handle(): int
     {
+        $ads = GoogleAdsService::fromConfig();
         $days = max(7, (int) $this->option('days'));
 
         if (! $ads->isConfigured()) {
