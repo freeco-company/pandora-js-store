@@ -54,6 +54,26 @@ return [
     'discord' => [
         'compliance_webhook' => env('DISCORD_COMPLIANCE_WEBHOOK'),
         'orders_webhook'     => env('DISCORD_ORDERS_WEBHOOK'),
+        'ads_webhook'        => env('DISCORD_ADS_WEBHOOK'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Google Ads API (read-only)
+    |--------------------------------------------------------------------------
+    | Populated via OAuth Playground once, refresh_token is long-lived.
+    | See /Users/chris/.claude/notes/... for setup runbook.
+    */
+    'google_ads' => [
+        'developer_token'    => env('GOOGLE_ADS_DEVELOPER_TOKEN'),
+        'client_id'          => env('GOOGLE_ADS_CLIENT_ID'),
+        'client_secret'      => env('GOOGLE_ADS_CLIENT_SECRET'),
+        'refresh_token'      => env('GOOGLE_ADS_REFRESH_TOKEN'),
+        // Paid account being queried (10-digit, no dashes)
+        'customer_id'        => env('GOOGLE_ADS_CUSTOMER_ID'),
+        // MCC account that manages it (10-digit, no dashes). Required when
+        // paid account is a child of a manager.
+        'login_customer_id'  => env('GOOGLE_ADS_LOGIN_CUSTOMER_ID'),
     ],
 
     'ecpay' => [

@@ -28,6 +28,16 @@ class DiscordNotifier
         );
     }
 
+    /** Webhook for Google Ads daily reports — falls back to orders → compliance. */
+    public static function ads(): self
+    {
+        return new self(
+            config('services.discord.ads_webhook')
+                ?: config('services.discord.orders_webhook')
+                ?: config('services.discord.compliance_webhook')
+        );
+    }
+
     public function isEnabled(): bool
     {
         return ! empty($this->webhook);
