@@ -14,6 +14,77 @@ import { detectAiTraffic } from './lib/ai-traffic';
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://pandora.js-store.com.tw/api';
 const memo = new Map<string, string | null>();
 
+/**
+ * WP /product/{wp_post_name} → Next /products/{new_slug}
+ *
+ * Key = 舊 WP post_name（decoded），Value = 新 products.slug。
+ * 來源：awoo_wp.wp_posts JOIN backend products.wp_id。
+ * Google 會丟 percent-encoded Chinese path，這邊統一 decode 後比對。
+ */
+const WP_PRODUCT_SLUG_MAP: Record<string, string> = {
+  'jerosse-婕樂纖-雪花紫纖飲-14份-盒': '雪花紫纖飲-蔓越莓風味漂浮微泡飲-微氣泡莓果飲-喝水神器',
+  '【郭雪芙代言推薦】-我的秘密-纖飄錠-60錠-盒': '纖飄錠-郭雪芙代言健康食品認證',
+  'jerosse-婕樂纖-纖纖輕鬆飲x-14包-盒': '纖纖飲X-纖纖輕鬆飲X',
+  'jerosse-婕樂纖-爆纖錠-120顆-瓶': '爆纖錠-小粉',
+  '婕樂纖輕卡肽纖飲-官方授權正品-10包-盒': '輕卡肽纖飲-肽可可',
+  '婕樂纖輕卡肽纖飲-厚焙奶茶-官方授權正品-10包-盒': '厚焙奶茶-肽纖飲奶茶口味-仙女奶茶-肽奶茶',
+  'jerosse-婕樂纖-植萃纖酵宿-60錠-盒-官方授權': '植萃纖酵宿',
+  'jerosse-hyaluronic-acid-tablets': '水光錠日本Hyabest專利玻尿酸-口服保養推薦',
+  'jerosse-hydration-mask-bandage': '水光繃帶面膜繃帶普拉斯頂級修護-補水保濕',
+  'jerosse-cleansing-gel': '婕肌零-J70婕肌零洗卸凝膠-洗卸保養三合一',
+  'jerosse-婕樂纖-雪聚露-雙效導入精華-官方授權正品': '雪聚露-雙效導入精華',
+  '婕樂纖-急救小白瓶-全效賦活絲絨身體精華油-100ml-瓶': '急救小白瓶-全效賦活絲絨身體精華油',
+  'jerosse-婕樂纖-法樂蓬洗髮露-法樂蓬強健養護豐盈洗髮露': '法樂蓬洗髮露-法樂蓬強健養護豐盈洗髮露',
+  'jerosse-婕樂纖-法樂蓬養髮原液-法樂蓬強健活化養髮原液': '法樂蓬養髮原液-法樂蓬強健活化養髮原液',
+  'jerosse-probiotics-official': '高機能益生菌',
+  'jerosse-婕樂纖-金盞花葉黃素晶亮凍葉黃素果凍-蘋果多多': '金盞花葉黃素晶亮凍葉黃素果凍-蘋果多多風味',
+  'jerosse-婕樂纖-積雪草護手霜50ml-條-官方授權正品': '積雪草護手霜',
+  'jerosse-婕樂纖-固樂纖dkkflex-60錠-盒-官方授權正品': '固樂纖DKKflex',
+  'jerosse-婕樂纖-療肺草正冠茶20包-盒-官方授權正品': '療肺草正冠茶',
+  'jerosse-婕樂纖-9國英雄turbo極速錠-20顆-包-官方授權正品': '9國英雄TURBO極速錠',
+  'jerosse-shampoo-sale': '法樂蓬洗髮露-法樂蓬強健養護豐盈洗髮露',
+  'jerosse-velvet-body-essence-oil': '急救小白瓶-全效賦活絲絨身體精華油',
+  'jerosse-probiotics-buy3get1': '高機能益生菌',
+  'jerosse-葉黃素晶亮凍優惠': '金盞花葉黃素晶亮凍葉黃素果凍-蘋果多多風味',
+};
+
+const WP_BUNDLE_SLUGS = new Set([
+  'jerosse-cny-2026-lucky-bag-bundle',
+  'jerosse-cny-burn-firming-vip-plan',
+]);
+
+function redirectWpProduct(req: NextRequest): NextResponse | null {
+  const { pathname } = req.nextUrl;
+  if (!pathname.startsWith('/product/')) return null;
+
+  const rawSlug = pathname.slice('/product/'.length).replace(/\/+$/, '');
+  const url = req.nextUrl.clone();
+  url.search = ''; // 丟掉 ?add-to-cart= 等 WooCommerce 參數
+
+  if (!rawSlug) {
+    url.pathname = '/products';
+    return NextResponse.redirect(url, 308);
+  }
+
+  let decoded: string;
+  try {
+    decoded = decodeURIComponent(rawSlug);
+  } catch {
+    decoded = rawSlug;
+  }
+
+  if (decoded in WP_PRODUCT_SLUG_MAP) {
+    url.pathname = `/products/${WP_PRODUCT_SLUG_MAP[decoded]}`;
+    return NextResponse.redirect(url, 308);
+  }
+  if (WP_BUNDLE_SLUGS.has(decoded)) {
+    url.pathname = '/bundles';
+    return NextResponse.redirect(url, 308);
+  }
+  url.pathname = '/products';
+  return NextResponse.redirect(url, 308);
+}
+
 async function postAiVisit(
   detection: { botType: string; source: string },
   path: string
@@ -80,6 +151,9 @@ export async function proxy(req: NextRequest, event: NextFetchEvent) {
     // block the response on analytics.
     event.waitUntil(postAiVisit(detection, req.nextUrl.pathname));
   }
+
+  const wpRedirect = redirectWpProduct(req);
+  if (wpRedirect) return wpRedirect;
 
   const redirect = await redirectLegacySlug(req);
   return redirect ?? NextResponse.next();
