@@ -4,6 +4,7 @@ namespace App\Observers;
 
 use App\Http\Controllers\Api\ProductController;
 use App\Models\Product;
+use App\Services\IndexNowService;
 use App\Services\LegalContentSanitizer;
 
 /**
@@ -32,6 +33,25 @@ class ProductComplianceObserver
     public function saved(Product $product): void
     {
         ProductController::bumpVersion();
+        $this->pingIndexNow($product);
+    }
+
+    /**
+     * Ping IndexNow only when a public-facing field changed. Skips
+     * inventory-only saves so we don't submit on every stock tweak.
+     */
+    private function pingIndexNow(Product $product): void
+    {
+        if (! $product->is_active) return;
+
+        $triggers = ['slug', 'name', 'description', 'short_description', 'price', 'combo_price', 'vip_price', 'is_active', 'featured_image'];
+        $changed = count(array_intersect($triggers, array_keys($product->getChanges()))) > 0
+            || $product->wasRecentlyCreated;
+        if (! $changed) return;
+
+        $host = (string) config('services.indexnow.host');
+        $url = "https://{$host}/products/{$product->slug}";
+        IndexNowService::fromConfig()->submitOne($url);
     }
 
     public function deleted(Product $product): void

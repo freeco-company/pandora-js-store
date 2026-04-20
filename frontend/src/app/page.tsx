@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
-import { getProducts, getProductCategories, getBanners, getPopups, type Product, type ProductCategory, type Banner, type Popup } from '@/lib/api';
+import { getProducts, getProductCategories, getBanners, getPopups, getArticles, imageUrl, type Product, type ProductCategory, type Banner, type Popup, type Article } from '@/lib/api';
 import ProductCardGrid from '@/components/ProductCardGrid';
 import HeroBanner from '@/components/HeroBanner';
 import ScrollReveal from '@/components/ScrollReveal';
@@ -29,17 +29,19 @@ const HeroOrbit = dynamic(() => import('@/components/HeroOrbit'), {
 export const revalidate = 3600;
 
 export default async function HomePage() {
-  const [productsRes, categoriesRes, bannersRes, popupsRes] = await Promise.allSettled([
+  const [productsRes, categoriesRes, bannersRes, popupsRes, articlesRes] = await Promise.allSettled([
     getProducts(),
     getProductCategories(),
     getBanners(),
     getPopups(),
+    getArticles(undefined, 1, 6),
   ]);
 
   const products: Product[] = productsRes.status === 'fulfilled' ? productsRes.value : [];
   const categories: ProductCategory[] = categoriesRes.status === 'fulfilled' ? categoriesRes.value : [];
   const banners: Banner[] = bannersRes.status === 'fulfilled' ? bannersRes.value : [];
   const popups: Popup[] = popupsRes.status === 'fulfilled' ? popupsRes.value : [];
+  const latestArticles: Article[] = articlesRes.status === 'fulfilled' ? articlesRes.value.data.slice(0, 6) : [];
 
   return (
     <>
@@ -441,6 +443,57 @@ export default async function HomePage() {
           </section>
         );
       })()}
+
+      {/* 8b. Latest articles — internal linking + SEO crawl path to /articles */}
+      {latestArticles.length > 0 && (
+        <section className="py-20 bg-[#fdf7ef]">
+          <div className="max-w-[1290px] mx-auto px-5 sm:px-6 lg:px-8">
+            <ScrollReveal variant="fade-up">
+              <div className="flex items-end justify-between mb-10 gap-4 flex-wrap">
+                <div>
+                  <div className="text-[10px] font-black tracking-[0.3em] text-[#b09070] mb-2">JEROSSE JOURNAL</div>
+                  <h2 className="text-3xl sm:text-4xl font-bold text-[#5a4529]">婕樂纖誌 · 最新文章</h2>
+                </div>
+                <Link
+                  href="/articles"
+                  className="text-sm font-bold text-[#9F6B3E] hover:text-[#7a5030] underline underline-offset-4"
+                >
+                  閱讀全部 →
+                </Link>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {latestArticles.slice(0, 6).map((a) => (
+                  <Link
+                    key={a.id}
+                    href={`/articles/${a.slug}`}
+                    className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow"
+                  >
+                    {a.featured_image && (
+                      <div className="aspect-[16/9] overflow-hidden bg-[#f0e6d8]">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={imageUrl(a.featured_image) || ''}
+                          alt={a.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          loading="lazy"
+                        />
+                      </div>
+                    )}
+                    <div className="p-5">
+                      <h3 className="text-base font-bold text-[#5a4529] line-clamp-2 group-hover:text-[#9F6B3E] transition-colors">
+                        {a.title}
+                      </h3>
+                      {a.excerpt && (
+                        <p className="text-sm text-[#8b7355] mt-2 line-clamp-2">{a.excerpt}</p>
+                      )}
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </ScrollReveal>
+          </div>
+        </section>
+      )}
 
       {/* 9. Final CTA — warm not black */}
       <section

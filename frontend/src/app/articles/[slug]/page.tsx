@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { notFound, permanentRedirect } from 'next/navigation';
 import { getArticle, getArticles, getProducts, imageUrl } from '@/lib/api';
 import ImageWithFallback, { LogoPlaceholder } from '@/components/ImageWithFallback';
 import ShareButtons from '@/components/ShareButtons';
@@ -77,6 +77,12 @@ export default async function ArticleDetailPage({ params }: Props) {
   }
   if (!article) {
     notFound();
+  }
+  // Legacy slug hit (slug_legacy matched on API) — 308 to the canonical slug.
+  const canonical = article.slug;
+  const current = decodeURIComponent(slug);
+  if (canonical !== current) {
+    permanentRedirect(`/articles/${canonical}`);
   }
 
   // Fetch related articles

@@ -80,6 +80,21 @@ return [
         'login_customer_id'  => env('GOOGLE_ADS_LOGIN_CUSTOMER_ID'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | IndexNow (Bing / Yandex)
+    |--------------------------------------------------------------------------
+    | Public ping protocol — tells search engines to re-crawl specific URLs.
+    | Key is a public verification token (not a secret). The matching .txt
+    | file lives at frontend/public/{key}.txt — both must match.
+    | Google ignores IndexNow; this is for Bing + Yandex.
+    */
+    'indexnow' => [
+        'key' => env('INDEXNOW_KEY', '5ca459d31d8cd8d090592abbd45056d8'),
+        'host' => env('INDEXNOW_HOST', 'pandora.js-store.com.tw'),
+        'enabled' => (bool) env('INDEXNOW_ENABLED', true),
+    ],
+
     'ecpay' => [
         // Payment (金流) credentials
         'merchant_id' => env('ECPAY_MERCHANT_ID'),

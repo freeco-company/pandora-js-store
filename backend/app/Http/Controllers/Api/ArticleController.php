@@ -71,7 +71,9 @@ class ArticleController extends Controller
     public function show(string $slug): JsonResponse
     {
         $payload = Cache::remember("articles:show:v{$this->version()}:{$slug}", self::CACHE_TTL, function () use ($slug) {
-            $article = Article::where('slug', $slug)
+            $article = Article::where(function ($q) use ($slug) {
+                    $q->where('slug', $slug)->orWhere('slug_legacy', $slug);
+                })
                 ->where('status', 'published')
                 // Expired promo articles 404 on detail page too, not just list
                 ->where(function ($q) {

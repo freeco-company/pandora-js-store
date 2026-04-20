@@ -4,6 +4,7 @@ namespace App\Observers;
 
 use App\Http\Controllers\Api\ArticleController;
 use App\Models\Article;
+use App\Services\IndexNowService;
 use App\Services\LegalContentSanitizer;
 
 /**
@@ -33,6 +34,25 @@ class ArticleComplianceObserver
     public function saved(Article $article): void
     {
         ArticleController::bumpVersion();
+        $this->pingIndexNow($article);
+    }
+
+    /**
+     * Ping IndexNow only when published and the public-facing URL/content
+     * changed. Skips draft saves so we don't waste submissions during edit.
+     */
+    private function pingIndexNow(Article $article): void
+    {
+        if ($article->status !== 'published') return;
+
+        $triggers = ['slug', 'title', 'content', 'excerpt', 'status', 'featured_image'];
+        $changed = count(array_intersect($triggers, array_keys($article->getChanges()))) > 0
+            || $article->wasRecentlyCreated;
+        if (! $changed) return;
+
+        $host = (string) config('services.indexnow.host');
+        $url = "https://{$host}/articles/{$article->slug}";
+        IndexNowService::fromConfig()->submitOne($url);
     }
 
     public function deleted(Article $article): void
