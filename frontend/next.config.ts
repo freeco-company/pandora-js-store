@@ -22,19 +22,9 @@ const nextConfig: NextConfig = {
   // 裡寫中文 source 無法命中）。這裡只留純 ASCII 可表達的規則。
   async redirects() {
     return [
-      // WP query-param
-      {
-        source: '/',
-        has: [{ type: 'query', key: 'post_type', value: 'product' }],
-        destination: '/products',
-        permanent: true,
-      },
-      {
-        source: '/',
-        has: [{ type: 'query', key: 'page_id' }],
-        destination: '/',
-        permanent: true,
-      },
+      // 注意：WP ?post_type=product / ?page_id= query-param 重定向改放
+      // proxy.ts。next.config 的 redirects() 會把 request query 原樣帶到
+      // destination，`/?page_id=3 → /?page_id=3` 會無限迴圈。
       // 分類（英文）
       {
         source: '/product-category/healthy-vitality-series',

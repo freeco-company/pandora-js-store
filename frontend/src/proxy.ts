@@ -78,7 +78,8 @@ function redirectWpProduct(req: NextRequest): NextResponse | null {
     return NextResponse.redirect(url, 308);
   }
   if (WP_BUNDLE_SLUGS.has(decoded)) {
-    url.pathname = '/bundles';
+    // /bundles 沒有 index 路由，導 /products 保險
+    url.pathname = '/products';
     return NextResponse.redirect(url, 308);
   }
   url.pathname = '/products';
@@ -150,6 +151,19 @@ export async function proxy(req: NextRequest, event: NextFetchEvent) {
     // waitUntil keeps the promise alive past the proxy return, so we don't
     // block the response on analytics.
     event.waitUntil(postAiVisit(detection, req.nextUrl.pathname));
+  }
+
+  // WP query-param 舊連結：?post_type=product / ?page_id=xxx。
+  // 放 proxy 不放 next.config 的 redirects()，是因為後者會把 request query 帶
+  // 到 destination，造成 `/?page_id=3 → /?page_id=3` 無限迴圈。
+  if (req.nextUrl.pathname === '/') {
+    const q = req.nextUrl.searchParams;
+    if (q.get('post_type') === 'product' || q.has('page_id')) {
+      const url = req.nextUrl.clone();
+      url.search = '';
+      url.pathname = q.get('post_type') === 'product' ? '/products' : '/';
+      return NextResponse.redirect(url, 308);
+    }
   }
 
   const wpRedirect = redirectWpProduct(req);
