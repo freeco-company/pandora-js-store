@@ -169,7 +169,6 @@ export default async function ProductDetailPage({ params }: Props) {
   // that actually have body text (Google rejects empty review bodies).
   const reviewJsonLd = reviewsData?.reviews
     ? reviewsSchema(
-        product.name,
         product.slug,
         reviewsData.reviews
           .filter((r): r is typeof r & { content: string } => !!r.content && r.content.trim().length > 0)

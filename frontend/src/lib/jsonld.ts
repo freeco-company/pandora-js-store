@@ -211,6 +211,7 @@ export function productSchema(product: {
   reviewRating?: number;
 }) {
   const url = `${siteUrl}/products/${product.slug}`;
+  const productId = `${url}#product`;
   const availability = !product.isActive
     ? 'https://schema.org/Discontinued'
     : product.stockStatus === 'outofstock'
@@ -277,6 +278,7 @@ export function productSchema(product: {
   return {
     '@context': 'https://schema.org',
     '@type': 'Product',
+    '@id': productId,
     name: product.name,
     description: product.description,
     image: product.image || undefined,
@@ -432,7 +434,6 @@ export function collectionPageSchema(opts: {
  * page actually renders.
  */
 export function reviewsSchema(
-  productName: string,
   productSlug: string,
   reviews: Array<{
     rating: number;
@@ -446,11 +447,7 @@ export function reviewsSchema(
   return reviews.map((r) => ({
     '@context': 'https://schema.org',
     '@type': 'Review',
-    itemReviewed: {
-      '@type': 'Product',
-      name: productName,
-      url: productUrl,
-    },
+    itemReviewed: { '@id': `${productUrl}#product` },
     reviewRating: {
       '@type': 'Rating',
       ratingValue: r.rating,
