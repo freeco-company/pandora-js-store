@@ -63,7 +63,7 @@ function redirectWpProduct(req: NextRequest): NextResponse | null {
 
   if (!rawSlug) {
     url.pathname = '/products';
-    return NextResponse.redirect(url, 308);
+    return NextResponse.redirect(url, 301);
   }
 
   let decoded: string;
@@ -75,15 +75,15 @@ function redirectWpProduct(req: NextRequest): NextResponse | null {
 
   if (decoded in WP_PRODUCT_SLUG_MAP) {
     url.pathname = `/products/${WP_PRODUCT_SLUG_MAP[decoded]}`;
-    return NextResponse.redirect(url, 308);
+    return NextResponse.redirect(url, 301);
   }
   if (WP_BUNDLE_SLUGS.has(decoded)) {
     // /bundles 沒有 index 路由，導 /products 保險
     url.pathname = '/products';
-    return NextResponse.redirect(url, 308);
+    return NextResponse.redirect(url, 301);
   }
   url.pathname = '/products';
-  return NextResponse.redirect(url, 308);
+  return NextResponse.redirect(url, 301);
 }
 
 async function postAiVisit(
@@ -136,7 +136,52 @@ async function redirectLegacySlug(req: NextRequest): Promise<NextResponse | null
   if (canonical) {
     const url = req.nextUrl.clone();
     url.pathname = `/products/${canonical}`;
-    return NextResponse.redirect(url, 308);
+    return NextResponse.redirect(url, 301);
+  }
+
+  return null;
+}
+
+// WooCommerce category slug → new category slug. Empty string = redirect to
+// /products index (no direct mapping). Extend as new category landing pages
+// are built.
+const WP_CATEGORY_MAP: Record<string, string> = {
+  health: '',
+  beauty: '',
+  supplements: '',
+  'body-beauty-series': 'body-beauty-series',
+};
+
+function redirectWpTaxonomy(req: NextRequest): NextResponse | null {
+  const { pathname } = req.nextUrl;
+  const url = req.nextUrl.clone();
+  url.search = ''; // strip WP query params (?orderby=, ?add-to-cart=, etc.)
+
+  // WP shop index — /shop or /shop/page/N
+  if (pathname === '/shop' || pathname.startsWith('/shop/')) {
+    url.pathname = '/products';
+    return NextResponse.redirect(url, 301);
+  }
+
+  // WP product category — /product-category/<slug> or /product-category/<slug>/page/N
+  const cat = pathname.match(/^\/product-category\/([^\/]+)/);
+  if (cat) {
+    const slug = decodeURIComponent(cat[1]);
+    const mapped = WP_CATEGORY_MAP[slug];
+    url.pathname = mapped ? `/products/category/${mapped}` : '/products';
+    return NextResponse.redirect(url, 301);
+  }
+
+  // WP product tag — /product-tag/<slug>
+  if (pathname.startsWith('/product-tag/')) {
+    url.pathname = '/products';
+    return NextResponse.redirect(url, 301);
+  }
+
+  // WooCommerce account
+  if (pathname === '/my-account' || pathname.startsWith('/my-account/')) {
+    url.pathname = '/account';
+    return NextResponse.redirect(url, 301);
   }
 
   return null;
@@ -162,9 +207,12 @@ export async function proxy(req: NextRequest, event: NextFetchEvent) {
       const url = req.nextUrl.clone();
       url.search = '';
       url.pathname = q.get('post_type') === 'product' ? '/products' : '/';
-      return NextResponse.redirect(url, 308);
+      return NextResponse.redirect(url, 301);
     }
   }
+
+  const taxonomyRedirect = redirectWpTaxonomy(req);
+  if (taxonomyRedirect) return taxonomyRedirect;
 
   const wpRedirect = redirectWpProduct(req);
   if (wpRedirect) return wpRedirect;
