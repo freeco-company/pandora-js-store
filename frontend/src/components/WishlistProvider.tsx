@@ -19,6 +19,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useAuth } from './AuthProvider';
+import { useToast } from './Toast';
 import {
   readGuestWishlist,
   writeGuestWishlist,
@@ -58,6 +59,7 @@ export function useWishlist() {
 
 export function WishlistProvider({ children }: { children: ReactNode }) {
   const { token, isLoggedIn, loading: authLoading } = useAuth();
+  const { toast } = useToast();
   const [ids, setIds] = useState<Set<number>>(new Set());
   const [items, setItems] = useState<WishlistItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -118,27 +120,33 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
   const has = useCallback((productId: number) => ids.has(productId), [ids]);
 
   const add = useCallback((productId: number) => {
+    let added = false;
     setIds((prev) => {
       if (prev.has(productId)) return prev;
+      added = true;
       const next = new Set(prev);
       next.add(productId);
       if (!token) writeGuestWishlist(Array.from(next));
       return next;
     });
+    if (added) toast('已加入我的最愛', 'success');
     if (token) addServerWishlist(token, productId).catch(() => {});
-  }, [token]);
+  }, [token, toast]);
 
   const remove = useCallback((productId: number) => {
+    let removed = false;
     setIds((prev) => {
       if (!prev.has(productId)) return prev;
+      removed = true;
       const next = new Set(prev);
       next.delete(productId);
       if (!token) writeGuestWishlist(Array.from(next));
       return next;
     });
     setItems((prev) => prev.filter((i) => i.product_id !== productId));
+    if (removed) toast('已從我的最愛移除', 'info');
     if (token) removeServerWishlist(token, productId).catch(() => {});
-  }, [token]);
+  }, [token, toast]);
 
   const toggle = useCallback((productId: number) => {
     if (ids.has(productId)) remove(productId);

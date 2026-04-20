@@ -34,6 +34,9 @@ export default function ProductBrowser({
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [phase, setPhase] = useState<'idle' | 'out' | 'in'>('in');
   const reqId = useRef(0);
+  // Cache category → products so flipping between tabs doesn't re-fetch.
+  // Keyed by category slug ("" = all). Seeded with the initial SSR payload.
+  const cacheRef = useRef<Map<string, Product[]>>(new Map([[initialCategory, initialProducts]]));
 
   // Entering /products from an external link (e.g. homepage category card)
   // should start at top of page — Next.js preserves scroll within the
@@ -75,12 +78,23 @@ export default function ProductBrowser({
 
   const load = useCallback(async (nextCategory: string) => {
     const id = ++reqId.current;
+    // Cache hit: swap instantly with a tiny crossfade, no network round-trip.
+    const cached = cacheRef.current.get(nextCategory);
+    if (cached) {
+      setPhase('out');
+      await new Promise((r) => setTimeout(r, 80));
+      if (reqId.current !== id) return;
+      setProducts(cached);
+      requestAnimationFrame(() => setPhase('in'));
+      return;
+    }
     setPhase('out');
     await new Promise((r) => setTimeout(r, 180));
     if (reqId.current !== id) return;
     try {
       const result = await getProducts(nextCategory || undefined);
       if (reqId.current !== id) return;
+      cacheRef.current.set(nextCategory, result);
       setProducts(result);
     } catch {
       if (reqId.current !== id) return;
