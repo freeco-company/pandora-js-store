@@ -17,94 +17,12 @@ const nextConfig: NextConfig = {
   env: {
     NEXT_PUBLIC_APP_VERSION: pkg.version,
   },
-  // WordPress → Next.js 301 (Next 回 308，對 SEO 等價) migration redirects.
-  // 舊 slug 對照表從舊站 MariaDB `awoo_wp.wp_posts` 撈出並 join 後端
-  // `products.wp_id`。促銷/組合 post 沒進 Product model，手動對應到最相關商品。
+  // WordPress → Next.js 301 migration redirects. Chinese-slug 精準對應改走
+  // middleware.ts（path-to-regexp 不會 decode percent-encoded path，config
+  // 裡寫中文 source 無法命中）。這裡只留純 ASCII 可表達的規則。
   async redirects() {
-    const productSlugMap: Record<string, string> = {
-      // wp_id=55
-      'jerosse-婕樂纖-雪花紫纖飲-14份-盒':
-        '雪花紫纖飲-蔓越莓風味漂浮微泡飲-微氣泡莓果飲-喝水神器',
-      // wp_id=427
-      '【郭雪芙代言推薦】-我的秘密-纖飄錠-60錠-盒':
-        '纖飄錠-郭雪芙代言健康食品認證',
-      // wp_id=1348
-      'jerosse-婕樂纖-纖纖輕鬆飲x-14包-盒': '纖纖飲X-纖纖輕鬆飲X',
-      // wp_id=1354
-      'jerosse-婕樂纖-爆纖錠-120顆-瓶': '爆纖錠-小粉',
-      // wp_id=1358
-      '婕樂纖輕卡肽纖飲-官方授權正品-10包-盒': '輕卡肽纖飲-肽可可',
-      // wp_id=1362
-      '婕樂纖輕卡肽纖飲-厚焙奶茶-官方授權正品-10包-盒':
-        '厚焙奶茶-肽纖飲奶茶口味-仙女奶茶-肽奶茶',
-      // wp_id=1366
-      'jerosse-婕樂纖-植萃纖酵宿-60錠-盒-官方授權': '植萃纖酵宿',
-      // wp_id=1372
-      'jerosse-hyaluronic-acid-tablets':
-        '水光錠日本Hyabest專利玻尿酸-口服保養推薦',
-      // wp_id=1379
-      'jerosse-hydration-mask-bandage':
-        '水光繃帶面膜繃帶普拉斯頂級修護-補水保濕',
-      // wp_id=1383
-      'jerosse-cleansing-gel': '婕肌零-J70婕肌零洗卸凝膠-洗卸保養三合一',
-      // wp_id=1387
-      'jerosse-婕樂纖-雪聚露-雙效導入精華-官方授權正品':
-        '雪聚露-雙效導入精華',
-      // wp_id=1391
-      '婕樂纖-急救小白瓶-全效賦活絲絨身體精華油-100ml-瓶':
-        '急救小白瓶-全效賦活絲絨身體精華油',
-      // wp_id=1395
-      'jerosse-婕樂纖-法樂蓬洗髮露-法樂蓬強健養護豐盈洗髮露':
-        '法樂蓬洗髮露-法樂蓬強健養護豐盈洗髮露',
-      // wp_id=1399
-      'jerosse-婕樂纖-法樂蓬養髮原液-法樂蓬強健活化養髮原液':
-        '法樂蓬養髮原液-法樂蓬強健活化養髮原液',
-      // wp_id=1403
-      'jerosse-probiotics-official': '高機能益生菌',
-      // wp_id=1411
-      'jerosse-婕樂纖-金盞花葉黃素晶亮凍葉黃素果凍-蘋果多多':
-        '金盞花葉黃素晶亮凍葉黃素果凍-蘋果多多風味',
-      // wp_id=1745
-      'jerosse-婕樂纖-積雪草護手霜50ml-條-官方授權正品': '積雪草護手霜',
-      // wp_id=1752
-      'jerosse-婕樂纖-固樂纖dkkflex-60錠-盒-官方授權正品': '固樂纖DKKflex',
-      // wp_id=1756
-      'jerosse-婕樂纖-療肺草正冠茶20包-盒-官方授權正品': '療肺草正冠茶',
-      // wp_id=1760
-      'jerosse-婕樂纖-9國英雄turbo極速錠-20顆-包-官方授權正品':
-        '9國英雄TURBO極速錠',
-      // 促銷 / 組合頁面（WP 有但 Product model 沒進 → 對應到主商品）
-      // wp_id=1844 髮露促銷
-      'jerosse-shampoo-sale': '法樂蓬洗髮露-法樂蓬強健養護豐盈洗髮露',
-      // wp_id=1884 小白瓶促銷
-      'jerosse-velvet-body-essence-oil': '急救小白瓶-全效賦活絲絨身體精華油',
-      // wp_id=2021 益生菌買三送一
-      'jerosse-probiotics-buy3get1': '高機能益生菌',
-      // wp_id=2023 葉黃素優惠
-      'jerosse-葉黃素晶亮凍優惠':
-        '金盞花葉黃素晶亮凍葉黃素果凍-蘋果多多風味',
-    };
-
-    const productRedirects = Object.entries(productSlugMap).map(
-      ([oldSlug, newSlug]) => ({
-        source: `/product/${oldSlug}`,
-        destination: `/products/${newSlug}`,
-        permanent: true,
-      }),
-    );
-
-    // 新春福袋類走 /bundles 首頁（兩個 bundle slug 都沒保留到新站）
-    const bundleRedirects = [
-      'jerosse-cny-2026-lucky-bag-bundle',
-      'jerosse-cny-burn-firming-vip-plan',
-    ].map((slug) => ({
-      source: `/product/${slug}`,
-      destination: '/bundles',
-      permanent: true,
-    }));
-
     return [
-      // ── WP query-param 格式 ─────────────────────
+      // WP query-param
       {
         source: '/',
         has: [{ type: 'query', key: 'post_type', value: 'product' }],
@@ -117,15 +35,7 @@ const nextConfig: NextConfig = {
         destination: '/',
         permanent: true,
       },
-
-      // ── 精準商品對應（最優先，放在 catch-all 前）──
-      ...productRedirects,
-      ...bundleRedirects,
-
-      // ── 商品 catch-all（對應不到的舊 slug）────────
-      { source: '/product/:slug*', destination: '/products', permanent: true },
-
-      // ── 商品分類（英文 slug 直接對應）─────────────
+      // 分類（英文）
       {
         source: '/product-category/healthy-vitality-series',
         destination: '/products/category/healthy-vitality-series',
@@ -141,20 +51,20 @@ const nextConfig: NextConfig = {
         destination: '/products/category/body-beauty-series',
         permanent: true,
       },
-      // 其他（未分類 / 旅遊必帶好物 / 露營必備 / 限時優惠活動等）→ /products
       {
         source: '/product-category/:slug*',
         destination: '/products',
         permanent: true,
       },
-
-      // ── Blog / Shop / Tag / Author ───────────────
+      // Blog / Shop / Tag / Author
       { source: '/blog', destination: '/articles', permanent: true },
       { source: '/blog/:slug*', destination: '/articles', permanent: true },
       { source: '/shop', destination: '/products', permanent: true },
       { source: '/shop/:slug*', destination: '/products', permanent: true },
       { source: '/tag/:slug*', destination: '/', permanent: true },
       { source: '/author/:slug*', destination: '/about', permanent: true },
+      // 注意：/product/:slug* catch-all 也在 middleware.ts 處理，才能讓精準
+      // 對應先命中。
     ];
   },
   async headers() {
