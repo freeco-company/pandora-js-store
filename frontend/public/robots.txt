@@ -1,15 +1,30 @@
 User-agent: *
 Allow: /
-Disallow: /cart
-Disallow: /checkout
-Disallow: /order-complete
-Disallow: /order-lookup
-Disallow: /admin
+
+# 系統 / 會員 / 結帳路徑不要索引
 Disallow: /api/
+Disallow: /admin
 Disallow: /account
 Disallow: /auth/
 Disallow: /login
 Disallow: /register
+Disallow: /cart
+Disallow: /checkout
+Disallow: /order-complete
+Disallow: /order-lookup
+
+# 舊 WooCommerce 加入購物車參數
+Disallow: /*?add-to-cart=
+Disallow: /*&add-to-cart=
+
+# WordPress 殘留路徑（舊站已下線，防誤抓）
+Disallow: /wp-admin/
+Disallow: /wp-content/
+Disallow: /wp-includes/
+Disallow: /wp-json/
+
+# Cloudflare email protection
+Disallow: /cdn-cgi/
 
 User-agent: GPTBot
 Allow: /
