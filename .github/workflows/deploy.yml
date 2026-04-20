@@ -180,6 +180,34 @@ jobs:
             exit 1
           fi
 
+      # Precision Cloudflare purge — clear HTML/sitemap so visitors never
+      # see a mid-deploy mixed response. /_next/static/* is hashed so it's
+      # safe to leave cached; /storage/* doesn't change on deploy.
+      - name: Purge Cloudflare cache (HTML + sitemap)
+        if: success()
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ZONE:  ${{ secrets.CLOUDFLARE_ZONE_ID }}
+        run: |
+          curl -sS -X POST \
+            "https://api.cloudflare.com/client/v4/zones/${CF_ZONE}/purge_cache" \
+            -H "Authorization: Bearer ${CF_TOKEN}" \
+            -H "Content-Type: application/json" \
+            --data '{
+              "files": [
+                "https://pandora.js-store.com.tw/",
+                "https://pandora.js-store.com.tw/products",
+                "https://pandora.js-store.com.tw/articles",
+                "https://pandora.js-store.com.tw/reviews",
+                "https://pandora.js-store.com.tw/where-to-buy",
+                "https://pandora.js-store.com.tw/sitemap.xml",
+                "https://pandora.js-store.com.tw/sitemap-images.xml",
+                "https://pandora.js-store.com.tw/robots.txt",
+                "https://pandora.js-store.com.tw/manifest.webmanifest"
+              ]
+            }' | tee /tmp/cf-purge.json
+          grep -q '"success":true' /tmp/cf-purge.json || { echo "Cloudflare purge failed"; exit 1; }
+
   notify:
     name: Discord notification
     needs: [deploy]
