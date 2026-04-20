@@ -44,10 +44,16 @@ class DailyVisitorsWidget extends StatsOverviewWidget
             ->distinct('session_id')
             ->count('session_id');
 
+        // Suppress % delta when the comparison base is tiny — first days of
+        // tracking produce absurd +986% numbers that say nothing about growth.
         $delta = null;
-        if ($prevVisitors > 0) {
+        if ($prevVisitors >= 10) {
             $pct = round((($uniqueVisitors - $prevVisitors) / $prevVisitors) * 100);
             $delta = ($pct >= 0 ? '+' : '') . $pct . '% vs 前一日';
+        } elseif ($prevVisitors > 0) {
+            $diff = $uniqueVisitors - $prevVisitors;
+            $sign = $diff >= 0 ? '+' : '';
+            $delta = "{$sign}{$diff} vs 前一日 ({$prevVisitors})";
         }
 
         $focusLabel = $focus->isToday() ? '今日' : $focus->format('m/d');

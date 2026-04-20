@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\DiscordNotification;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -12,11 +13,14 @@ use Illuminate\Support\Facades\Log;
  */
 class DiscordNotifier
 {
-    public function __construct(private readonly ?string $webhook = null) {}
+    public function __construct(
+        private readonly ?string $webhook = null,
+        private readonly string $channel = 'unknown',
+    ) {}
 
     public static function compliance(): self
     {
-        return new self(config('services.discord.compliance_webhook'));
+        return new self(config('services.discord.compliance_webhook'), 'compliance');
     }
 
     /** Webhook for new-order alerts — falls back to compliance if unset. */
@@ -24,7 +28,8 @@ class DiscordNotifier
     {
         return new self(
             config('services.discord.orders_webhook')
-                ?: config('services.discord.compliance_webhook')
+                ?: config('services.discord.compliance_webhook'),
+            'orders',
         );
     }
 
@@ -34,7 +39,8 @@ class DiscordNotifier
         return new self(
             config('services.discord.ads_webhook')
                 ?: config('services.discord.orders_webhook')
-                ?: config('services.discord.compliance_webhook')
+                ?: config('services.discord.compliance_webhook'),
+            'ads',
         );
     }
 
@@ -49,7 +55,8 @@ class DiscordNotifier
             config('services.discord.ads_strategy_webhook')
                 ?: config('services.discord.ads_webhook')
                 ?: config('services.discord.orders_webhook')
-                ?: config('services.discord.compliance_webhook')
+                ?: config('services.discord.compliance_webhook'),
+            'ads_strategy',
         );
     }
 
@@ -72,6 +79,8 @@ class DiscordNotifier
             return false;
         }
 
+        $success = false;
+        $status = null;
         try {
             $res = Http::timeout(10)->post($this->webhook, [
                 'embeds' => [[
@@ -82,14 +91,36 @@ class DiscordNotifier
                     'timestamp'   => now()->toIso8601String(),
                 ]],
             ]);
-            if (! $res->successful()) {
-                Log::warning('[discord] webhook failed', ['status' => $res->status(), 'body' => $res->body()]);
-                return false;
+            $status = $res->status();
+            $success = $res->successful();
+            if (! $success) {
+                Log::warning('[discord] webhook failed', ['status' => $status, 'body' => $res->body()]);
             }
-            return true;
         } catch (\Throwable $e) {
             Log::warning('[discord] webhook exception', ['msg' => $e->getMessage()]);
-            return false;
+        }
+
+        $this->record($title, $success, $status);
+        return $success;
+    }
+
+    /**
+     * Log each webhook call to discord_notifications so the admin dashboard
+     * can surface activity. Silently swallows DB failures — notification
+     * logging must never break the sending flow.
+     */
+    private function record(string $title, bool $success, ?int $status): void
+    {
+        try {
+            DiscordNotification::create([
+                'channel' => $this->channel,
+                'title' => mb_substr($title, 0, 256),
+                'success' => $success,
+                'http_status' => $status,
+                'sent_at' => now(),
+            ]);
+        } catch (\Throwable $e) {
+            // swallow — telemetry must not affect delivery
         }
     }
 }

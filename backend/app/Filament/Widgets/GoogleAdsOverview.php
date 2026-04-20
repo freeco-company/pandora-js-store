@@ -56,12 +56,25 @@ class GoogleAdsOverview extends BaseWidget
         $roas   = $m['roas'] > 0 ? "{$m['roas']}x" : '—';
         $convValue = 'NT$' . number_format($m['conversion_value']);
 
-        // ROAS color: green ≥ 2, warning 1–2, danger < 1 (but only if spend > 0)
+        // ROAS colour + label. Special-case 0 conversions: we can't tell
+        // apart "ads are losing money" from "conversion tracking isn't wired
+        // up yet", so show a neutral warning instead of red 虧錢中.
         $roasColor = 'gray';
+        $roasDesc = '尚無花費';
         if ($m['spend'] > 0) {
-            if ($m['roas'] >= 2) $roasColor = 'success';
-            elseif ($m['roas'] >= 1) $roasColor = 'warning';
-            else $roasColor = 'danger';
+            if ($m['conversions'] == 0) {
+                $roasColor = 'warning';
+                $roasDesc = '⚠️ 0 轉換（請確認 GTM 轉換追蹤）';
+            } elseif ($m['roas'] >= 2) {
+                $roasColor = 'success';
+                $roasDesc = '表現不錯';
+            } elseif ($m['roas'] >= 1) {
+                $roasColor = 'warning';
+                $roasDesc = '勉強回本';
+            } else {
+                $roasColor = 'danger';
+                $roasDesc = '⚠️ 虧錢中';
+            }
         }
 
         return [
@@ -83,9 +96,7 @@ class GoogleAdsOverview extends BaseWidget
                 ->color('info'),
 
             Stat::make('ROAS', $roas)
-                ->description($m['spend'] > 0
-                    ? ($m['roas'] >= 2 ? '表現不錯' : ($m['roas'] >= 1 ? '勉強回本' : '⚠️ 虧錢中'))
-                    : '尚無花費')
+                ->description($roasDesc)
                 ->descriptionIcon($m['roas'] >= 1 ? 'heroicon-m-arrow-trending-up' : 'heroicon-m-arrow-trending-down')
                 ->color($roasColor),
         ];

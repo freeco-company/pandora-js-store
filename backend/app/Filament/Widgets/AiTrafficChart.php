@@ -4,17 +4,21 @@ namespace App\Filament\Widgets;
 
 use Carbon\Carbon;
 use Filament\Widgets\ChartWidget;
+use Filament\Widgets\Concerns\InteractsWithPageFilters;
 use Illuminate\Support\Facades\DB;
 
 /**
- * AI traffic over the last 14 days, stacked by bot_type.
+ * AI traffic stacked by bot_type. Honors the dashboard date filter;
+ * falls back to a 14-day window if no filter is set.
  * "bot" rows = crawler hits (ClaudeBot etc.); "user" rows = humans
  * arriving from AI sites (chatgpt.com referer etc.). Combined here —
  * toggle the filter pill to split.
  */
 class AiTrafficChart extends ChartWidget
 {
-    protected ?string $heading = 'AI 爬蟲 × AI 來源訪客（近 14 天）';
+    use InteractsWithPageFilters;
+
+    protected ?string $heading = 'AI 爬蟲 × AI 來源訪客';
 
     protected static ?int $sort = 10;
 
@@ -63,8 +67,7 @@ class AiTrafficChart extends ChartWidget
 
     protected function getData(): array
     {
-        $start = Carbon::today()->subDays(13);
-        $end = Carbon::today();
+        [$start, $end] = $this->resolveRange();
 
         $q = DB::table('ai_visits_daily')
             ->whereBetween('date', [$start->toDateString(), $end->toDateString()]);
@@ -118,6 +121,22 @@ class AiTrafficChart extends ChartWidget
     protected function getType(): string
     {
         return 'bar';
+    }
+
+    private function resolveRange(): array
+    {
+        $start = $this->pageFilters['startDate'] ?? null;
+        $end = $this->pageFilters['endDate'] ?? null;
+
+        $start = $start ? Carbon::parse($start)->startOfDay() : Carbon::today()->subDays(13);
+        $end = $end ? Carbon::parse($end)->startOfDay() : Carbon::today();
+
+        // Cap absurdly long ranges so the x-axis stays readable
+        if ($start->diffInDays($end) > 90) {
+            $start = (clone $end)->subDays(90);
+        }
+
+        return [$start, $end];
     }
 
     protected function getOptions(): array
