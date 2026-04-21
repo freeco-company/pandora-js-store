@@ -238,8 +238,10 @@ class GoogleAdsService
     }
 
     /**
-     * Wasteful search terms: spent money, produced zero conversions.
-     * These are prime candidates for negative-keyword addition.
+     * Wasteful search terms: spent money, produced zero conversions, and are
+     * NOT brand-name queries. Brand queries with zero conversions are not
+     * waste — they're people searching for the store by name and comparing,
+     * and adding them as negatives would kill your most intent-rich traffic.
      *
      * @return list<array{term:string, spend:int, clicks:int}>
      */
@@ -247,9 +249,35 @@ class GoogleAdsService
     {
         $terms = $this->getTopSearchTerms($days, 100);
         $waste = array_values(array_filter($terms, fn ($t) =>
-            $t['spend'] >= $minSpend && $t['conversions'] == 0
+            $t['spend'] >= $minSpend
+            && $t['conversions'] == 0
+            && ! self::isBrandTerm($t['term'])
         ));
         return array_slice($waste, 0, $limit);
+    }
+
+    /**
+     * Heuristic brand-term detector. Google's search-term report normalizes
+     * with spaces between Chinese characters, so we strip whitespace before
+     * comparing. Extend $needles as new brand variations appear.
+     */
+    public static function isBrandTerm(string $term): bool
+    {
+        $normalized = mb_strtolower(preg_replace('/\s+/u', '', $term));
+        $needles = [
+            '婕樂纖',     // 主品牌
+            '捷樂纖',     // 常見錯字
+            'jerosse',    // 英文品牌
+            'fairypandora',
+            'fp仙女館',
+            '仙女館',
+            '法樂蓬',     // 旗下產品線
+            '婕楽纖',     // 異體字錯字
+        ];
+        foreach ($needles as $n) {
+            if (str_contains($normalized, $n)) return true;
+        }
+        return false;
     }
 
     // ────────────────────────────────────────────────────────────

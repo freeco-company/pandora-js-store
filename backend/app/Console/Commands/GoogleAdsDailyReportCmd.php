@@ -109,27 +109,28 @@ class GoogleAdsDailyReportCmd extends Command
         if (! empty($top)) {
             $lines = [];
             foreach ($top as $i => $t) {
+                $brand = \App\Services\GoogleAdsService::isBrandTerm($t['term']) ? '🏷️ ' : '';
                 $tag = $t['conversions'] > 0 ? '✓' : '·';
                 $lines[] = sprintf(
-                    "%s `%s` — NT\$%s / %s 次 / %s 轉換",
-                    $tag, mb_strimwidth($t['term'], 0, 40, '…'),
+                    "%s %s`%s` — NT\$%s / %s 次 / %s 轉換",
+                    $tag, $brand, mb_strimwidth($t['term'], 0, 40, '…'),
                     number_format($t['spend']), number_format($t['clicks']), $t['conversions']
                 );
             }
             $fields[] = [
                 'name'   => '🎯 花最多錢的字（近 7 天）',
-                'value'  => implode("\n", $lines),
+                'value'  => implode("\n", $lines) . "\n\n🏷️ = 品牌詞（0 轉換屬正常，不該加否定）",
                 'inline' => false,
             ];
         }
 
-        if (! empty($waste)) {
-            $fields[] = [
-                'name'   => '📌 建議',
-                'value'  => '考慮把上述 🔥 清單加進 Google Ads → 否定關鍵字，減少浪費。',
-                'inline' => false,
-            ];
-        }
+        $fields[] = [
+            'name'   => '📌 建議',
+            'value'  => ! empty($waste)
+                ? '上述 🔥 清單已排除品牌詞，這些才是真浪費，考慮加進 Google Ads → 否定關鍵字。'
+                : '近 7 天沒有非品牌浪費字，廣告命中率不錯 👍',
+            'inline' => false,
+        ];
 
         // Brand color: gold-brown (success) when ROAS > 2, warning (amber) < 1, else brand
         $color = 10447166; // #9F6B3E brand
