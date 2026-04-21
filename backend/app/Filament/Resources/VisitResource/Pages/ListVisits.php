@@ -17,7 +17,9 @@ class ListVisits extends ListRecords
 
     protected function getHeaderWidgets(): array
     {
-        return [];
+        return [
+            \App\Filament\Widgets\VisitStatsWidget::class,
+        ];
     }
 
     public function getSubheading(): ?string

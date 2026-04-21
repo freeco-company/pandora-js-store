@@ -43,6 +43,17 @@ class VisitResource extends Resource
                     ->dateTime('m-d H:i:s')
                     ->sortable(),
 
+                // Short deterministic tag so the same person's rows can be
+                // eyeballed together. Same visitor_id → same tag → same
+                // badge color. Tag is copyable for searching / pasting.
+                Tables\Columns\TextColumn::make('visitor_id')
+                    ->label('訪客')
+                    ->formatStateUsing(fn (?string $state) => $state ? '#' . substr($state, 0, 6) : '—')
+                    ->badge()
+                    ->color(fn (?string $state): string => self::hashColor($state))
+                    ->searchable()
+                    ->copyable(),
+
                 Tables\Columns\TextColumn::make('referer_source')
                     ->label('來源')
                     ->badge()
@@ -196,4 +207,17 @@ class VisitResource extends Resource
     public static function canCreate(): bool { return false; }
     public static function canEdit($record): bool { return false; }
     public static function canDelete($record): bool { return false; }
+
+    /**
+     * Map a visitor hash to one of Filament's palette slots deterministically.
+     * Same visitor_id → same color across rows, so grouping is visible at a
+     * glance without a "group by" UI.
+     */
+    public static function hashColor(?string $state): string
+    {
+        if (! $state) return 'gray';
+        $palette = ['primary', 'success', 'warning', 'danger', 'info'];
+        $idx = hexdec(substr($state, 0, 2)) % count($palette);
+        return $palette[$idx];
+    }
 }
