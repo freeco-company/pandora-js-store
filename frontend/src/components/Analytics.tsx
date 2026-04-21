@@ -150,7 +150,12 @@ export function trackPurchase(
   });
 }
 
-/** First-party pageview ping for the dashboard 今日瀏覽人數 widget. */
+/**
+ * First-party page-view ping for the admin "當日流量" list + dashboard widget.
+ * Posts rich context (UA, referer, UTM, landing path) so the backend can parse
+ * device/OS/source without a second round-trip. keepalive:true survives the
+ * beforeunload race when users click out mid-request.
+ */
 function trackPageView(pathname: string) {
   if (typeof window === 'undefined') return;
   try {
@@ -159,14 +164,29 @@ function trackPageView(pathname: string) {
       sid = crypto.randomUUID();
       localStorage.setItem('pandora-session-id', sid);
     }
+
+    // First hit of this session gets landing_path; later hits in the same
+    // session reuse it so we can answer "where did this visitor arrive?"
+    let landing = sessionStorage.getItem('pandora-landing-path');
+    if (!landing) {
+      landing = pathname;
+      sessionStorage.setItem('pandora-landing-path', landing);
+    }
+
+    const params = new URLSearchParams(window.location.search);
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
-    fetch(`${apiUrl}/track/view`, {
+    fetch(`${apiUrl}/track/visit`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        path: pathname,
         session_id: sid,
-        referer: document.referrer || null,
+        path: pathname,
+        landing_path: landing,
+        referer_url: document.referrer || null,
+        user_agent: navigator.userAgent,
+        utm_source: params.get('utm_source'),
+        utm_medium: params.get('utm_medium'),
+        utm_campaign: params.get('utm_campaign'),
       }),
       keepalive: true,
     }).catch(() => {});

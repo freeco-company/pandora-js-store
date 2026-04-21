@@ -55,9 +55,6 @@ Route::get('/article-categories', [ArticleController::class, 'categories']);
 Route::get('/banners', [BannerController::class, 'index']);
 Route::get('/popups', [PopupController::class, 'index']);
 
-// Lightweight page-view tracking for dashboard daily-visitors widget
-Route::post('/track/view', [\App\Http\Controllers\Api\PageViewController::class, 'store']);
-
 // Real social proof — cumulative sales + recent viewers for product pages.
 Route::get('/products/{slug}/social-proof', [\App\Http\Controllers\Api\SocialProofController::class, 'show']);
 
@@ -65,6 +62,11 @@ Route::get('/products/{slug}/social-proof', [\App\Http\Controllers\Api\SocialPro
 // referer is detected. Aggregates by (date, bot_type, source).
 Route::post('/track/ai-visit', [\App\Http\Controllers\Api\AiVisitController::class, 'store'])
     ->middleware('throttle:600,1'); // 10/s burst cap — upsert is cheap, AI bots crawl fast
+
+// Human visit logger — called client-side by Analytics.tsx on every route
+// change. Inserts one raw row per hit for later UV/source/device breakdowns.
+Route::post('/track/visit', [\App\Http\Controllers\Api\VisitController::class, 'store'])
+    ->middleware('throttle:600,1');
 
 // Customer gamification dashboard (requires auth)
 Route::middleware('auth:sanctum')->group(function () {
