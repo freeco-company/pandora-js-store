@@ -8,6 +8,7 @@ use App\Models\Order;
 use App\Models\Product;
 use App\Models\Review;
 use App\Models\User;
+use App\Models\Visit;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -93,6 +94,48 @@ class FilamentAdminSmokeTest extends TestCase
 
         $this->actingAs($this->admin())
             ->get('/admin/customers')
+            ->assertSuccessful();
+    }
+
+    public function test_visits_index_renders_empty(): void
+    {
+        // Page must render even when there are no rows — common state on day 1.
+        $this->actingAs($this->admin())
+            ->get('/admin/visits')
+            ->assertSuccessful();
+    }
+
+    public function test_visits_index_renders_with_records(): void
+    {
+        // Seed one row per distinct referer_source so every branch of the
+        // badge color/label match arm executes. Regression guard: a missing
+        // arm previously crashed the whole page with
+        // "Call to newQueryWithoutRelationships() on null".
+        $sources = ['direct', 'google', 'google_ads', 'bing', 'yahoo', 'facebook', 'instagram', 'line', 'email', 'other', null];
+        $customer = Customer::create(['name' => 'C', 'email' => 'c@t.com', 'password' => bcrypt('x')]);
+
+        foreach ($sources as $i => $src) {
+            Visit::create([
+                'visitor_id' => 'test-visitor-' . $i,
+                'session_id' => 'sess-' . $i,
+                'ip' => '1.2.3.4',
+                'country' => 'TW',
+                'user_agent' => 'Mozilla/5.0',
+                'device_type' => ['mobile', 'tablet', 'desktop'][$i % 3],
+                'os' => 'iOS',
+                'os_version' => '18.5',
+                'browser' => 'Safari',
+                'browser_version' => '18.5',
+                'referer_source' => $src,
+                'path' => '/products',
+                'landing_path' => '/',
+                'customer_id' => $i % 3 === 0 ? $customer->id : null,
+                'visited_at' => now(),
+            ]);
+        }
+
+        $this->actingAs($this->admin())
+            ->get('/admin/visits')
             ->assertSuccessful();
     }
 

@@ -9,7 +9,6 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
 use UnitEnum;
 
 /**
@@ -37,7 +36,7 @@ class VisitResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
-            ->modifyQueryUsing(fn (Builder $q) => $q->with('customer'))
+            ->modifyQueryUsing(fn ($query) => $query->with('customer'))
             ->columns([
                 Tables\Columns\TextColumn::make('visited_at')
                     ->label('時間')
@@ -47,14 +46,14 @@ class VisitResource extends Resource
                 Tables\Columns\TextColumn::make('referer_source')
                     ->label('來源')
                     ->badge()
-                    ->colors([
-                        'success' => 'direct',
-                        'info'    => fn ($s) => in_array($s, ['google', 'bing', 'yahoo']),
-                        'warning' => 'google_ads',
-                        'primary' => fn ($s) => in_array($s, ['facebook', 'instagram', 'line']),
-                        'gray'    => fn ($s) => in_array($s, ['other', 'email']),
-                    ])
-                    ->formatStateUsing(fn ($state) => match ($state) {
+                    ->color(fn (?string $state): string => match ($state) {
+                        'direct' => 'success',
+                        'google', 'bing', 'yahoo' => 'info',
+                        'google_ads' => 'warning',
+                        'facebook', 'instagram', 'line' => 'primary',
+                        default => 'gray',
+                    })
+                    ->formatStateUsing(fn (?string $state) => match ($state) {
                         'direct' => '直接進站',
                         'google' => 'Google',
                         'google_ads' => 'Google Ads',
@@ -65,17 +64,17 @@ class VisitResource extends Resource
                         'line' => 'LINE',
                         'email' => 'Email',
                         'other' => '其他',
-                        default => $state,
+                        default => $state ?? '—',
                     }),
 
                 Tables\Columns\TextColumn::make('device_type')
                     ->label('裝置')
                     ->badge()
-                    ->formatStateUsing(fn ($state) => match ($state) {
+                    ->formatStateUsing(fn (?string $state) => match ($state) {
                         'mobile' => '手機',
                         'tablet' => '平板',
                         'desktop' => '桌機',
-                        default => $state,
+                        default => $state ?? '—',
                     }),
 
                 Tables\Columns\TextColumn::make('os')
@@ -126,7 +125,7 @@ class VisitResource extends Resource
                 Tables\Filters\Filter::make('today')
                     ->label('僅今日')
                     ->default()
-                    ->query(fn (Builder $q) => $q->whereDate('visited_at', today())),
+                    ->query(fn ($query) => $query->whereDate('visited_at', today())),
 
                 Tables\Filters\SelectFilter::make('referer_source')
                     ->label('來源')
@@ -166,9 +165,9 @@ class VisitResource extends Resource
                     ->trueLabel('已登入會員')
                     ->falseLabel('訪客')
                     ->queries(
-                        true: fn (Builder $q) => $q->whereNotNull('customer_id'),
-                        false: fn (Builder $q) => $q->whereNull('customer_id'),
-                        blank: fn (Builder $q) => $q,
+                        true: fn ($query) => $query->whereNotNull('customer_id'),
+                        false: fn ($query) => $query->whereNull('customer_id'),
+                        blank: fn ($query) => $query,
                     ),
             ])
             ->actions([])
