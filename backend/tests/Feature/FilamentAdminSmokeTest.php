@@ -105,6 +105,39 @@ class FilamentAdminSmokeTest extends TestCase
             ->assertSuccessful();
     }
 
+    public function test_dashboard_renders_with_all_widgets(): void
+    {
+        // Smoke-test the dashboard page including the new VisitStatsWidget
+        // and VisitTrendChart. Seed one of each relevant row so widgets
+        // hit real data paths (not just the no-data shortcut).
+        Visit::create([
+            'visitor_id' => 'dashboard-seed',
+            'ip' => '1.1.1.1',
+            'device_type' => 'mobile',
+            'os' => 'iOS',
+            'browser' => 'Safari',
+            'referer_source' => 'direct',
+            'path' => '/',
+            'visited_at' => now(),
+        ]);
+        Visit::create([
+            'visitor_id' => 'dashboard-paid',
+            'ip' => '2.2.2.2',
+            'device_type' => 'desktop',
+            'os' => 'Windows',
+            'browser' => 'Chrome',
+            'referer_source' => 'google_ads',
+            'utm_medium' => 'cpc',
+            'utm_campaign' => 'launch',
+            'path' => '/products',
+            'visited_at' => now(),
+        ]);
+
+        $this->actingAs($this->admin())
+            ->get('/admin')
+            ->assertSuccessful();
+    }
+
     public function test_visits_index_renders_with_records(): void
     {
         // Seed one row per distinct referer_source so every branch of the

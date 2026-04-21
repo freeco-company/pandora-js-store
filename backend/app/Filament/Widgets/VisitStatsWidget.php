@@ -3,18 +3,27 @@
 namespace App\Filament\Widgets;
 
 use App\Models\Visit;
+use Carbon\Carbon;
+use Filament\Widgets\Concerns\InteractsWithPageFilters;
 use Filament\Widgets\StatsOverviewWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 
 /**
- * Header widget on the Visit list page. Summarizes today's traffic so the
- * admin gets a 5-second read before scrolling the row list: how many UV,
- * how many pages per visitor, and where traffic is coming from.
- * Separate from the dashboard DailyVisitorsWidget (which covers historic
- * trend) — this one is today-only and always relative to "now".
+ * Traffic stats — used both on the /admin (dashboard) page and as the
+ * VisitResource list page's header widget.
+ *
+ * Splits UV into: 自然 (organic search + direct + referral) vs 廣告
+ * (Google Ads + any paid utm). The line between the two is the clearest
+ * signal of whether organic SEO work is paying off vs whether we're
+ * only renting traffic.
+ *
+ * Responds to the dashboard date filter via InteractsWithPageFilters so
+ * "今日 / 最近 7 天 / 本月" all work without editing this widget.
  */
 class VisitStatsWidget extends StatsOverviewWidget
 {
+    use InteractsWithPageFilters;
+
     protected static ?int $sort = 1;
 
     protected int | string | array $columnSpan = 'full';
@@ -26,73 +35,96 @@ class VisitStatsWidget extends StatsOverviewWidget
 
     protected function getStats(): array
     {
-        $today = today();
-        $start = $today->copy()->startOfDay();
-        $end = $today->copy()->endOfDay();
+        [$start, $end] = $this->resolveRange();
 
-        $uv = Visit::whereBetween('visited_at', [$start, $end])->distinct('visitor_id')->count('visitor_id');
-        $pv = Visit::whereBetween('visited_at', [$start, $end])->count();
-        $pvPerUv = $uv > 0 ? round($pv / $uv, 1) : 0;
+        $baseQuery = fn () => Visit::whereBetween('visited_at', [$start, $end]);
 
-        $members = Visit::whereBetween('visited_at', [$start, $end])
+        $uv = (clone $baseQuery())->distinct('visitor_id')->count('visitor_id');
+        $pv = (clone $baseQuery())->count();
+
+        // Paid = referer_source google_ads OR utm_medium cpc/paid/ads.
+        // Organic = everything else (direct + google organic + social + referral).
+        $paidUv = (clone $baseQuery())
+            ->where(function ($q) {
+                $q->where('referer_source', 'google_ads')
+                    ->orWhereIn('utm_medium', ['cpc', 'paid', 'ads', 'ppc']);
+            })
+            ->distinct('visitor_id')
+            ->count('visitor_id');
+        $organicUv = max(0, $uv - $paidUv);
+
+        $members = (clone $baseQuery())
             ->whereNotNull('customer_id')
             ->distinct('visitor_id')
             ->count('visitor_id');
 
-        // Source breakdown (UV unique per source so one browsing person
-        // doesn't inflate their source into looking dominant).
-        $sources = Visit::whereBetween('visited_at', [$start, $end])
-            ->selectRaw('referer_source, COUNT(DISTINCT visitor_id) as uv')
-            ->groupBy('referer_source')
-            ->orderByDesc('uv')
-            ->pluck('uv', 'referer_source')
-            ->toArray();
-        $topSource = array_key_first($sources) ?? '—';
-        $topSourceUv = $sources[$topSource] ?? 0;
+        // Compare to previous equal-length window so delta % is meaningful
+        // regardless of whether user picked "today" or "last 30 days".
+        $durationDays = max(1, $start->diffInDays($end) + 1);
+        $prevStart = (clone $start)->subDays($durationDays);
+        $prevEnd = (clone $start)->subDay()->endOfDay();
+        $prevUv = Visit::whereBetween('visited_at', [$prevStart, $prevEnd])
+            ->distinct('visitor_id')
+            ->count('visitor_id');
+        $delta = $this->deltaLabel($uv, $prevUv);
 
-        // Device breakdown
-        $deviceRows = Visit::whereBetween('visited_at', [$start, $end])
-            ->selectRaw('device_type, COUNT(DISTINCT visitor_id) as uv')
-            ->groupBy('device_type')
-            ->pluck('uv', 'device_type')
-            ->toArray();
-        $mobile = ($deviceRows['mobile'] ?? 0) + ($deviceRows['tablet'] ?? 0);
-        $desktop = $deviceRows['desktop'] ?? 0;
-
-        $sourceLabel = match ($topSource) {
-            'direct' => '直接進站',
-            'google' => 'Google',
-            'google_ads' => 'Google Ads',
-            'facebook' => 'Facebook',
-            'instagram' => 'Instagram',
-            'line' => 'LINE',
-            'bing' => 'Bing',
-            'yahoo' => 'Yahoo',
-            'email' => 'Email',
-            'other' => '其他',
-            default => '—',
-        };
+        $listUrl = \App\Filament\Resources\VisitResource::getUrl('index');
+        $label = $this->rangeLabel($start, $end);
+        $pvPerUv = $uv > 0 ? round($pv / $uv, 1) : 0;
 
         return [
-            Stat::make('今日不重複訪客', number_format($uv))
-                ->description("瀏覽 {$pv} 頁 · 人均 {$pvPerUv} 頁")
+            Stat::make("{$label}不重複訪客", number_format($uv))
+                ->description($delta ?: "瀏覽 {$pv} 頁 · 人均 {$pvPerUv}")
                 ->descriptionIcon('heroicon-m-users')
-                ->color('primary'),
+                ->color('primary')
+                ->url($listUrl),
+
+            Stat::make('自然流量', number_format($organicUv))
+                ->description($uv > 0 ? round($organicUv / $uv * 100) . '% · SEO + 直接 + 社群' : '—')
+                ->descriptionIcon('heroicon-m-sparkles')
+                ->color('success'),
+
+            Stat::make('廣告流量', number_format($paidUv))
+                ->description($uv > 0 ? round($paidUv / $uv * 100) . '% · Google Ads / 付費' : '—')
+                ->descriptionIcon('heroicon-m-megaphone')
+                ->color($paidUv > 0 ? 'warning' : 'gray'),
 
             Stat::make('會員訪客', number_format($members))
                 ->description($uv > 0 ? round($members / $uv * 100) . '% 已登入' : '—')
                 ->descriptionIcon('heroicon-m-user-circle')
-                ->color($members > 0 ? 'success' : 'gray'),
-
-            Stat::make('最大來源', $sourceLabel)
-                ->description("{$topSourceUv} 人 · 佔 " . ($uv > 0 ? round($topSourceUv / $uv * 100) : 0) . '%')
-                ->descriptionIcon('heroicon-m-arrow-trending-up')
-                ->color('info'),
-
-            Stat::make('裝置分布', "{$mobile} / {$desktop}")
-                ->description('手機+平板 / 桌機')
-                ->descriptionIcon('heroicon-m-device-phone-mobile')
-                ->color('warning'),
+                ->color($members > 0 ? 'info' : 'gray'),
         ];
+    }
+
+    /** @return array{0: Carbon, 1: Carbon} */
+    private function resolveRange(): array
+    {
+        $startFilter = $this->pageFilters['startDate'] ?? null;
+        $endFilter = $this->pageFilters['endDate'] ?? null;
+
+        if ($startFilter && $endFilter) {
+            return [
+                Carbon::parse($startFilter)->startOfDay(),
+                Carbon::parse($endFilter)->endOfDay(),
+            ];
+        }
+        // Default = today only (matches list page's "僅今日" default filter)
+        return [today()->startOfDay(), today()->endOfDay()];
+    }
+
+    private function rangeLabel(Carbon $start, Carbon $end): string
+    {
+        if ($start->isSameDay($end)) return $start->isToday() ? '今日' : $start->format('m/d');
+        if ($start->isToday()) return '今日';
+        $days = $start->diffInDays($end) + 1;
+        return "{$days} 天";
+    }
+
+    private function deltaLabel(int $current, int $prev): ?string
+    {
+        if ($prev < 5) return null; // too small to compare meaningfully
+        $pct = round((($current - $prev) / $prev) * 100);
+        $sign = $pct >= 0 ? '+' : '';
+        return "{$sign}{$pct}% vs 前期（{$prev}）";
     }
 }

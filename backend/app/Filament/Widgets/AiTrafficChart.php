@@ -4,20 +4,21 @@ namespace App\Filament\Widgets;
 
 use Carbon\Carbon;
 use Filament\Widgets\ChartWidget;
-use Filament\Widgets\Concerns\InteractsWithPageFilters;
 use Illuminate\Support\Facades\DB;
 
 /**
- * AI traffic stacked by bot_type. Honors the dashboard date filter;
- * falls back to a 14-day window if no filter is set.
+ * AI traffic stacked by bot_type. Has its own range pill (7/14/30 days)
+ * because the whole point of this chart is watching the AI trend over
+ * weeks — tying it to the dashboard's "today" filter would collapse it
+ * to one bar, which tells you nothing about whether AI crawlers are
+ * visiting more this week than last.
+ *
  * "bot" rows = crawler hits (ClaudeBot etc.); "user" rows = humans
- * arriving from AI sites (chatgpt.com referer etc.). Combined here —
- * toggle the filter pill to split.
+ * arriving from AI sites (chatgpt.com referer etc.). Combined by
+ * default — change the source pill to split.
  */
 class AiTrafficChart extends ChartWidget
 {
-    use InteractsWithPageFilters;
-
     protected ?string $heading = 'AI 爬蟲 × AI 來源訪客';
 
     protected static ?int $sort = 10;
@@ -26,7 +27,7 @@ class AiTrafficChart extends ChartWidget
 
     protected int | string | array $columnSpan = 'full';
 
-    public ?string $filter = 'all';
+    public ?string $filter = 'all_14';
 
     private const BOT_LABELS = [
         'claude' => 'Claude (Anthropic)',
@@ -58,22 +59,30 @@ class AiTrafficChart extends ChartWidget
 
     protected function getFilters(): ?array
     {
+        // Combined source × range pill so we don't need two separate
+        // widgets. Format: "<source>_<days>" — parsed in getData().
         return [
-            'all' => '全部',
-            'bot' => 'AI 爬蟲',
-            'user' => 'AI 來源訪客',
+            'all_7' => '全部 · 近 7 天',
+            'all_14' => '全部 · 近 14 天',
+            'all_30' => '全部 · 近 30 天',
+            'bot_14' => 'AI 爬蟲 · 近 14 天',
+            'bot_30' => 'AI 爬蟲 · 近 30 天',
+            'user_14' => 'AI 來源訪客 · 近 14 天',
+            'user_30' => 'AI 來源訪客 · 近 30 天',
         ];
     }
 
     protected function getData(): array
     {
-        [$start, $end] = $this->resolveRange();
+        [$source, $days] = $this->parseFilter();
+        $end = Carbon::today();
+        $start = (clone $end)->subDays($days - 1);
 
         $q = DB::table('ai_visits_daily')
             ->whereBetween('date', [$start->toDateString(), $end->toDateString()]);
 
-        if ($this->filter !== 'all') {
-            $q->where('source', $this->filter);
+        if ($source !== 'all') {
+            $q->where('source', $source);
         }
 
         $rows = $q->select('date', 'bot_type', DB::raw('SUM(hits) as hits'))
@@ -123,20 +132,15 @@ class AiTrafficChart extends ChartWidget
         return 'bar';
     }
 
-    private function resolveRange(): array
+    /** @return array{0: string, 1: int} [source, days] */
+    private function parseFilter(): array
     {
-        $start = $this->pageFilters['startDate'] ?? null;
-        $end = $this->pageFilters['endDate'] ?? null;
-
-        $start = $start ? Carbon::parse($start)->startOfDay() : Carbon::today()->subDays(13);
-        $end = $end ? Carbon::parse($end)->startOfDay() : Carbon::today();
-
-        // Cap absurdly long ranges so the x-axis stays readable
-        if ($start->diffInDays($end) > 90) {
-            $start = (clone $end)->subDays(90);
-        }
-
-        return [$start, $end];
+        $parts = explode('_', $this->filter ?? 'all_14');
+        $source = $parts[0] ?? 'all';
+        $days = (int) ($parts[1] ?? 14);
+        if (! in_array($source, ['all', 'bot', 'user'], true)) $source = 'all';
+        if (! in_array($days, [7, 14, 30], true)) $days = 14;
+        return [$source, $days];
     }
 
     protected function getOptions(): array
