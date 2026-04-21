@@ -30,6 +30,10 @@ class VisitController extends Controller
             'utm_medium'    => 'nullable|string|max:64',
             'utm_campaign'  => 'nullable|string|max:128',
             'country'       => 'nullable|string|max:2',
+            // click_id + click_source come from ad-platform auto-tagging
+            // (gclid / fbclid / msclkid / etc.). Definitive paid signal.
+            'click_id'      => 'nullable|string|max:255',
+            'click_source'  => 'nullable|string|max:32',
             // customer_id validated below by checking auth, not client input,
             // so we don't trust the frontend to claim an identity.
         ]);
@@ -58,7 +62,12 @@ class VisitController extends Controller
             'os_version'      => $agent->version($agent->platform() ?: '') ?: null,
             'browser'         => $agent->browser() ?: null,
             'browser_version' => $agent->version($agent->browser() ?: '') ?: null,
-            'referer_source'  => $this->normalizeSource($data['referer_url'] ?? null, $data['utm_source'] ?? null),
+            'referer_source'  => $this->normalizeSource(
+                $data['referer_url'] ?? null,
+                $data['utm_source'] ?? null,
+                $data['utm_medium'] ?? null,
+                $data['click_source'] ?? null,
+            ),
             'referer_url'     => $data['referer_url'] ?? null,
             'utm_source'      => $data['utm_source'] ?? null,
             'utm_medium'      => $data['utm_medium'] ?? null,
@@ -101,32 +110,61 @@ class VisitController extends Controller
     }
 
     /**
-     * Bucket a referer URL into a normalized source label. utm_source wins
-     * when present because paid campaigns explicitly tag themselves; we
-     * trust that over host-based inference. Keep this list aligned with
-     * the Filament filter pill labels.
+     * Bucket a visit into a normalized source label. Priority order:
+     *   1. click_source (ad platform auto-tagging: gclid etc.) — definitive
+     *      paid signal. Wins even over utm_* and referer.
+     *   2. utm_source (explicit campaign tagging)
+     *   3. utm_medium hints (cpc/paid/ads → treat as paid for the matching
+     *      host inferred from referer)
+     *   4. referer host (organic classification)
+     *   5. Default: direct
+     *
+     * Keep bucket names aligned with Filament filter pill options.
      */
-    private function normalizeSource(?string $refererUrl, ?string $utmSource): string
-    {
-        if ($utmSource) {
-            $s = strtolower($utmSource);
-            if (str_contains($s, 'google')) return str_contains($s, 'ads') ? 'google_ads' : 'google';
-            if (str_contains($s, 'facebook') || $s === 'fb') return 'facebook';
-            if (str_contains($s, 'instagram') || $s === 'ig') return 'instagram';
-            if (str_contains($s, 'line')) return 'line';
-            if (str_contains($s, 'email') || str_contains($s, 'mail')) return 'email';
-            return 'other';
+    private function normalizeSource(
+        ?string $refererUrl,
+        ?string $utmSource,
+        ?string $utmMedium = null,
+        ?string $clickSource = null,
+    ): string {
+        // 1. Click ID beats everything — if Google/Meta/etc tagged the URL
+        //    with their ad-click identifier, it's definitionally paid.
+        if ($clickSource) {
+            return match (strtolower($clickSource)) {
+                'google_ads' => 'google_ads',
+                'facebook_ads' => 'facebook_ads',
+                'bing_ads' => 'bing_ads',
+                'tiktok_ads' => 'tiktok_ads',
+                'linkedin_ads' => 'linkedin_ads',
+                default => 'other_ads',
+            };
         }
 
+        // 2. utm_medium = cpc/paid/ads + utm_source present → paid.
+        $isPaidMedium = $utmMedium && in_array(strtolower($utmMedium), ['cpc', 'paid', 'ads', 'ppc'], true);
+
+        // 3. utm_source
+        if ($utmSource) {
+            $s = strtolower($utmSource);
+            if (str_contains($s, 'google')) return ($isPaidMedium || str_contains($s, 'ads')) ? 'google_ads' : 'google';
+            if (str_contains($s, 'facebook') || $s === 'fb') return $isPaidMedium ? 'facebook_ads' : 'facebook';
+            if (str_contains($s, 'instagram') || $s === 'ig') return $isPaidMedium ? 'facebook_ads' : 'instagram';
+            if (str_contains($s, 'line')) return $isPaidMedium ? 'other_ads' : 'line';
+            if (str_contains($s, 'email') || str_contains($s, 'mail')) return 'email';
+            if (str_contains($s, 'bing')) return $isPaidMedium ? 'bing_ads' : 'bing';
+            return $isPaidMedium ? 'other_ads' : 'other';
+        }
+
+        // 4. Fall back to referer host
         if (! $refererUrl) return 'direct';
 
         $host = strtolower(parse_url($refererUrl, PHP_URL_HOST) ?? '');
         if ($host === '') return 'direct';
 
-        if (str_contains($host, 'google.')) return 'google';
-        if (str_contains($host, 'bing.com') || str_contains($host, 'duckduckgo')) return 'bing';
-        if (str_contains($host, 'facebook.com') || str_contains($host, 'fb.com') || str_contains($host, 'l.facebook')) return 'facebook';
-        if (str_contains($host, 'instagram.com')) return 'instagram';
+        if (str_contains($host, 'google.')) return $isPaidMedium ? 'google_ads' : 'google';
+        if (str_contains($host, 'bing.com') || str_contains($host, 'duckduckgo')) return $isPaidMedium ? 'bing_ads' : 'bing';
+        if (str_contains($host, 'facebook.com') || str_contains($host, 'fb.com') || str_contains($host, 'l.facebook')) return $isPaidMedium ? 'facebook_ads' : 'facebook';
+        if (str_contains($host, 'instagram.com')) return $isPaidMedium ? 'facebook_ads' : 'instagram';
         if (str_contains($host, 'line.me') || str_contains($host, 't.co/line')) return 'line';
         if (str_contains($host, 'yahoo.')) return 'yahoo';
         if (str_contains($host, 'mail.')) return 'email';

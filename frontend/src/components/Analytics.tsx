@@ -174,6 +174,43 @@ function trackPageView(pathname: string) {
     }
 
     const params = new URLSearchParams(window.location.search);
+
+    // Paid-click IDs — every major ad platform auto-tags landing URLs with
+    // one of these when traffic comes from paid. Presence = definitive paid
+    // signal, independent of whether utm_medium was also set.
+    //   gclid / gbraid / wbraid / gad_source → Google Ads
+    //   fbclid                               → Meta (FB/IG) ads
+    //   msclkid                              → Microsoft (Bing) ads
+    //   ttclid                               → TikTok ads
+    //   li_fat_id                            → LinkedIn ads
+    const clickId =
+      params.get('gclid') ||
+      params.get('gbraid') ||
+      params.get('wbraid') ||
+      params.get('gad_source') ||
+      params.get('fbclid') ||
+      params.get('msclkid') ||
+      params.get('ttclid') ||
+      params.get('li_fat_id') ||
+      null;
+    const clickIdSource = params.get('gclid') || params.get('gbraid') || params.get('wbraid') || params.get('gad_source')
+      ? 'google_ads'
+      : params.get('fbclid') ? 'facebook_ads'
+      : params.get('msclkid') ? 'bing_ads'
+      : params.get('ttclid') ? 'tiktok_ads'
+      : params.get('li_fat_id') ? 'linkedin_ads'
+      : null;
+
+    // Persist the arrival attribution for the whole session so follow-up
+    // page views stay attributed to the campaign that brought them in.
+    // (Without this, everything after the landing page looks "direct".)
+    if (clickIdSource) {
+      sessionStorage.setItem('pandora-click-source', clickIdSource);
+      if (clickId) sessionStorage.setItem('pandora-click-id', clickId);
+    }
+    const sessionClickSource = sessionStorage.getItem('pandora-click-source');
+    const sessionClickId = sessionStorage.getItem('pandora-click-id');
+
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
     fetch(`${apiUrl}/track/visit`, {
       method: 'POST',
@@ -187,6 +224,8 @@ function trackPageView(pathname: string) {
         utm_source: params.get('utm_source'),
         utm_medium: params.get('utm_medium'),
         utm_campaign: params.get('utm_campaign'),
+        click_id: clickId || sessionClickId,
+        click_source: clickIdSource || sessionClickSource,
       }),
       keepalive: true,
     }).catch(() => {});

@@ -28,6 +28,9 @@ class VisitStatsWidget extends StatsOverviewWidget
 
     protected int | string | array $columnSpan = 'full';
 
+    /** Source buckets counted as paid. Keep in sync with VisitController::normalizeSource. */
+    private const PAID_SOURCES = ['google_ads', 'facebook_ads', 'bing_ads', 'tiktok_ads', 'linkedin_ads', 'other_ads'];
+
     protected function getColumns(): int
     {
         return 4;
@@ -42,11 +45,12 @@ class VisitStatsWidget extends StatsOverviewWidget
         $uv = (clone $baseQuery())->distinct('visitor_id')->count('visitor_id');
         $pv = (clone $baseQuery())->count();
 
-        // Paid = referer_source google_ads OR utm_medium cpc/paid/ads.
-        // Organic = everything else (direct + google organic + social + referral).
+        // Paid = any *_ads bucket (set when click IDs or utm_medium=cpc seen)
+        // OR utm_medium cpc/paid/ads (legacy tagged rows).
+        // Organic = everything else (direct + search + social + referral).
         $paidUv = (clone $baseQuery())
             ->where(function ($q) {
-                $q->where('referer_source', 'google_ads')
+                $q->whereIn('referer_source', self::PAID_SOURCES)
                     ->orWhereIn('utm_medium', ['cpc', 'paid', 'ads', 'ppc']);
             })
             ->distinct('visitor_id')

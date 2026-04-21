@@ -34,6 +34,9 @@ class VisitTrendChart extends ChartWidget
         return 'line';
     }
 
+    /** Source buckets counted as paid. Keep in sync with VisitController::normalizeSource. */
+    private const PAID_SOURCES = ['google_ads', 'facebook_ads', 'bing_ads', 'tiktok_ads', 'linkedin_ads', 'other_ads'];
+
     protected function getData(): array
     {
         [$start, $end] = $this->resolveRange();
@@ -45,23 +48,12 @@ class VisitTrendChart extends ChartWidget
             $start = (clone $end)->subDays(13)->startOfDay();
         }
 
-        // Pull one row per (date, is_paid) so the query is cheap even on
-        // large ranges. SUM over visitor_id via COUNT DISTINCT.
-        $rows = Visit::selectRaw('DATE(visited_at) as d')
-            ->selectRaw("SUM(CASE WHEN referer_source = 'google_ads' OR utm_medium IN ('cpc','paid','ads','ppc') THEN 1 ELSE 0 END) as paid_hits")
-            ->selectRaw("SUM(CASE WHEN referer_source != 'google_ads' AND (utm_medium IS NULL OR utm_medium NOT IN ('cpc','paid','ads','ppc')) THEN 1 ELSE 0 END) as organic_hits")
-            ->selectRaw('COUNT(DISTINCT visitor_id) as uv')
-            ->whereBetween('visited_at', [$start, $end])
-            ->groupByRaw('DATE(visited_at)')
-            ->get()
-            ->keyBy('d');
-
-        // Paid/organic UV needs a separate query because UV is COUNT DISTINCT
-        // which can't be split by a CASE inside one aggregation.
+        // Paid UV per day. Separate query from total UV because COUNT DISTINCT
+        // can't be split by a CASE inside one aggregation.
         $paidUvPerDay = Visit::selectRaw('DATE(visited_at) as d, COUNT(DISTINCT visitor_id) as uv')
             ->whereBetween('visited_at', [$start, $end])
             ->where(function ($q) {
-                $q->where('referer_source', 'google_ads')
+                $q->whereIn('referer_source', self::PAID_SOURCES)
                     ->orWhereIn('utm_medium', ['cpc', 'paid', 'ads', 'ppc']);
             })
             ->groupByRaw('DATE(visited_at)')
