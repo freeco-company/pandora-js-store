@@ -52,6 +52,7 @@ class VisitTrendChart extends ChartWidget
         // can't be split by a CASE inside one aggregation.
         $paidUvPerDay = Visit::selectRaw('DATE(visited_at) as d, COUNT(DISTINCT visitor_id) as uv')
             ->whereBetween('visited_at', [$start, $end])
+            ->where('referer_source', '!=', 'bot')
             ->where(function ($q) {
                 $q->whereIn('referer_source', self::PAID_SOURCES)
                     ->orWhereIn('utm_medium', ['cpc', 'paid', 'ads', 'ppc']);
@@ -62,6 +63,7 @@ class VisitTrendChart extends ChartWidget
 
         $totalUvPerDay = Visit::selectRaw('DATE(visited_at) as d, COUNT(DISTINCT visitor_id) as uv')
             ->whereBetween('visited_at', [$start, $end])
+            ->where('referer_source', '!=', 'bot')
             ->groupByRaw('DATE(visited_at)')
             ->pluck('uv', 'd')
             ->toArray();

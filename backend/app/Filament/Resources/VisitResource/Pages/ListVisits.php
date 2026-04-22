@@ -36,8 +36,13 @@ class ListVisits extends ListRecords
         $end = $day->copy()->endOfDay();
 
         $uv = Visit::whereBetween('visited_at', [$start, $end])
+            ->where('referer_source', '!=', 'bot')
             ->distinct('visitor_id')->count('visitor_id');
-        $pv = Visit::whereBetween('visited_at', [$start, $end])->count();
+        $pv = Visit::whereBetween('visited_at', [$start, $end])
+            ->where('referer_source', '!=', 'bot')
+            ->count();
+        // Keep bots visible in the breakdown so admins can still see crawler
+        // activity at a glance — just not in the headline UV/PV numbers.
         $bySource = Visit::whereBetween('visited_at', [$start, $end])
             ->selectRaw('referer_source, COUNT(*) as c')
             ->groupBy('referer_source')
@@ -54,6 +59,7 @@ class ListVisits extends ListRecords
             'bing' => 'Bing',
             'email' => 'Email',
             'other' => '其他',
+            'bot' => 'Bot',
         ];
         $parts = [];
         foreach ($sourceLabels as $k => $label) {

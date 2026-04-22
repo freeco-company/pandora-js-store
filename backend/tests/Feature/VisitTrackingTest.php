@@ -90,6 +90,49 @@ class VisitTrackingTest extends TestCase
         $this->assertSame('direct', Visit::first()->referer_source);
     }
 
+    public function test_bot_ua_is_bucketed_as_bot_regardless_of_referer(): void
+    {
+        // AdsBot-Google-Mobile was the specific UA that leaked into "direct"
+        // on production (4/21–4/23), inflating organic UV by ~15/day.
+        $this->track([
+            'session_id' => 'sess-bot-1',
+            'path' => '/products/foo',
+            'referer_url' => 'https://www.google.com/',
+            'user_agent' => 'Mozilla/5.0 (Linux; Android 6.0.1; Nexus 5X Build/MMB29P) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.7680.177 Mobile Safari/537.36 (compatible; AdsBot-Google-Mobile; +http://www.google.com/mobile/adsbot.html)',
+        ]);
+        $this->assertSame('bot', Visit::first()->referer_source);
+    }
+
+    public function test_curl_ua_is_bucketed_as_bot(): void
+    {
+        $this->track([
+            'session_id' => 'sess-bot-2',
+            'path' => '/',
+            'user_agent' => 'curl/8.4.0',
+        ]);
+        $this->assertSame('bot', Visit::first()->referer_source);
+    }
+
+    public function test_claude_bot_ua_is_bucketed_as_bot(): void
+    {
+        $this->track([
+            'session_id' => 'sess-bot-3',
+            'path' => '/articles/foo',
+            'user_agent' => 'Mozilla/5.0 (compatible; ClaudeBot/1.0; +claudebot@anthropic.com)',
+        ]);
+        $this->assertSame('bot', Visit::first()->referer_source);
+    }
+
+    public function test_real_human_ua_is_not_flagged_as_bot(): void
+    {
+        $this->track([
+            'session_id' => 'sess-human',
+            'path' => '/',
+            'user_agent' => 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1',
+        ]);
+        $this->assertSame('direct', Visit::first()->referer_source);
+    }
+
     public function test_ua_parsing_populates_device_os_browser(): void
     {
         $this->track([

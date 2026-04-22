@@ -40,7 +40,11 @@ class VisitStatsWidget extends StatsOverviewWidget
     {
         [$start, $end] = $this->resolveRange();
 
-        $baseQuery = fn () => Visit::whereBetween('visited_at', [$start, $end]);
+        // Exclude rows flagged as bots by the VisitController — AdsBot,
+        // headless Chrome, Googlebot, curl/, etc. Keeping them in the
+        // denominator inflates organic UV with non-human traffic.
+        $baseQuery = fn () => Visit::whereBetween('visited_at', [$start, $end])
+            ->where('referer_source', '!=', 'bot');
 
         $uv = (clone $baseQuery())->distinct('visitor_id')->count('visitor_id');
         $pv = (clone $baseQuery())->count();
@@ -68,6 +72,7 @@ class VisitStatsWidget extends StatsOverviewWidget
         $prevStart = (clone $start)->subDays($durationDays);
         $prevEnd = (clone $start)->subDay()->endOfDay();
         $prevUv = Visit::whereBetween('visited_at', [$prevStart, $prevEnd])
+            ->where('referer_source', '!=', 'bot')
             ->distinct('visitor_id')
             ->count('visitor_id');
         $delta = $this->deltaLabel($uv, $prevUv);

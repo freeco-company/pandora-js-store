@@ -28,13 +28,16 @@ class DailyVisitorsWidget extends StatsOverviewWidget
         $dayStart = $focus->copy()->startOfDay();
         $dayEnd = $focus->copy()->endOfDay();
 
+        // Exclude bot rows so the "unique visitors" number reflects humans only.
         $uniqueVisitors = (int) DB::table('visits')
             ->whereBetween('visited_at', [$dayStart, $dayEnd])
+            ->where('referer_source', '!=', 'bot')
             ->distinct('visitor_id')
             ->count('visitor_id');
 
         $totalHits = (int) DB::table('visits')
             ->whereBetween('visited_at', [$dayStart, $dayEnd])
+            ->where('referer_source', '!=', 'bot')
             ->count();
 
         // Previous day for delta %
@@ -42,6 +45,7 @@ class DailyVisitorsWidget extends StatsOverviewWidget
         $prevEnd = $focus->copy()->subDay()->endOfDay();
         $prevVisitors = (int) DB::table('visits')
             ->whereBetween('visited_at', [$prevStart, $prevEnd])
+            ->where('referer_source', '!=', 'bot')
             ->distinct('visitor_id')
             ->count('visitor_id');
 

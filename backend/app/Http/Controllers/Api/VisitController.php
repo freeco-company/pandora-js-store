@@ -62,7 +62,12 @@ class VisitController extends Controller
             'os_version'      => $agent->version($agent->platform() ?: '') ?: null,
             'browser'         => $agent->browser() ?: null,
             'browser_version' => $agent->version($agent->browser() ?: '') ?: null,
-            'referer_source'  => $this->normalizeSource(
+            // Bot UA wins over every other source signal. Without this, crawlers
+            // that execute JS (AdsBot-Google-Mobile, headless Chrome, Puppeteer
+            // etc.) leak into the "direct" bucket and inflate organic UV counts.
+            // Keep the row so we can audit who's crawling us, but label it so
+            // widgets can exclude it from organic traffic math.
+            'referer_source'  => $this->isBot($ua) ? 'bot' : $this->normalizeSource(
                 $data['referer_url'] ?? null,
                 $data['utm_source'] ?? null,
                 $data['utm_medium'] ?? null,
@@ -100,6 +105,38 @@ class VisitController extends Controller
         }
         $parts = explode('.', $ip);
         return count($parts) === 4 ? "{$parts[0]}.{$parts[1]}.{$parts[2]}" : $ip;
+    }
+
+    /**
+     * UA-based bot detection. Catches well-known crawlers regardless of whether
+     * the edge proxy's AI-traffic detector recognised them. Anything matching
+     * here is bucketed as `referer_source = 'bot'` so it doesn't inflate the
+     * admin dashboard's organic / direct counts.
+     *
+     * Intentionally broader than ai-traffic.ts (which only catches *AI* bots):
+     * this also catches AdsBot, Googlebot, Bingbot, SEO crawlers, uptime
+     * probes, and generic "bot/crawler/spider" UAs.
+     */
+    private function isBot(string $ua): bool
+    {
+        if ($ua === '') return false;
+        // Broad but intentional. Ordering doesn't matter — this is a pure
+        // match. AdsBot-Google-* is explicit because it shows up as a
+        // "mobile Chrome" UA with "AdsBot-Google-Mobile" appended, which
+        // would otherwise slip past a naive "bot" substring check on some
+        // platforms that lowercase-normalise UA strings differently.
+        return (bool) preg_match(
+            '~'
+            . 'AdsBot-Google|Googlebot|Bingbot|DuckDuckBot|Baiduspider|YandexBot|Sogou|Yeti|'
+            . 'facebookexternalhit|facebookcatalog|LinkedInBot|Twitterbot|Slackbot|TelegramBot|Discordbot|'
+            . 'WhatsApp|Line/|ia_archiver|archive\.org_bot|PetalBot|Seekport|AhrefsBot|SemrushBot|MJ12bot|'
+            . 'DotBot|BLEXBot|DataForSeoBot|serpstatbot|ZoominfoBot|MegaIndex|'
+            . 'HeadlessChrome|PhantomJS|puppeteer|Playwright|Selenium|Lighthouse|'
+            . 'curl/|wget/|python-requests|Go-http-client|node-fetch|axios/|okhttp/|Java/|'
+            . 'bot|crawler|crawling|spider|scraper'
+            . '~i',
+            $ua,
+        );
     }
 
     private function deviceType(Agent $agent): string

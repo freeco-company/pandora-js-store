@@ -63,6 +63,7 @@ class VisitResource extends Resource
                         'google', 'bing', 'yahoo' => 'info',
                         'google_ads', 'facebook_ads', 'bing_ads', 'tiktok_ads', 'linkedin_ads', 'other_ads' => 'warning',
                         'facebook', 'instagram', 'line' => 'primary',
+                        'bot' => 'danger',
                         default => 'gray',
                     })
                     ->formatStateUsing(fn (?string $state) => match ($state) {
@@ -81,6 +82,7 @@ class VisitResource extends Resource
                         'other_ads' => '其他廣告',
                         'email' => 'Email',
                         'other' => '其他',
+                        'bot' => '機器人',
                         default => $state ?? '—',
                     }),
 
@@ -186,6 +188,7 @@ class VisitResource extends Resource
                         'other_ads' => '其他廣告',
                         'email' => 'Email',
                         'other' => '其他',
+                        'bot' => '機器人/爬蟲',
                     ]),
 
                 Tables\Filters\SelectFilter::make('device_type')
@@ -237,6 +240,7 @@ class VisitResource extends Resource
             'visits:today-uv',
             60,
             fn () => Visit::whereBetween('visited_at', [today()->startOfDay(), today()->endOfDay()])
+                ->where('referer_source', '!=', 'bot')
                 ->distinct('visitor_id')
                 ->count('visitor_id')
         );
