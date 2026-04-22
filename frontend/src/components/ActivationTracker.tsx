@@ -13,7 +13,11 @@ import { useAuth } from './AuthProvider';
 import { useCelebrate } from './Celebration';
 import { markActivation, type ActivationStep } from '@/lib/api';
 
-const CACHE_KEY = 'pandora-activation-marked';
+// Cache is scoped by user token prefix so switching accounts on the same
+// browser doesn't cross-contaminate. Previously a single CACHE_KEY was
+// shared, causing the bug where a new user's tasks were skipped because
+// a prior user had already marked them on that device.
+const CACHE_KEY_PREFIX = 'pandora-activation-marked:';
 
 function matchStep(pathname: string): ActivationStep | null {
   if (pathname === '/products' || pathname.startsWith('/products?')) return 'first_browse';
@@ -24,21 +28,37 @@ function matchStep(pathname: string): ActivationStep | null {
   return null;
 }
 
-function readCache(): Record<string, boolean> {
+function cacheKey(token: string): string {
+  return CACHE_KEY_PREFIX + token.slice(0, 16);
+}
+
+function readCache(token: string): Record<string, boolean> {
   if (typeof window === 'undefined') return {};
   try {
-    return JSON.parse(localStorage.getItem(CACHE_KEY) || '{}');
+    return JSON.parse(localStorage.getItem(cacheKey(token)) || '{}');
   } catch {
     return {};
   }
 }
 
-function writeCache(cache: Record<string, boolean>) {
+function writeCache(token: string, cache: Record<string, boolean>): void {
   try {
-    localStorage.setItem(CACHE_KEY, JSON.stringify(cache));
+    localStorage.setItem(cacheKey(token), JSON.stringify(cache));
   } catch {
     // ignore quota errors
   }
+}
+
+/**
+ * Delete the legacy shared cache. We deliberately don't migrate it to a
+ * user scope: "first user we see after deploy owns this cache" is only
+ * safe when we can identify that user, and we can't — the cache had no
+ * identity. Worst case after delete: one extra markActivation API call
+ * per step per user. Backend is idempotent, so no correctness risk.
+ */
+function clearLegacyCache(): void {
+  if (typeof window === 'undefined') return;
+  localStorage.removeItem('pandora-activation-marked');
 }
 
 export default function ActivationTracker() {
@@ -52,11 +72,14 @@ export default function ActivationTracker() {
     const step = matchStep(pathname);
     if (!step) return;
 
-    // Skip if already fired this session + this step
+    clearLegacyCache();
+
+    // Dedup within this mount + token combo
     const fireKey = `${token.slice(0, 8)}:${step}`;
     if (lastFired.current === fireKey) return;
 
-    const cache = readCache();
+    // Dedup across sessions via user-scoped localStorage cache
+    const cache = readCache(token);
     if (cache[step]) {
       lastFired.current = fireKey;
       return;
@@ -65,9 +88,9 @@ export default function ActivationTracker() {
     lastFired.current = fireKey;
     markActivation(token, step)
       .then((res) => {
-        const c = readCache();
+        const c = readCache(token);
         c[step] = true;
-        writeCache(c);
+        writeCache(token, c);
         // First-time award → fullscreen celebration modal
         if (res._achievement) celebrate(res._achievement);
       })
