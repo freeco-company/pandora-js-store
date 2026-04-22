@@ -31,37 +31,42 @@ class AuthController extends Controller
             return redirect()->to($frontendUrl . '/auth/google/callback?error=auth_failed');
         }
 
-        $customer = Customer::updateOrCreate(
-            ['google_id' => $googleUser->getId()],
-            [
-                'name' => $googleUser->getName(),
-                'email' => $googleUser->getEmail(),
-                'membership_level' => 'regular',
-                // password is NOT NULL in the DB. Google OAuth users don't
-                // have a password but the column must have a value. Set a
-                // random hash so the row passes strict-mode insertion.
-                'password' => bcrypt(\Illuminate\Support\Str::random(32)),
-            ]
-        );
+        $googleId = $googleUser->getId();
+        $name = $googleUser->getName();
+        $email = $googleUser->getEmail();
 
-        // If an existing customer with the same email but no google_id, link them
-        if (!$customer->wasRecentlyCreated) {
-            // Already matched by google_id — good
-        } else {
-            // Check if a customer with this email already exists (from guest checkout)
-            $existing = Customer::where('email', $googleUser->getEmail())
-                ->whereNull('google_id')
-                ->first();
+        // Three cases, mirrored from LINE callback:
+        //   1. Already have this google_id → just log them in.
+        //   2. Have a customer with this email but no google_id (guest
+        //      checkout, email/password register, or LINE-first user) →
+        //      link Google and reuse that account.
+        //   3. Totally new → create.
+        // The previous implementation used updateOrCreate(google_id=...)
+        // which tried to INSERT when no google_id match existed — and then
+        // hit 1062 on the email unique index. The fallback that would have
+        // linked the existing email user never ran because the exception
+        // fired mid-insert. Fixed by searching both keys BEFORE create.
+        $customer = Customer::where('google_id', $googleId)->first();
 
-            if ($existing) {
-                // Link Google to existing customer, delete the duplicate
-                $existing->update([
-                    'google_id' => $googleUser->getId(),
-                    'name' => $googleUser->getName(),
-                ]);
-                $customer->forceDelete();
-                $customer = $existing;
+        if (! $customer && $email) {
+            $customer = Customer::where('email', $email)->first();
+            if ($customer) {
+                $updates = ['google_id' => $googleId];
+                if (! $customer->name && $name) $updates['name'] = $name;
+                $customer->update($updates);
             }
+        }
+
+        if (! $customer) {
+            $customer = Customer::create([
+                'google_id' => $googleId,
+                'name' => $name,
+                'email' => $email,
+                'membership_level' => 'regular',
+                // password NOT NULL in DB; Google users don't have one, so
+                // seed a random hash they can't sign in with directly.
+                'password' => bcrypt(\Illuminate\Support\Str::random(32)),
+            ]);
         }
 
         $token = $customer->createToken('google-auth')->plainTextToken;
