@@ -9,6 +9,7 @@ import { jsonLdScript } from '@/lib/jsonld';
 import { SITE_URL } from '@/lib/site';
 import { formatPrice } from '@/lib/format';
 import { BundleListTracker } from '@/components/BundleTracker';
+import CampaignStateNotice from '@/components/CampaignStateNotice';
 
 export const dynamic = 'force-dynamic';
 
@@ -42,6 +43,17 @@ export default async function CampaignPage({ params }: { params: Promise<{ slug:
     notFound();
   }
   if (!campaign) notFound();
+
+  if (!campaign.is_running) {
+    return (
+      <CampaignStateNotice
+        state={campaign.has_ended ? 'ended' : 'upcoming'}
+        name={campaign.name}
+        startAt={campaign.start_at}
+        endAt={campaign.end_at}
+      />
+    );
+  }
 
   const endDate = new Date(campaign.end_at);
   const eventSchema = {

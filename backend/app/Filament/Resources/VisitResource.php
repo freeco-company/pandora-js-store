@@ -9,6 +9,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Support\Carbon;
 use UnitEnum;
 
 /**
@@ -138,10 +139,35 @@ class VisitResource extends Resource
             ])
             ->defaultSort('visited_at', 'desc')
             ->filters([
-                Tables\Filters\Filter::make('today')
-                    ->label('僅今日')
-                    ->default()
-                    ->query(fn ($query) => $query->whereDate('visited_at', today())),
+                // Single-day picker — defaults to today, user can scrub to
+                // any past day. whereBetween + startOfDay/endOfDay is
+                // timezone-safe (honours APP_TIMEZONE=Asia/Taipei) while
+                // whereDate() relies on the DB session tz and drifts when
+                // the server clock is UTC.
+                Tables\Filters\Filter::make('date')
+                    ->label('日期')
+                    ->schema([
+                        \Filament\Forms\Components\DatePicker::make('value')
+                            ->label('選擇日期')
+                            ->native(false)
+                            ->displayFormat('Y-m-d')
+                            ->maxDate(today())
+                            ->default(today()),
+                    ])
+                    ->query(function ($query, array $data) {
+                        $date = $data['value'] ?? null;
+                        if (! $date) return $query;
+                        $day = Carbon::parse($date);
+                        return $query->whereBetween('visited_at', [
+                            $day->copy()->startOfDay(),
+                            $day->copy()->endOfDay(),
+                        ]);
+                    })
+                    ->indicateUsing(function (array $data): ?string {
+                        if (empty($data['value'])) return null;
+                        $d = Carbon::parse($data['value']);
+                        return $d->isToday() ? '今日' : $d->format('Y-m-d');
+                    }),
 
                 Tables\Filters\SelectFilter::make('referer_source')
                     ->label('來源')
@@ -210,7 +236,9 @@ class VisitResource extends Resource
         return (string) \Illuminate\Support\Facades\Cache::remember(
             'visits:today-uv',
             60,
-            fn () => Visit::whereDate('visited_at', today())->distinct('visitor_id')->count('visitor_id')
+            fn () => Visit::whereBetween('visited_at', [today()->startOfDay(), today()->endOfDay()])
+                ->distinct('visitor_id')
+                ->count('visitor_id')
         );
     }
 

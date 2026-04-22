@@ -139,6 +139,7 @@ export interface CampaignBundle {
     start_at: string;
     end_at: string;
     is_running: boolean;
+    has_ended: boolean;
   };
 }
 
@@ -152,6 +153,7 @@ export interface Campaign {
   start_at: string;
   end_at: string;
   is_running: boolean;
+  has_ended: boolean;
   bundles: CampaignBundle[];
 }
 

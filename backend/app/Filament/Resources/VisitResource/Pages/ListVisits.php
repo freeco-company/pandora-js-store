@@ -5,6 +5,7 @@ namespace App\Filament\Resources\VisitResource\Pages;
 use App\Filament\Resources\VisitResource;
 use App\Models\Visit;
 use Filament\Resources\Pages\ListRecords;
+use Illuminate\Support\Carbon;
 
 class ListVisits extends ListRecords
 {
@@ -12,7 +13,9 @@ class ListVisits extends ListRecords
 
     public function getTitle(): string
     {
-        return '當日流量';
+        $day = $this->focusDate();
+        if ($day->isToday()) return '當日流量';
+        return '流量紀錄 · ' . $day->format('Y-m-d');
     }
 
     protected function getHeaderWidgets(): array
@@ -24,12 +27,18 @@ class ListVisits extends ListRecords
 
     public function getSubheading(): ?string
     {
-        // Show quick stats above the table — UV, PV, and source breakdown
-        // for today. Cheap because the column has a compound index.
-        $today = today();
-        $uv = Visit::whereDate('visited_at', $today)->distinct('visitor_id')->count('visitor_id');
-        $pv = Visit::whereDate('visited_at', $today)->count();
-        $bySource = Visit::whereDate('visited_at', $today)
+        // Stats reflect the table filter's selected date (defaults to today).
+        // Uses whereBetween + Carbon startOfDay/endOfDay so the window is
+        // timezone-safe — whereDate() would drift when the DB session tz
+        // differs from APP_TIMEZONE.
+        $day = $this->focusDate();
+        $start = $day->copy()->startOfDay();
+        $end = $day->copy()->endOfDay();
+
+        $uv = Visit::whereBetween('visited_at', [$start, $end])
+            ->distinct('visitor_id')->count('visitor_id');
+        $pv = Visit::whereBetween('visited_at', [$start, $end])->count();
+        $bySource = Visit::whereBetween('visited_at', [$start, $end])
             ->selectRaw('referer_source, COUNT(*) as c')
             ->groupBy('referer_source')
             ->pluck('c', 'referer_source')
@@ -51,6 +60,20 @@ class ListVisits extends ListRecords
             if (! empty($bySource[$k])) $parts[] = "{$label} {$bySource[$k]}";
         }
 
-        return sprintf('今日 UV %d · PV %d · %s', $uv, $pv, $parts ? implode('　', $parts) : '—');
+        $dayLabel = $day->isToday() ? '今日' : $day->format('Y-m-d');
+        return sprintf('%s UV %d · PV %d · %s', $dayLabel, $uv, $pv, $parts ? implode('　', $parts) : '—');
+    }
+
+    /**
+     * Read the selected date from the table `date` filter. Defaults to today
+     * when the filter is cleared or the value is invalid.
+     */
+    private function focusDate(): Carbon
+    {
+        $value = $this->tableFilters['date']['value'] ?? null;
+        if ($value) {
+            try { return Carbon::parse($value); } catch (\Throwable) {}
+        }
+        return Carbon::today();
     }
 }

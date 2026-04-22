@@ -6,6 +6,7 @@ import ScrollReveal from '@/components/ScrollReveal';
 import SiteIcon from '@/components/SiteIcon';
 import CampaignBundleCard from '@/components/CampaignBundleCard';
 import { BundleViewTracker } from '@/components/BundleTracker';
+import CampaignStateNotice from '@/components/CampaignStateNotice';
 import { jsonLdScript, breadcrumbSchema } from '@/lib/jsonld';
 import { SITE_URL } from '@/lib/site';
 
@@ -43,6 +44,17 @@ export default async function BundlePage({ params }: { params: Promise<{ slug: s
   if (!bundle) notFound();
 
   const campaign = bundle.campaign;
+
+  if (campaign && !campaign.is_running) {
+    return (
+      <CampaignStateNotice
+        state={campaign.has_ended ? 'ended' : 'upcoming'}
+        name={campaign.name}
+        startAt={campaign.start_at}
+        endAt={campaign.end_at}
+      />
+    );
+  }
   const breadcrumbs = breadcrumbSchema([
     { name: '首頁', url: '/' },
     ...(campaign ? [{ name: campaign.name, url: `/campaigns/${campaign.slug}` }] : []),

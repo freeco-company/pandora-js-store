@@ -13,13 +13,18 @@ use Illuminate\Http\JsonResponse;
  */
 class BundleController extends Controller
 {
+    /**
+     * Returns the bundle regardless of whether the parent campaign is running,
+     * so the frontend can show a friendly 「尚未開始 / 已結束」 state.
+     * Only bundles under an unpublished (is_active=false) campaign 404.
+     */
     public function show(string $slug): JsonResponse
     {
         $bundle = Bundle::where('slug', $slug)
             ->with(['campaign', 'buyItems', 'giftItems'])
             ->firstOrFail();
 
-        if (! $bundle->isAvailable()) {
+        if (! $bundle->campaign || ! $bundle->campaign->is_active) {
             abort(404);
         }
 
@@ -66,6 +71,7 @@ class BundleController extends Controller
                 'start_at' => $campaign->start_at->toIso8601String(),
                 'end_at' => $campaign->end_at->toIso8601String(),
                 'is_running' => $campaign->isRunning(),
+                'has_ended' => $campaign->hasEnded(),
             ] : null,
         ];
     }

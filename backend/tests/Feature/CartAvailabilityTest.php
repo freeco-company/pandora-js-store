@@ -228,7 +228,7 @@ class CartAvailabilityTest extends TestCase
             ->assertJsonPath('campaign.slug', 'spring');
     }
 
-    public function test_bundle_show_404_when_campaign_not_running(): void
+    public function test_bundle_show_returns_ok_with_not_running_flag_when_campaign_ended(): void
     {
         $c = Campaign::create([
             'name' => 'Past', 'slug' => 'past-c', 'is_active' => true,
@@ -238,7 +238,25 @@ class CartAvailabilityTest extends TestCase
             'campaign_id' => $c->id, 'name' => 'Expired Bundle', 'slug' => 'expired-bundle',
         ]);
 
-        $this->getJson('/api/bundles/expired-bundle')->assertNotFound();
+        // Now returns 200 with is_running=false so frontend can show
+        // a friendly 「活動已結束」 notice instead of 404.
+        $this->getJson('/api/bundles/expired-bundle')
+            ->assertOk()
+            ->assertJsonPath('campaign.is_running', false)
+            ->assertJsonPath('campaign.has_ended', true);
+    }
+
+    public function test_bundle_show_404_when_campaign_inactive(): void
+    {
+        $c = Campaign::create([
+            'name' => 'Draft', 'slug' => 'draft-c', 'is_active' => false,
+            'start_at' => now()->subDay(), 'end_at' => now()->addDay(),
+        ]);
+        Bundle::create([
+            'campaign_id' => $c->id, 'name' => 'Hidden Bundle', 'slug' => 'hidden-bundle',
+        ]);
+
+        $this->getJson('/api/bundles/hidden-bundle')->assertNotFound();
     }
 
     public function test_cart_bundle_pricing_triggers_vip_for_whole_cart(): void
@@ -284,24 +302,33 @@ class CartAvailabilityTest extends TestCase
             ->assertJsonCount(0, 'bundles');
     }
 
-    public function test_campaign_show_404_when_not_running(): void
+    public function test_campaign_show_returns_ok_with_not_running_flag_outside_window(): void
     {
         Campaign::create([
-            'name' => 'Past',
-            'slug' => 'past',
-            'is_active' => true,
-            'start_at' => now()->subDays(5),
-            'end_at' => now()->subDay(),
+            'name' => 'Past', 'slug' => 'past', 'is_active' => true,
+            'start_at' => now()->subDays(5), 'end_at' => now()->subDay(),
         ]);
-        $this->getJson('/api/campaigns/past')->assertNotFound();
+        $this->getJson('/api/campaigns/past')
+            ->assertOk()
+            ->assertJsonPath('is_running', false)
+            ->assertJsonPath('has_ended', true);
 
         Campaign::create([
-            'name' => 'Future',
-            'slug' => 'future',
-            'is_active' => true,
-            'start_at' => now()->addDay(),
-            'end_at' => now()->addDays(7),
+            'name' => 'Future', 'slug' => 'future', 'is_active' => true,
+            'start_at' => now()->addDay(), 'end_at' => now()->addDays(7),
         ]);
-        $this->getJson('/api/campaigns/future')->assertNotFound();
+        $this->getJson('/api/campaigns/future')
+            ->assertOk()
+            ->assertJsonPath('is_running', false)
+            ->assertJsonPath('has_ended', false);
+    }
+
+    public function test_campaign_show_404_when_inactive(): void
+    {
+        Campaign::create([
+            'name' => 'Draft', 'slug' => 'draft', 'is_active' => false,
+            'start_at' => now()->subDay(), 'end_at' => now()->addDays(7),
+        ]);
+        $this->getJson('/api/campaigns/draft')->assertNotFound();
     }
 }

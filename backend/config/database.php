@@ -59,6 +59,11 @@ return [
             'prefix_indexes' => true,
             'strict' => true,
             'engine' => null,
+            // Force the DB session timezone to match APP_TIMEZONE so that
+            // DATE()/whereDate()/NOW() return values aligned with Carbon.
+            // Without this, a host running in UTC (e.g. Linode default)
+            // buckets traffic into the wrong day for 00:00–08:00 visits.
+            'timezone' => env('DB_TIMEZONE', '+08:00'),
             'options' => extension_loaded('pdo_mysql') ? array_filter([
                 (PHP_VERSION_ID >= 80500 ? Mysql::ATTR_SSL_CA : PDO::MYSQL_ATTR_SSL_CA) => env('MYSQL_ATTR_SSL_CA'),
             ]) : [],
@@ -79,6 +84,11 @@ return [
             'prefix_indexes' => true,
             'strict' => true,
             'engine' => null,
+            // Force the DB session timezone to match APP_TIMEZONE so that
+            // DATE()/whereDate()/NOW() return values aligned with Carbon.
+            // Without this, a host running in UTC (e.g. Linode default)
+            // buckets traffic into the wrong day for 00:00–08:00 visits.
+            'timezone' => env('DB_TIMEZONE', '+08:00'),
             'options' => extension_loaded('pdo_mysql') ? array_filter([
                 (PHP_VERSION_ID >= 80500 ? Mysql::ATTR_SSL_CA : PDO::MYSQL_ATTR_SSL_CA) => env('MYSQL_ATTR_SSL_CA'),
             ]) : [],

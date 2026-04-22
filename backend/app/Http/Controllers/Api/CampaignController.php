@@ -20,11 +20,16 @@ class CampaignController extends Controller
         return response()->json($campaigns);
     }
 
-    /** Single campaign (with bundles) by slug — 404 when not running. */
+    /**
+     * Single campaign (with bundles) by slug.
+     * Returns the campaign regardless of time window so the frontend can
+     * show a friendly 「尚未開始 / 已結束」 state instead of 404.
+     * Only unpublished (is_active=false) campaigns 404.
+     */
     public function show(string $slug): JsonResponse
     {
-        $campaign = Campaign::active()
-            ->where('slug', $slug)
+        $campaign = Campaign::where('slug', $slug)
+            ->where('is_active', true)
             ->with(['bundles.buyItems', 'bundles.giftItems'])
             ->firstOrFail();
 
@@ -43,6 +48,7 @@ class CampaignController extends Controller
             'start_at' => $c->start_at->toIso8601String(),
             'end_at' => $c->end_at->toIso8601String(),
             'is_running' => $c->isRunning(),
+            'has_ended' => $c->hasEnded(),
             'bundles' => $c->bundles->map(fn ($b) => $this->serializeBundle($b))->values(),
         ];
     }

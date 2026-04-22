@@ -125,6 +125,19 @@ function CountdownSection({ campaign }: { campaign: Campaign }) {
         {/* ── Background + breathing ripples ── */}
         <div className="absolute inset-0 overflow-hidden" aria-hidden>
           <div className="absolute inset-0" style={{ background: 'linear-gradient(160deg, #f5e1c8 0%, #ecd1b3 30%, #e7c9a8 55%, #f2ddc4 100%)' }} />
+          {campaign.banner_image && (
+            <>
+              <ImageWithFallback
+                src={imageUrl(campaign.banner_image)!}
+                alt=""
+                fill
+                sizes="100vw"
+                className="object-cover opacity-40 mix-blend-multiply"
+                priority
+              />
+              <div className="absolute inset-0 bg-gradient-to-b from-[#f5e1c8]/60 via-transparent to-[#ecd1b3]/70" />
+            </>
+          )}
           {/* Continuous ripples from center — synced with countdown seconds */}
           {settled && (
             <>
