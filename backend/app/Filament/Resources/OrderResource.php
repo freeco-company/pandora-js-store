@@ -175,6 +175,9 @@ class OrderResource extends Resource
 
         return $table
             ->stackedOnMobile()
+            // Preload items_count so the "商品" action tooltip doesn't fire
+            // N+1 queries when hovering down a long order list.
+            ->modifyQueryUsing(fn ($query) => $query->withCount('items'))
             ->columns([
                 Tables\Columns\TextColumn::make('order_number')
                     ->searchable()
@@ -313,6 +316,23 @@ class OrderResource extends Resource
                         ->where('payment_status', 'paid')),
             ])
             ->actions([
+                // Inline item preview — clicking opens a modal with all line
+                // items (thumbnail + name + qty + subtotal). Faster than
+                // navigating into /edit just to see what was ordered.
+                \Filament\Actions\Action::make('items')
+                    ->label('商品')
+                    ->icon('heroicon-o-cube')
+                    ->color('gray')
+                    ->iconButton()
+                    ->tooltip(fn ($record) => "共 {$record->items_count} 項商品")
+                    ->modalHeading(fn ($record) => "訂單 {$record->order_number} · 商品明細")
+                    ->modalSubmitAction(false)
+                    ->modalCancelActionLabel('關閉')
+                    ->modalContent(fn ($record) => view('filament.order-items-modal', [
+                        'items' => $record->items()->with('product')->get(),
+                        'order' => $record,
+                    ])),
+
                 \Filament\Actions\Action::make('create_logistics')
                     ->label('建立物流單')
                     ->icon('heroicon-o-building-storefront')

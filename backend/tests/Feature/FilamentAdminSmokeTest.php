@@ -70,7 +70,12 @@ class FilamentAdminSmokeTest extends TestCase
     public function test_orders_index_renders(): void
     {
         $customer = Customer::create(['name' => 'C', 'email' => 'c@t.com', 'password' => bcrypt('x')]);
-        Order::create([
+        $product = Product::create([
+            'name' => 'P', 'slug' => 'p', 'price' => 1000,
+            'combo_price' => 900, 'vip_price' => 800,
+            'is_active' => true, 'stock_status' => 'instock',
+        ]);
+        $order = Order::create([
             'order_number' => 'PDTEST01',
             'customer_id' => $customer->id,
             'status' => 'pending',
@@ -81,6 +86,16 @@ class FilamentAdminSmokeTest extends TestCase
             'shipping_method' => 'home_delivery',
             'shipping_name' => 'X', 'shipping_phone' => '0900000000',
             'shipping_address' => '台北市',
+        ]);
+        // Seed one item so the items_count withCount path + "商品" modal
+        // action both exercise their real render code.
+        \App\Models\OrderItem::create([
+            'order_id' => $order->id,
+            'product_id' => $product->id,
+            'product_name' => 'P',
+            'quantity' => 2,
+            'unit_price' => 1000,
+            'subtotal' => 2000,
         ]);
 
         $this->actingAs($this->admin())
