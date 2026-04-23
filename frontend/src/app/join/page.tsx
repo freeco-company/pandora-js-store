@@ -39,9 +39,9 @@ export default function JoinPage() {
           />
           <ScrollReveal variant="fade-up" delay={300}>
             <p className="text-sm sm:text-base text-gray-700 mt-4 max-w-xl mx-auto leading-relaxed">
-              只要 <strong className="text-[#9F6B3E]">NT$200 工本費</strong>，就能成為加盟會員。
+              加盟會員需 <strong className="text-[#9F6B3E]">NT$200 工本費</strong>，並完成 App 註冊、線上課程考核、首次方案購買等流程。
               <br />
-              選擇適合你的方案，全館商品直接用<strong className="text-[#9F6B3E]">成本價</strong>購買！
+              啟用加盟身分後，後續購買商品皆為<strong className="text-[#9F6B3E]">成本價</strong>。
             </p>
           </ScrollReveal>
         </div>
@@ -86,89 +86,94 @@ export default function JoinPage() {
 function SelfUsePanel() {
   return (
     <div className="space-y-8">
-      {/* Intro */}
+      {/* Intro — one line, details live inside each card */}
       <ScrollReveal variant="fade-up">
         <div className="text-center mb-2">
           <p className="text-sm sm:text-base text-gray-600 leading-relaxed max-w-2xl mx-auto">
-            自用加盟只要 <strong className="text-[#9F6B3E]">NT$200 工本費</strong>，
-            全館商品隨你挑、湊滿 NT$6,600 或 NT$19,600 即可，<br />首次就用<strong className="text-[#9F6B3E]">成本價</strong>帶走。
-            <br className="hidden sm:inline" />
-            有活動時，活動贈品照拿、商品一樣成本價！
+            自用加盟是<strong className="text-[#9F6B3E]">一套完整流程</strong>，不是單次折扣。
+            完成以下方案的啟用步驟後，後續購買商品皆為<strong className="text-[#9F6B3E]">成本價</strong>。
           </p>
         </div>
       </ScrollReveal>
 
-      {/* Two pricing cards side by side */}
+      {/* Two pricing cards side by side — detail lives here now */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
         {/* 6600 Plan */}
         <ScrollReveal variant="fade-up" delay={100}>
-          <div className="bg-gradient-to-br from-[#fdf7ef] to-[#f7eee3] rounded-3xl p-6 sm:p-8 border border-[#e7d9cb] h-full flex flex-col">
-            <div className="flex items-center gap-2 mb-3">
-              <IconCoin className="text-[#D4A053]" />
-              <span className="text-[10px] font-black tracking-[0.2em] text-[#9F6B3E]">PLAN A</span>
-            </div>
-            <h3 className="text-2xl sm:text-3xl font-black text-gray-900 mb-1">
-              NT$6,600
-            </h3>
-            <p className="text-xs text-gray-500 mb-4">+ NT$200 工本費</p>
-            <p className="text-sm text-gray-700 leading-relaxed mb-5 flex-1">
-              任挑商品 NT$6,600，首次就用成本價購買。適合想試試、開啟保養之路的你。
-            </p>
-            <div className="pt-3 border-t border-[#e7d9cb]/60">
-              <p className="text-xs text-[#9F6B3E] font-bold">加盟成本價</p>
-            </div>
-          </div>
+          <PlanCard
+            tone="neutral"
+            badge={null}
+            planLabel="PLAN A"
+            headlineIcon={<IconCoin className="text-[#D4A053]" />}
+            price="NT$6,600"
+            fee="+ NT$200 工本費"
+            steps={[
+              'App 會員註冊',
+              '完成 3.5 小時線上課程考核',
+              '首次以 NT$6,600 完成方案購買',
+            ]}
+            afterwards={[
+              '啟用加盟身分，後續商品皆為成本價',
+              '活動期間贈品照常領取',
+            ]}
+            suitable="適合日常保養、習慣持續回購的你"
+            footer="加盟成本價"
+          />
         </ScrollReveal>
 
         {/* 19600 Plan */}
         <ScrollReveal variant="fade-up" delay={200}>
-          <div className="bg-gradient-to-br from-[#fef6e4] via-[#fdf7ef] to-[#f7eee3] rounded-3xl p-6 sm:p-8 border-2 border-[#9F6B3E]/40 h-full flex flex-col relative overflow-hidden">
-            <span className="absolute top-3 right-3 bg-[#9F6B3E] text-white text-[10px] font-black px-2.5 py-1 rounded-full">
-              更划算
-            </span>
-            <div className="flex items-center gap-2 mb-3">
-              <IconCrown className="text-[#D4A053]" />
-              <span className="text-[10px] font-black tracking-[0.2em] text-[#9F6B3E]">PLAN B</span>
-            </div>
-            <h3 className="text-2xl sm:text-3xl font-black text-gray-900 mb-1">
-              NT$19,600
-            </h3>
-            <p className="text-xs text-gray-500 mb-4">+ NT$200 工本費</p>
-            <p className="text-sm text-gray-700 leading-relaxed mb-5 flex-1">
-              任挑商品 NT$19,600，<br />首次就用成本價購買，而且成本價更便宜！適合長期使用、想一次備齊的你。
-            </p>
-            <div className="pt-3 border-t border-[#9F6B3E]/20">
-              <p className="text-xs text-[#9F6B3E] font-bold">更優惠的成本價</p>
-            </div>
-          </div>
+          <PlanCard
+            tone="premium"
+            badge="更划算"
+            planLabel="PLAN B"
+            headlineIcon={<IconCrown className="text-[#D4A053]" />}
+            price="NT$19,600"
+            fee="+ NT$200 工本費"
+            steps={[
+              'App 會員註冊',
+              '完成 3.5 小時線上課程考核',
+              '首次以 NT$19,600 完成方案購買',
+            ]}
+            afterwards={[
+              '啟用加盟身分，後續商品皆為成本價',
+              '成本價再優惠一些',
+              '活動期間贈品照常領取',
+            ]}
+            suitable="適合長期使用、習慣一次備齊較長週期的你"
+            footer="更優惠的成本價"
+          />
         </ScrollReveal>
       </div>
 
-      {/* Shared benefits */}
+      {/* Flexibility guarantee — absorbs the “沒壓力、可降級、可退出” tone */}
       <ScrollReveal variant="fade-up" delay={300}>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          {[
-            { icon: <IconNoContract className="text-[#E8864B]" />, t: '不用綁約', d: '沒有合約束縛，自由自在' },
-            { icon: <IconInfinity className="text-[#4A9D5F]" />, t: '永久有效', d: '一次加入，終身享成本價' },
-            { icon: <IconZeroStock className="text-[#5B8EC9]" />, t: '零囤貨', d: '不用備貨，直接成本價購買' },
-          ].map((b, i) => (
-            <div key={i} className="bg-white rounded-2xl p-4 border border-[#e7d9cb] text-center">
-              <div className="mb-2 flex justify-center">{b.icon}</div>
-              <div className="font-black text-gray-900 text-sm mb-1">{b.t}</div>
-              <div className="text-xs text-gray-500">{b.d}</div>
-            </div>
-          ))}
-        </div>
-      </ScrollReveal>
-
-      {/* Bonus callout */}
-      <ScrollReveal variant="fade-up" delay={400}>
-        <div className="bg-[#fdf7ef] rounded-2xl p-5 border border-[#e7d9cb] flex items-center gap-3">
-          <IconGift className="text-[#E05B8C] shrink-0" />
-          <p className="text-sm text-gray-700 leading-relaxed">
-            <strong className="text-[#9F6B3E]">遇到活動更划算！</strong>
-            活動贈品照拿，商品同時享有成本價，等於雙重優惠。
-          </p>
+        <div className="bg-white rounded-3xl p-5 sm:p-7 border border-[#e7d9cb]">
+          <div className="flex items-center gap-2 mb-4 sm:mb-5">
+            <IconStarSolid className="text-[#D4A053]" />
+            <h3 className="text-sm sm:text-base font-black text-gray-900">
+              自由彈性，沒有壓力
+            </h3>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {[
+              { icon: <IconServicePerk />, t: '優惠加專屬服務', d: '享成本價與更好的服務' },
+              { icon: <IconArrowDownCircle />, t: '可以降級', d: '可選擇降級，無壓力調整' },
+              { icon: <IconDoorOut />, t: '也可以退出', d: '退出完全不影響你' },
+              { icon: <IconUserOnly />, t: '純自用 OK', d: '無推廣義務、純自用' },
+            ].map((b, i) => (
+              <div key={i} className="text-center">
+                <div className="mb-2 flex justify-center">{b.icon}</div>
+                <div className="font-black text-gray-900 text-xs sm:text-sm mb-1 [word-break:keep-all]">{b.t}</div>
+                <div className="text-[11px] sm:text-xs text-gray-500 leading-relaxed text-balance [word-break:keep-all]">{b.d}</div>
+              </div>
+            ))}
+          </div>
+          <div className="mt-5 pt-4 border-t border-[#e7d9cb]/60 text-center">
+            <p className="text-xs sm:text-sm text-[#7a5836] leading-relaxed">
+              <strong>重點是：</strong>你永遠可以自由選擇，沒有壓力，只有彈性。
+            </p>
+          </div>
         </div>
       </ScrollReveal>
 
@@ -208,7 +213,7 @@ function BusinessPanel() {
               { icon: <IconMoneyBag className="text-[#D4A053]" />, t: '制度簡單', d: '單純賺價差，沒有複雜的獎金計算' },
               { icon: <IconFlower className="text-[#E05B8C]" />, t: '團隊陪伴', d: '不是一個人單打獨鬥，有夥伴一起成長' },
               { icon: <IconTarget className="text-[#E8864B]" />, t: '個人品牌打造', d: '協助你建立 IG / 直播 / 個人定位' },
-              { icon: <IconStethoscope className="text-[#4A9D5F]" />, t: '零風險創業', d: '不用囤貨、不用綁約，隨時可以開始' },
+              { icon: <IconStethoscope className="text-[#4A9D5F]" />, t: '零庫存啟動', d: '不需囤貨，以成本價直接下單' },
             ].map((b, i) => (
               <div key={i} className="bg-white rounded-2xl p-4 border border-[#e7d9cb]">
                 <div className="mb-2">{b.icon}</div>
@@ -216,6 +221,36 @@ function BusinessPanel() {
                 <div className="text-xs text-gray-500 leading-relaxed">{b.d}</div>
               </div>
             ))}
+          </div>
+        </div>
+      </ScrollReveal>
+
+      {/* Reassurance — no penalty / can downgrade / can exit */}
+      <ScrollReveal variant="fade-up">
+        <div className="bg-white rounded-3xl p-5 sm:p-7 border border-[#e7d9cb]">
+          <div className="flex items-center gap-2 mb-4 sm:mb-5">
+            <IconStarSolid className="text-[#D4A053]" />
+            <h3 className="text-sm sm:text-base font-black text-gray-900">
+              補貨不是壓力，真的不行，也沒任何罰金
+            </h3>
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            {[
+              { icon: <IconShieldCheck />, t: '沒有罰金', d: '沒達業績也無罰金' },
+              { icon: <IconArrowDownCircle />, t: '可以降級', d: '可選擇降級，無壓力調整' },
+              { icon: <IconDoorOut />, t: '也可以退出', d: '退出完全不影響你' },
+            ].map((b, i) => (
+              <div key={i} className="text-center">
+                <div className="mb-2 flex justify-center">{b.icon}</div>
+                <div className="font-black text-gray-900 text-xs sm:text-sm mb-1 [word-break:keep-all]">{b.t}</div>
+                <div className="text-[11px] sm:text-xs text-gray-500 leading-relaxed text-balance [word-break:keep-all]">{b.d}</div>
+              </div>
+            ))}
+          </div>
+          <div className="mt-5 pt-4 border-t border-[#e7d9cb]/60 text-center">
+            <p className="text-xs sm:text-sm text-[#7a5836] leading-relaxed">
+              <strong>重點是：</strong>你永遠可以自由選擇，沒有壓力，只有彈性。
+            </p>
           </div>
         </div>
       </ScrollReveal>
@@ -353,45 +388,144 @@ function IconCrown({ className = '' }: { className?: string }) {
   );
 }
 
-function IconNoContract({ className = '' }: { className?: string }) {
+/* ─── Self-use plan card ─────────────────────────────────── */
+
+interface PlanCardProps {
+  tone: 'neutral' | 'premium';
+  badge: string | null;
+  planLabel: string;
+  headlineIcon: React.ReactNode;
+  price: string;
+  fee: string;
+  steps: string[];
+  afterwards: string[];
+  suitable: string;
+  footer: string;
+}
+
+function PlanCard({
+  tone, badge, planLabel, headlineIcon, price, fee, steps, afterwards, suitable, footer,
+}: PlanCardProps) {
+  const wrap =
+    tone === 'premium'
+      ? 'bg-gradient-to-br from-[#fef6e4] via-[#fdf7ef] to-[#f7eee3] border-2 border-[#9F6B3E]/40'
+      : 'bg-gradient-to-br from-[#fdf7ef] to-[#f7eee3] border border-[#e7d9cb]';
+  const divider = tone === 'premium' ? 'border-[#9F6B3E]/20' : 'border-[#e7d9cb]/60';
+
   return (
-    <svg className={`inline-block shrink-0 ${className}`} width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden>
-      <rect x="6" y="3" width="12" height="18" rx="2" stroke="#E8864B" strokeWidth="1.5" fill="#FDE8D8" />
-      <line x1="9" y1="8" x2="15" y2="8" stroke="#E8864B" strokeWidth="1" strokeLinecap="round" />
-      <line x1="9" y1="11" x2="13" y2="11" stroke="#E8864B" strokeWidth="1" strokeLinecap="round" />
-      <line x1="4" y1="4" x2="20" y2="20" stroke="#E05B5B" strokeWidth="2" strokeLinecap="round" />
+    <div className={`${wrap} rounded-3xl p-6 sm:p-8 h-full flex flex-col relative overflow-hidden`}>
+      {badge && (
+        <span className="absolute top-3 right-3 bg-[#9F6B3E] text-white text-[10px] font-black px-2.5 py-1 rounded-full">
+          {badge}
+        </span>
+      )}
+      <div className="flex items-center gap-2 mb-3">
+        {headlineIcon}
+        <span className="text-[10px] font-black tracking-[0.2em] text-[#9F6B3E]">{planLabel}</span>
+      </div>
+      <h3 className="text-2xl sm:text-3xl font-black text-gray-900 mb-1">{price}</h3>
+      <p className="text-xs text-gray-500 mb-5">{fee}</p>
+
+      <div className="mb-4">
+        <div className="text-[11px] font-black text-[#9F6B3E] tracking-[0.15em] mb-2">啟用條件</div>
+        <ul className="space-y-1.5">
+          {steps.map((s, i) => (
+            <li key={i} className="flex gap-2 text-sm text-gray-700 leading-relaxed">
+              <IconCheckCircle className="shrink-0 mt-0.5" />
+              <span>{s}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <div className="mb-4 flex-1">
+        <div className="text-[11px] font-black text-[#9F6B3E] tracking-[0.15em] mb-2">啟用後</div>
+        <ul className="space-y-1.5">
+          {afterwards.map((s, i) => (
+            <li key={i} className="flex gap-2 text-sm text-gray-700 leading-relaxed">
+              <span className="text-[#9F6B3E] shrink-0">•</span>
+              <span>{s}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <p className="text-xs text-gray-500 mb-4 leading-relaxed">{suitable}</p>
+
+      <div className={`pt-3 border-t ${divider}`}>
+        <p className="text-xs text-[#9F6B3E] font-bold">{footer}</p>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Reassurance icons (flexibility row) ────────────────── */
+
+function IconCheckCircle({ className = '' }: { className?: string }) {
+  return (
+    <svg className={`inline-block ${className}`} width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <circle cx="12" cy="12" r="9" fill="#E8F3EA" stroke="#4A9D5F" strokeWidth="1.3" />
+      <path d="M8 12l3 3 5-6" stroke="#4A9D5F" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill="none" />
     </svg>
   );
 }
 
-function IconInfinity({ className = '' }: { className?: string }) {
+function IconStarSolid({ className = '' }: { className?: string }) {
   return (
-    <svg className={`inline-block shrink-0 ${className}`} width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden>
-      <path d="M7 12a3.5 3.5 0 1 1 0-.01M17 12a3.5 3.5 0 1 1 0-.01" stroke="#4A9D5F" strokeWidth="2" strokeLinecap="round" fill="none" />
-      <path d="M10.5 9.5c1.5-1.5 3-1.5 4 0M10.5 14.5c1.5 1.5 3 1.5 4 0" stroke="#4A9D5F" strokeWidth="2" strokeLinecap="round" fill="none" />
+    <svg className={`inline-block shrink-0 ${className}`} width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path d="M12 3l2.6 5.6 6.1.7-4.5 4.1 1.2 6-5.4-3-5.4 3 1.2-6L3.3 9.3l6.1-.7L12 3z"
+            fill="#F5D680" stroke="#D4A053" strokeWidth="1" strokeLinejoin="round" />
     </svg>
   );
 }
 
-function IconZeroStock({ className = '' }: { className?: string }) {
+function IconServicePerk() {
   return (
-    <svg className={`inline-block shrink-0 ${className}`} width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden>
-      <path d="M4 8l8-4.5L20 8v8l-8 4.5L4 16V8z" stroke="#5B8EC9" strokeWidth="1.5" fill="#DDEAF7" />
-      <path d="M4 8l8 4.5 8-4.5M12 12.5V21" stroke="#5B8EC9" strokeWidth="1.2" />
-      <circle cx="12" cy="12" r="2" fill="#fff" stroke="#5B8EC9" strokeWidth="1" />
-      <text x="12" y="14" textAnchor="middle" fill="#5B8EC9" fontSize="5" fontWeight="bold">0</text>
+    <svg className="inline-block shrink-0" width="36" height="36" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <circle cx="12" cy="9" r="5.5" fill="#FBE9D4" stroke="#C88A4A" strokeWidth="1.3" />
+      <path d="M12 6l1.1 2.3 2.5.3-1.8 1.8.4 2.5L12 11.7l-2.2 1.2.4-2.5-1.8-1.8 2.5-.3L12 6z"
+            fill="#D4A053" stroke="#C88A4A" strokeWidth="0.4" strokeLinejoin="round" />
+      <path d="M8.5 13.5L6.5 20l3-1.5 2.5 1.5 2.5-1.5 3 1.5-2-6.5"
+            stroke="#C88A4A" strokeWidth="1.2" strokeLinejoin="round" fill="#F5E7D3" />
     </svg>
   );
 }
 
-function IconGift({ className = '' }: { className?: string }) {
+function IconShieldCheck() {
   return (
-    <svg className={`inline-block shrink-0 ${className}`} width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden>
-      <rect x="4" y="10" width="16" height="3" rx="1" fill="#FFD6E0" stroke="#E05B8C" strokeWidth="1" />
-      <rect x="5" y="13" width="14" height="7" rx="1" fill="#FFE8EE" stroke="#E05B8C" strokeWidth="1" />
-      <line x1="12" y1="10" x2="12" y2="20" stroke="#E05B8C" strokeWidth="1" />
-      <path d="M12 10C12 10 10 6 8 7s0 3 4 3" stroke="#E05B8C" strokeWidth="1" fill="none" />
-      <path d="M12 10C12 10 14 6 16 7s0 3-4 3" stroke="#E05B8C" strokeWidth="1" fill="none" />
+    <svg className="inline-block shrink-0" width="36" height="36" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path d="M12 3l8 3v5c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-3z"
+            fill="#E8F0E6" stroke="#7B9B6E" strokeWidth="1.3" strokeLinejoin="round" />
+      <path d="M8.5 12l2.5 2.5 4.5-5" stroke="#7B9B6E" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+    </svg>
+  );
+}
+
+function IconArrowDownCircle() {
+  return (
+    <svg className="inline-block shrink-0" width="36" height="36" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <circle cx="12" cy="12" r="9" fill="#F0EBE3" stroke="#9A8670" strokeWidth="1.3" />
+      <path d="M12 7v9M8 13l4 4 4-4" stroke="#9A8670" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+    </svg>
+  );
+}
+
+function IconDoorOut() {
+  return (
+    <svg className="inline-block shrink-0" width="36" height="36" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path d="M4 4h8v16H4z" fill="#F0EBE3" stroke="#9A8670" strokeWidth="1.3" strokeLinejoin="round" />
+      <circle cx="9.5" cy="12" r="0.8" fill="#9A8670" />
+      <path d="M14 12h7M18 8l3 4-3 4" stroke="#9A8670" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+    </svg>
+  );
+}
+
+function IconUserOnly() {
+  return (
+    <svg className="inline-block shrink-0" width="36" height="36" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <circle cx="12" cy="8" r="3.5" fill="#FBE9D4" stroke="#C88A4A" strokeWidth="1.3" />
+      <path d="M5 20c1.5-4 4-6 7-6s5.5 2 7 6" stroke="#C88A4A" strokeWidth="1.3" strokeLinecap="round" fill="#FBE9D4" />
+      <path d="M15.5 6.5l1.5 1.5 3-3" stroke="#4A9D5F" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" fill="none" />
     </svg>
   );
 }
