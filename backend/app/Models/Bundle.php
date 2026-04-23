@@ -12,7 +12,7 @@ class Bundle extends Model
 {
     protected $fillable = [
         'campaign_id', 'name', 'slug', 'description', 'image',
-        'value_price', 'custom_gifts', 'sort_order',
+        'value_price', 'original_value_price', 'custom_gifts', 'sort_order',
     ];
 
     protected $casts = [
@@ -68,12 +68,15 @@ class Bundle extends Model
     }
 
     /**
-     * 「價值」 — strikethrough anchor shown alongside 套組價.
-     * Admin-entered value_price wins; otherwise fall back to computed retail
-     * sum so bundles without an explicit value still display sensibly.
+     * 「原價值」— strikethrough anchor shown alongside 套組價.
+     * Prefer new `original_value_price` (pure keyin), then legacy `value_price`,
+     * else fall back to retail sum so frontend always has a number.
      */
     public function valuePrice(): float
     {
+        if ($this->original_value_price !== null && (float) $this->original_value_price > 0) {
+            return (float) $this->original_value_price;
+        }
         if ($this->value_price !== null && (float) $this->value_price > 0) {
             return (float) $this->value_price;
         }

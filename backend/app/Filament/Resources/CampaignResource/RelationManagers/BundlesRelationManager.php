@@ -46,12 +46,18 @@ class BundlesRelationManager extends RelationManager
                         ->label('套組主圖')
                         ->helperText('活動頁卡片 + 套組詳情頁 hero')
                         ->columnSpanFull(),
+                    Forms\Components\TextInput::make('original_value_price')
+                        ->numeric()
+                        ->prefix('NT$')
+                        ->minValue(0)
+                        ->label('原價值')
+                        ->helperText('前台套組價旁邊的劃線金額；填什麼就顯示什麼，留空時會 fallback 到舊 value_price 或購買商品原價加總。'),
                     Forms\Components\TextInput::make('value_price')
                         ->numeric()
                         ->prefix('NT$')
                         ->minValue(0)
-                        ->label('價值')
-                        ->helperText('套組價旁邊的劃線錨點；留空則自動用購買商品的原價加總。'),
+                        ->label('價值（舊欄位）')
+                        ->helperText('保留為向下相容欄位，新設定請用上面的「原價值」。'),
                     Forms\Components\TextInput::make('sort_order')
                         ->numeric()
                         ->default(0)
@@ -159,7 +165,7 @@ class BundlesRelationManager extends RelationManager
                     ->color('primary')
                     ->alignEnd()
                     ->label('套組價'),
-                Tables\Columns\TextColumn::make('value_price')
+                Tables\Columns\TextColumn::make('original_value_price')
                     ->state(fn ($record) => $record->valuePrice())
                     ->money('TWD', 0)
                     ->alignEnd()
@@ -167,7 +173,7 @@ class BundlesRelationManager extends RelationManager
                     ->description(fn ($record) => $record->valuePrice() > $record->bundlePrice()
                         ? '省 $' . number_format($record->valuePrice() - $record->bundlePrice(), 0)
                         : null)
-                    ->label('價值'),
+                    ->label('原價值'),
                 Tables\Columns\TextColumn::make('buy_items_count')
                     ->counts('buyItems')
                     ->alignEnd()
