@@ -68,6 +68,13 @@ Route::post('/track/ai-visit', [\App\Http\Controllers\Api\AiVisitController::cla
 Route::post('/track/visit', [\App\Http\Controllers\Api\VisitController::class, 'store'])
     ->middleware('throttle:600,1');
 
+// Cart event logger — fired from CartProvider alongside GTM dataLayer pushes
+// so the pipeline report can compute funnel rates without GA4 API access.
+// Throttle is generous because one user can easily trigger 5+ events/min
+// (view_item on every product card hover, rapid add_to_cart etc.).
+Route::post('/track/cart-event', [\App\Http\Controllers\Api\CartEventController::class, 'store'])
+    ->middleware('throttle:1000,1');
+
 // Customer gamification dashboard (requires auth)
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/customer/dashboard', [CustomerController::class, 'dashboard']);

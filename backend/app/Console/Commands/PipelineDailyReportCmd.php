@@ -7,6 +7,7 @@ use App\Services\GoogleAdsService;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * 「管線健診」每日報告 — 2 週新站專用版。
@@ -40,7 +41,7 @@ class PipelineDailyReportCmd extends Command
         $fourteenDaysAgo = today()->subDays(14);
 
         $flow    = $this->flowMetrics($yesterday, $sevenDaysAgo, $fourteenDaysAgo);
-        $funnel  = $this->funnelMetrics($yesterday);
+        $funnel  = $this->funnelMetrics($yesterday, $flow['yesterdayUv']);
         $seo     = $this->seoTrend($fourteenDaysAgo);
         $geo     = $this->geoActivity($yesterday);
         $ads     = $this->adsMetrics();
@@ -124,7 +125,7 @@ class PipelineDailyReportCmd extends Command
      * payment) and who completed (status in completed/processing/shipped).
      * Can't see add-to-cart from backend yet — that's only in GTM dataLayer.
      */
-    private function funnelMetrics(Carbon $yesterday): array
+    private function funnelMetrics(Carbon $yesterday, int $yesterdayUv): array
     {
         $ordersYesterday = (int) DB::table('orders')
             ->whereBetween('created_at', [$yesterday->copy()->startOfDay(), $yesterday->copy()->endOfDay()])
@@ -158,7 +159,68 @@ class PipelineDailyReportCmd extends Command
             ? (int) abs(today()->diffInDays(Carbon::parse($lastPaid->created_at)->startOfDay()))
             : null;
 
-        return compact('ordersYesterday', 'pendingYesterday', 'completedYesterday', 'daysSinceConversion');
+        // True funnel rates from cart_events. Counts distinct sessions at each
+        // stage so we can see where the funnel leaks. Schema-tolerant — if the
+        // cart_events table doesn't exist yet (fresh migration), return nulls
+        // so the report still renders cleanly.
+        $cartEvents = $this->cartFunnelRates($yesterday, $yesterdayUv);
+
+        return compact(
+            'ordersYesterday', 'pendingYesterday', 'completedYesterday', 'daysSinceConversion',
+        ) + $cartEvents;
+    }
+
+    /**
+     * Unique-session counts at each funnel stage for yesterday, from
+     * cart_events. Returns nulls (not zeros) when the table is empty so the
+     * report can distinguish "no data yet" from "funnel is broken".
+     */
+    private function cartFunnelRates(Carbon $yesterday, int $yesterdayUv): array
+    {
+        if (! Schema::hasTable('cart_events')) {
+            return [
+                'viewItemSessions' => null,
+                'addToCartSessions' => null,
+                'beginCheckoutSessions' => null,
+                'addToCartRate' => null,
+            ];
+        }
+
+        $start = $yesterday->copy()->startOfDay();
+        $end = $yesterday->copy()->endOfDay();
+
+        $countBy = fn (string $eventType) => (int) DB::table('cart_events')
+            ->whereBetween('occurred_at', [$start, $end])
+            ->where('event_type', $eventType)
+            ->distinct('session_id')
+            ->count('session_id');
+
+        $view = $countBy('view_item');
+        $add  = $countBy('add_to_cart');
+        $ck   = $countBy('begin_checkout');
+
+        // Any activity at all? If 0 on everything, data hasn't flowed yet —
+        // return null so the report shows "N/A" rather than misleading 0%.
+        $totalEvents = $view + $add + $ck;
+        if ($totalEvents === 0) {
+            return [
+                'viewItemSessions' => null,
+                'addToCartSessions' => null,
+                'beginCheckoutSessions' => null,
+                'addToCartRate' => null,
+            ];
+        }
+
+        $addToCartRate = $yesterdayUv > 0
+            ? round(($add / $yesterdayUv) * 100, 1)
+            : null;
+
+        return [
+            'viewItemSessions' => $view,
+            'addToCartSessions' => $add,
+            'beginCheckoutSessions' => $ck,
+            'addToCartRate' => $addToCartRate,
+        ];
     }
 
     /** 14-day organic UV for a tiny ASCII sparkline. */
@@ -362,17 +424,52 @@ class PipelineDailyReportCmd extends Command
             $notes[] = sprintf('⏳ 已 %d 天無成交（新站 ≤ %d 天仍算可接受）', $funnel['daysSinceConversion'], self::NEW_SITE_ZERO_CONVERSION_TOLERANCE_DAYS);
         }
 
-        // If no pending orders at all despite traffic, funnel is broken very early.
-        if ($flow['yesterdayUv'] >= 20 && $funnel['ordersYesterday'] === 0) {
+        // Pipeline diagnostics from cart_events — points at exactly WHERE the
+        // funnel breaks. If add_to_cart rate is below industry baseline
+        // (~5% for TW ecommerce), landing pages / product CTAs are the issue.
+        // If add-to-cart is healthy but begin_checkout is low, the cart page
+        // or shipping-fee shock is the issue.
+        if ($funnel['addToCartSessions'] !== null) {
+            if ($flow['yesterdayUv'] >= 20 && $funnel['addToCartRate'] !== null && $funnel['addToCartRate'] < 2) {
+                $notes[] = sprintf(
+                    '⚠ 加購率僅 %.1f%%（業界 5-10%%）— 商品頁/CTA 需優化',
+                    $funnel['addToCartRate'],
+                );
+            }
+            if ($funnel['addToCartSessions'] > 0 && $funnel['beginCheckoutSessions'] === 0) {
+                $notes[] = sprintf(
+                    '⚠ 有 %d session 加購但 0 進結帳 — 購物車或運費環節斷',
+                    $funnel['addToCartSessions'],
+                );
+            }
+        } elseif ($flow['yesterdayUv'] >= 20 && $funnel['ordersYesterday'] === 0) {
+            // Fallback path for when cart_events hasn't been populated yet.
             $notes[] = sprintf('⚠ %d UV 但 0 進結帳 — 落地頁/加購 CTA 要檢查', $flow['yesterdayUv']);
         }
 
+        // Body: show cart-event funnel if we have it, otherwise just orders.
+        if ($funnel['addToCartSessions'] !== null) {
+            $rateLine = $funnel['addToCartRate'] !== null
+                ? sprintf('（加購率 %.1f%%）', $funnel['addToCartRate'])
+                : '';
+            $body = sprintf(
+                "```\n昨日 UV          %d\n  └ 看商品       %d session\n  └ 加入購物車   %d session %s\n  └ 進入結帳     %d session\n  └ 成功付款     %d 筆\n```",
+                $flow['yesterdayUv'],
+                $funnel['viewItemSessions'] ?? 0,
+                $funnel['addToCartSessions'],
+                $rateLine,
+                $funnel['beginCheckoutSessions'] ?? 0,
+                $funnel['completedYesterday'],
+            );
+        } else {
+            $body = sprintf(
+                "```\n昨日進入結帳   %d 筆\n  └ 已付款      %d\n  └ 待付款(棄)  %d\n```\n（加購明細尚無資料 — cart_events 追蹤 2026-04-23 上線）",
+                $funnel['ordersYesterday'], $funnel['completedYesterday'], $funnel['pendingYesterday'],
+            );
+        }
+
         $note = $notes ? "\n" . implode("\n", $notes) : '';
-        $value = sprintf(
-            "```\n昨日進入結帳   %d 筆\n  └ 已付款      %d\n  └ 待付款(棄)  %d\n```%s",
-            $funnel['ordersYesterday'], $funnel['completedYesterday'], $funnel['pendingYesterday'], $note,
-        );
-        return ['name' => '🎯 轉換漏斗', 'value' => $value];
+        return ['name' => '🎯 轉換漏斗', 'value' => $body . $note];
     }
 
     private function seoField(array $seo, array $flow): array
@@ -466,9 +563,16 @@ class PipelineDailyReportCmd extends Command
     {
         $actions = [];
 
-        // Priority 1: conversion blockers (trumps everything)
+        // Priority 1: conversion blockers (trumps everything). Drill down
+        // using cart_events when available to point at the broken stage.
         if ($funnel['daysSinceConversion'] === null || $funnel['daysSinceConversion'] > self::NEW_SITE_ZERO_CONVERSION_TOLERANCE_DAYS) {
-            $actions[] = '🔴 [轉換] 親自走一次 mobile 結帳流程，錄影找斷點';
+            if ($funnel['addToCartRate'] !== null && $funnel['addToCartRate'] < 2 && $flow['yesterdayUv'] >= 20) {
+                $actions[] = sprintf('🔴 [轉換] 加購率 %.1f%% 遠低於業界 5-10%% — 問題在商品頁 CTA', $funnel['addToCartRate']);
+            } elseif ($funnel['addToCartSessions'] !== null && $funnel['addToCartSessions'] > 0 && $funnel['beginCheckoutSessions'] === 0) {
+                $actions[] = sprintf('🔴 [轉換] %d session 加購卻 0 進結帳 — 檢查購物車 / 運費', $funnel['addToCartSessions']);
+            } else {
+                $actions[] = '🔴 [轉換] 親自走一次 mobile 結帳流程，錄影找斷點';
+            }
             $actions[] = '🔴 [轉換] 檢查 GA4 add_to_cart / begin_checkout 事件是否有進';
         } elseif ($flow['yesterdayUv'] >= 20 && $funnel['ordersYesterday'] === 0) {
             $actions[] = sprintf('🟡 [轉換] 昨日 %d UV 但 0 進結帳 — 落地頁 CTA 檢查', $flow['yesterdayUv']);

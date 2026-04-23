@@ -205,6 +205,51 @@ class PipelineDailyReportTest extends TestCase
         $this->assertMatchesRegularExpression('/待付款\(棄\)\s+1/u', $out);
     }
 
+    public function test_cart_events_drive_detailed_funnel_display(): void
+    {
+        $yesterday = now()->subDay()->setTime(14, 0);
+        // 3 humans yesterday
+        for ($i = 1; $i <= 3; $i++) {
+            Visit::factory()->create([
+                'visited_at' => $yesterday,
+                'referer_source' => 'google',
+                'visitor_id' => "vis-{$i}",
+                'session_id' => "sess-{$i}",
+            ]);
+        }
+        // Cart events: 3 viewed, 2 added, 1 checked out
+        foreach (['sess-1', 'sess-2', 'sess-3'] as $s) {
+            DB::table('cart_events')->insert([
+                'session_id' => $s, 'event_type' => 'view_item',
+                'occurred_at' => $yesterday, 'created_at' => now(), 'updated_at' => now(),
+            ]);
+        }
+        foreach (['sess-1', 'sess-2'] as $s) {
+            DB::table('cart_events')->insert([
+                'session_id' => $s, 'event_type' => 'add_to_cart', 'value' => 1000,
+                'occurred_at' => $yesterday, 'created_at' => now(), 'updated_at' => now(),
+            ]);
+        }
+        DB::table('cart_events')->insert([
+            'session_id' => 'sess-1', 'event_type' => 'begin_checkout', 'value' => 1000,
+            'occurred_at' => $yesterday, 'created_at' => now(), 'updated_at' => now(),
+        ]);
+
+        $out = $this->runReport();
+        $this->assertMatchesRegularExpression('/看商品\s+3\s*session/u', $out);
+        $this->assertMatchesRegularExpression('/加入購物車\s+2\s*session/u', $out);
+        $this->assertMatchesRegularExpression('/進入結帳\s+1\s*session/u', $out);
+        // Add-to-cart rate = 2/3 ≈ 66.7% (unusually high — just verifying formula works)
+        $this->assertMatchesRegularExpression('/加購率\s+66\.7%/u', $out);
+    }
+
+    public function test_empty_cart_events_falls_back_to_orders_only_view(): void
+    {
+        // No cart_events rows inserted → should show fallback "尚無資料" note
+        $out = $this->runReport();
+        $this->assertOutputContains('cart_events 追蹤', $out);
+    }
+
     public function test_ai_bot_crawls_surface_in_geo_section(): void
     {
         DB::table('ai_visits_daily')->insert([

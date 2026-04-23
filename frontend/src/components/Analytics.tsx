@@ -26,6 +26,34 @@ export function pushEvent(event: string, data: Record<string, unknown> = {}) {
 }
 
 /**
+ * Mirror key ecommerce events to the backend /api/track/cart-event endpoint
+ * so the pipeline daily report can compute funnel rates (add-to-cart rate,
+ * checkout initiation rate) without needing GA4 Reporting API credentials.
+ *
+ * GTM remains the source of truth for tag integrations — this is a parallel
+ * write, fire-and-forget. Failures are swallowed so analytics errors never
+ * bubble into the UI.
+ */
+type CartEventType = 'view_item' | 'add_to_cart' | 'remove_from_cart' | 'begin_checkout' | 'purchase';
+function postCartEvent(params: {
+  event_type: CartEventType;
+  product_id?: number;
+  bundle_id?: number;
+  quantity?: number;
+  value?: number;
+}) {
+  if (typeof window === 'undefined') return;
+  const sid = localStorage.getItem('pandora-session-id');
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+  fetch(`${apiUrl}/track/cart-event`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    keepalive: true,
+    body: JSON.stringify({ session_id: sid, ...params }),
+  }).catch(() => { /* analytics is best-effort */ });
+}
+
+/**
  * GA4 ecommerce item — used by every cart/checkout/bundle event so reports
  * can break down revenue by item_category (product vs bundle) etc.
  */
@@ -52,6 +80,12 @@ export function trackAddToCart(productName: string, price: number, productId?: n
       }],
     },
   });
+  postCartEvent({
+    event_type: 'add_to_cart',
+    product_id: productId,
+    quantity,
+    value: price * quantity,
+  });
 }
 
 /**
@@ -77,6 +111,12 @@ export function trackBundleAddToCart(bundle: {
         ...(bundle.campaign?.name ? { item_brand: bundle.campaign.name } : {}),
       }],
     },
+  });
+  postCartEvent({
+    event_type: 'add_to_cart',
+    bundle_id: bundle.id,
+    quantity,
+    value: bundle.bundle_price * quantity,
   });
 }
 
@@ -130,6 +170,11 @@ export function trackBeginCheckout(total: number, items: GtmItem[]) {
       value: total,
       items,
     },
+  });
+  postCartEvent({
+    event_type: 'begin_checkout',
+    value: total,
+    quantity: items.reduce((sum, i) => sum + i.quantity, 0) || 1,
   });
 }
 
