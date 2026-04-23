@@ -59,6 +59,7 @@ class ListVisits extends ListRecords
             'bing' => 'Bing',
             'email' => 'Email',
             'other' => '其他',
+            'ai_referral' => 'AI引薦',
             'bot' => 'Bot',
         ];
         $parts = [];

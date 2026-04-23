@@ -63,6 +63,7 @@ class VisitResource extends Resource
                         'google', 'bing', 'yahoo' => 'info',
                         'google_ads', 'facebook_ads', 'bing_ads', 'tiktok_ads', 'linkedin_ads', 'other_ads' => 'warning',
                         'facebook', 'instagram', 'line' => 'primary',
+                        'ai_referral' => 'success',
                         'bot' => 'danger',
                         default => 'gray',
                     })
@@ -82,6 +83,7 @@ class VisitResource extends Resource
                         'other_ads' => '其他廣告',
                         'email' => 'Email',
                         'other' => '其他',
+                        'ai_referral' => 'AI 引薦（ChatGPT/Perplexity 等）',
                         'bot' => '機器人',
                         default => $state ?? '—',
                     }),
@@ -188,6 +190,7 @@ class VisitResource extends Resource
                         'other_ads' => '其他廣告',
                         'email' => 'Email',
                         'other' => '其他',
+                        'ai_referral' => 'AI 引薦',
                         'bot' => '機器人/爬蟲',
                     ]),
 

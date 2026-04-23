@@ -79,16 +79,17 @@ Schedule::command('seo:weekly-snapshot')
     ->withoutOverlapping(30)
     ->appendOutputTo(storage_path('logs/seo-snapshot.log'));
 
-// Google Ads daily report — daily 09:10 Asia/Taipei (10 min after CVS reminder
-// so the two Discord posts don't land at exactly the same second). Fetches
-// yesterday's spend/clicks/conversions + top 5 wasteful search terms and
-// posts to DISCORD_ADS_WEBHOOK. Silently skips if API creds missing.
-Schedule::command('ads:daily-report')
+// Pipeline daily report — 09:10 Asia/Taipei. Merges Ads + SEO + GEO + funnel
+// into a single Discord embed so the team isn't cross-referencing 4 different
+// posts every morning. Supersedes `ads:daily-report` (which is kept as an
+// unscheduled admin command for manual Ads-only inspection). Silently skips
+// if DISCORD_ADS_WEBHOOK missing.
+Schedule::command('pipeline:daily-report')
     ->dailyAt('09:10')
     ->timezone('Asia/Taipei')
     ->withoutOverlapping(15)
     ->runInBackground()
-    ->appendOutputTo(storage_path('logs/ads-daily-report.log'));
+    ->appendOutputTo(storage_path('logs/pipeline-daily-report.log'));
 
 // ── 本機開發專用：每天 03:00 從正式站 pull DB 覆蓋本地 ──
 // 指令內建 PHP_OS_FAMILY === 'Darwin' 守門，Linux 正式機跑 schedule:run

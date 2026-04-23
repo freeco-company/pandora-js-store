@@ -123,6 +123,39 @@ class VisitTrackingTest extends TestCase
         $this->assertSame('bot', Visit::first()->referer_source);
     }
 
+    public function test_chatgpt_referer_bucketed_as_ai_referral(): void
+    {
+        $this->track([
+            'session_id' => 'sess-ai-1',
+            'path' => '/products/foo',
+            'referer_url' => 'https://chatgpt.com/',
+            'user_agent' => 'Mozilla/5.0',
+        ]);
+        $this->assertSame('ai_referral', Visit::first()->referer_source);
+    }
+
+    public function test_perplexity_referer_bucketed_as_ai_referral(): void
+    {
+        $this->track([
+            'session_id' => 'sess-ai-2',
+            'path' => '/articles/probiotic-guide',
+            'referer_url' => 'https://www.perplexity.ai/search?q=jerosse',
+            'user_agent' => 'Mozilla/5.0',
+        ]);
+        $this->assertSame('ai_referral', Visit::first()->referer_source);
+    }
+
+    public function test_claude_ai_referer_bucketed_as_ai_referral(): void
+    {
+        $this->track([
+            'session_id' => 'sess-ai-3',
+            'path' => '/',
+            'referer_url' => 'https://claude.ai/chat/abc',
+            'user_agent' => 'Mozilla/5.0',
+        ]);
+        $this->assertSame('ai_referral', Visit::first()->referer_source);
+    }
+
     public function test_real_human_ua_is_not_flagged_as_bot(): void
     {
         $this->track([

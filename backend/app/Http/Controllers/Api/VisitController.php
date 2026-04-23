@@ -198,6 +198,18 @@ class VisitController extends Controller
         $host = strtolower(parse_url($refererUrl, PHP_URL_HOST) ?? '');
         if ($host === '') return 'direct';
 
+        // AI-engine referrals — user clicked through from a generative-AI
+        // answer (ChatGPT / Perplexity / Claude / Gemini / Copilot). This is
+        // THE signal for GEO effectiveness: bot crawling ≠ being cited, but
+        // a real human click-through from the AI result means we were named
+        // in the answer. Bucket separately so the GEO dashboard stays honest.
+        if (str_contains($host, 'chatgpt.com') || str_contains($host, 'chat.openai.com')) return 'ai_referral';
+        if (str_contains($host, 'perplexity.ai')) return 'ai_referral';
+        if (str_contains($host, 'claude.ai')) return 'ai_referral';
+        if (str_contains($host, 'gemini.google.com') || str_contains($host, 'bard.google.com')) return 'ai_referral';
+        if (str_contains($host, 'copilot.microsoft.com')) return 'ai_referral';
+        if (str_contains($host, 'you.com') || str_contains($host, 'phind.com')) return 'ai_referral';
+
         if (str_contains($host, 'google.')) return $isPaidMedium ? 'google_ads' : 'google';
         if (str_contains($host, 'bing.com') || str_contains($host, 'duckduckgo')) return $isPaidMedium ? 'bing_ads' : 'bing';
         if (str_contains($host, 'facebook.com') || str_contains($host, 'fb.com') || str_contains($host, 'l.facebook')) return $isPaidMedium ? 'facebook_ads' : 'facebook';
