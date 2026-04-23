@@ -126,7 +126,7 @@ export default function CartPage() {
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-[#E8A93B] flex items-center justify-center shrink-0"><Icons.Seedling className="w-5 h-5 text-white" /></div>
             <div className="flex-1 min-w-0">
-              <div className="text-sm font-black text-[#7a5836]">加盟會員價更省 · 一次 NT$6,600 永久享優惠</div>
+              <div className="text-sm font-black text-[#7a5836]">加盟成本價更省 · 首次滿 NT$6,600 完成流程後，長期享優惠</div>
               <div className="text-[11px] text-[#7a5836]/80 mt-0.5">了解自用加盟方案 →</div>
             </div>
             <span className="text-[#7a5836] group-hover:translate-x-1 transition-transform">→</span>
