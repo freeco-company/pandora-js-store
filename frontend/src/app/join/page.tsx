@@ -39,7 +39,7 @@ export default function JoinPage() {
           />
           <ScrollReveal variant="fade-up" delay={300}>
             <p className="text-sm sm:text-base text-gray-700 mt-4 max-w-xl mx-auto leading-relaxed">
-              加盟會員需 <strong className="text-[#9F6B3E]">NT$200 工本費</strong>，並完成 App 註冊、線上課程考核、首次方案購買等流程。
+              加盟會員需 <strong className="text-[#9F6B3E]">NT$200 工本費</strong>，並完成 App 註冊、線上課程考核、首次任挑商品滿額購買等流程。
               <br />
               啟用加盟身分後，後續購買商品皆為<strong className="text-[#9F6B3E]">成本價</strong>。
             </p>
@@ -105,12 +105,12 @@ function SelfUsePanel() {
             badge={null}
             planLabel="PLAN A"
             headlineIcon={<IconCoin className="text-[#D4A053]" />}
-            price="NT$6,600"
+            price="滿額 NT$6,600"
             fee="+ NT$200 工本費"
             steps={[
               'App 會員註冊',
               '完成 3.5 小時線上課程考核',
-              '首次以 NT$6,600 完成方案購買',
+              '首次任挑商品滿 NT$6,600 完成購買',
             ]}
             afterwards={[
               '啟用加盟身分，後續商品皆為成本價',
@@ -128,12 +128,12 @@ function SelfUsePanel() {
             badge="更划算"
             planLabel="PLAN B"
             headlineIcon={<IconCrown className="text-[#D4A053]" />}
-            price="NT$19,600"
+            price="滿額 NT$19,600"
             fee="+ NT$200 工本費"
             steps={[
               'App 會員註冊',
               '完成 3.5 小時線上課程考核',
-              '首次以 NT$19,600 完成方案購買',
+              '首次任挑商品滿 NT$19,600 完成購買',
             ]}
             afterwards={[
               '啟用加盟身分，後續商品皆為成本價',
