@@ -99,16 +99,14 @@ export default function HeroBanner({
           matching max-w cap prevents square/portrait uploads from blowing
           up the viewport (container shrinks + centers instead). */}
       <div
-        className="relative w-full mx-auto
+        className="relative w-full mx-auto max-h-[520px] sm:max-h-[420px]
                    [aspect-ratio:var(--ar-m)] sm:[aspect-ratio:var(--ar-d)]
-                   [max-height:var(--max-h-m)] sm:[max-height:var(--max-h-d)]
-                   [max-width:calc(var(--max-h-m)*var(--ar-m))]
-                   sm:[max-width:calc(var(--max-h-d)*var(--ar-d))]"
+                   [max-width:var(--mw-m)] sm:[max-width:var(--mw-d)]"
         style={{
           '--ar-m': String(mobileAR),
           '--ar-d': String(desktopAR),
-          '--max-h-m': `${MOBILE_MAX_H}px`,
-          '--max-h-d': `${DESKTOP_MAX_H}px`,
+          '--mw-m': `${MOBILE_MAX_H * mobileAR}px`,
+          '--mw-d': `${DESKTOP_MAX_H * desktopAR}px`,
         } as React.CSSProperties}
       >
         {slides.map((slide, i) => (
