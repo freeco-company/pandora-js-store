@@ -145,6 +145,10 @@ async function redirectLegacySlug(req: NextRequest): Promise<NextResponse | null
 // WooCommerce category slug → new category slug. Empty string = redirect to
 // /products index (no direct mapping). Extend as new category landing pages
 // are built.
+//
+// Note: next.config.ts `redirects()` handles the English-slug product-category
+// URLs at the framework level (runs before middleware). This map survives as a
+// fallback for requests that somehow skip the config redirects (edge cases).
 const WP_CATEGORY_MAP: Record<string, string> = {
   health: '',
   beauty: '',

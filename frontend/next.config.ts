@@ -42,6 +42,11 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
       {
+        source: '/product-category/slimming',
+        destination: '/products/category/slimming',
+        permanent: true,
+      },
+      {
         source: '/product-category/:slug*',
         destination: '/products',
         permanent: true,

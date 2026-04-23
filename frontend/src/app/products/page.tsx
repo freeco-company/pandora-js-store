@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { permanentRedirect } from 'next/navigation';
 import { getProducts, getProductCategories, imageUrl } from '@/lib/api';
 import ProductBrowser from '@/components/ProductBrowser';
 import ScrollReveal from '@/components/ScrollReveal';
@@ -37,7 +38,15 @@ export default async function ProductsPage({
   searchParams: Promise<{ category?: string; sort?: string }>;
 }) {
   const { category, sort } = await searchParams;
-  const initialCategory = category || '';
+
+  // Legacy `?category=X` URL — canonicalize to `/products/category/X` with 308.
+  // Consolidates to a single SEO-ranking URL per category.
+  if (category) {
+    const suffix = sort ? `?sort=${encodeURIComponent(sort)}` : '';
+    permanentRedirect(`/products/category/${encodeURIComponent(category)}${suffix}`);
+  }
+
+  const initialCategory = '';
   const initialSort = (['price_asc', 'price_desc', 'newest'].includes(sort || '') ? sort : '') as SortValue;
 
   let products: Awaited<ReturnType<typeof getProducts>> = [];

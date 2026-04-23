@@ -47,7 +47,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: article.seo_meta?.title || article.title,
       description: article.seo_meta?.description || article.excerpt,
       alternates: {
-        canonical: article.source_url || `/articles/${article.slug}`,
+        // Self-canonical — we're an authorized reseller republishing with added
+        // commerce context (product recommendations, cart integration). Source
+        // attribution lives in visible UI and JSON-LD isBasedOn instead.
+        canonical: `/articles/${article.slug}`,
       },
       openGraph: {
         title: article.title,
@@ -128,6 +131,7 @@ export default async function ArticleDetailPage({ params }: Props) {
     slug: article.slug,
     publishedAt: article.published_at,
     wordCount,
+    sourceUrl: article.source_url ?? null,
   });
   const typeLabel =
     article.source_type === 'blog' || article.source_type === 'news'
@@ -207,6 +211,45 @@ export default async function ArticleDetailPage({ params }: Props) {
             priority
           />
         </div>
+      )}
+
+      {/* Source attribution — signals authorized syndication, not scraped duplicate */}
+      {article.source_url && (
+        <aside
+          className="mb-8 rounded-lg border border-[#9F6B3E]/20 bg-[#9F6B3E]/5 p-4 text-sm text-gray-700"
+          aria-label="內容授權說明"
+        >
+          <div className="flex items-start gap-3">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="mt-0.5 h-5 w-5 shrink-0 text-[#9F6B3E]"
+              aria-hidden="true"
+            >
+              <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
+            </svg>
+            <div className="min-w-0 flex-1">
+              <p className="font-medium text-[#9F6B3E]">FP 仙女館 × JEROSSE 婕樂纖｜授權轉載</p>
+              <p className="mt-1 leading-relaxed text-gray-600">
+                本文經 JEROSSE 婕樂纖官方授權轉載，由 Fairy Pandora 仙女館朵朵團隊整理，並搭配本站對應的正品商品連結與選購建議，協助你一次看懂、一次買對。
+                原文連結：
+                <a
+                  href={article.source_url}
+                  rel="noopener"
+                  target="_blank"
+                  className="ml-1 break-all text-[#9F6B3E] underline underline-offset-2 hover:text-[#7a4e2a]"
+                >
+                  {article.source_url}
+                </a>
+              </p>
+            </div>
+          </div>
+        </aside>
       )}
 
       {/* Content */}
