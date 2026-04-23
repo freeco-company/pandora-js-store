@@ -95,6 +95,16 @@ return [
         'enabled' => (bool) env('INDEXNOW_ENABLED', true),
     ],
 
+    'frontend' => [
+        'url' => env('FRONTEND_URL', 'https://pandora.js-store.com.tw'),
+        'revalidate_secret' => env('REVALIDATE_SECRET'),
+    ],
+
+    'cloudflare' => [
+        'zone_id' => env('CLOUDFLARE_ZONE_ID'),
+        'api_token' => env('CLOUDFLARE_API_TOKEN'),
+    ],
+
     'ecpay' => [
         // Payment (金流) credentials
         'merchant_id' => env('ECPAY_MERCHANT_ID'),

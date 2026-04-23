@@ -3,10 +3,12 @@
 namespace App\Providers;
 
 use App\Models\Article;
+use App\Models\Banner;
 use App\Models\Campaign;
 use App\Models\Order;
 use App\Models\Product;
 use App\Observers\ArticleComplianceObserver;
+use App\Observers\BannerObserver;
 use App\Observers\CampaignObserver;
 use App\Observers\OrderObserver;
 use App\Observers\ProductComplianceObserver;
@@ -41,6 +43,9 @@ class AppServiceProvider extends ServiceProvider
 
         // Bust product cache when campaigns change
         Campaign::observe(CampaignObserver::class);
+
+        // Bust Next.js + Cloudflare cache when banners change
+        Banner::observe(BannerObserver::class);
     }
 
     private function configureRateLimiting(): void
