@@ -14,6 +14,16 @@ interface BannerSlide {
   subtitle?: string;
 }
 
+// Default aspect ratios when banner dimensions are missing (old records,
+// product fallback). Desktop assumes wide hero; mobile assumes square.
+const DEFAULT_DESKTOP_AR = 16 / 5;
+const DEFAULT_MOBILE_AR = 1;
+
+// Absolute ceiling heights so a square / portrait upload never blows
+// the viewport. Below these, container shrinks to respect image aspect.
+const MOBILE_MAX_H = 520;
+const DESKTOP_MAX_H = 420;
+
 export default function HeroBanner({
   banners,
   products,
@@ -52,6 +62,19 @@ export default function HeroBanner({
     }
   }
 
+  // Container aspect = first banner's aspect. Other slides cover-fit.
+  const first = banners[0];
+  const desktopAR =
+    first?.image_width && first?.image_height
+      ? first.image_width / first.image_height
+      : DEFAULT_DESKTOP_AR;
+  const mobileAR =
+    first?.mobile_image_width && first?.mobile_image_height
+      ? first.mobile_image_width / first.mobile_image_height
+      : first?.image_width && first?.image_height
+        ? first.image_width / first.image_height
+        : DEFAULT_MOBILE_AR;
+
   const [current, setCurrent] = useState(0);
 
   const next = useCallback(() => {
@@ -72,8 +95,22 @@ export default function HeroBanner({
 
   return (
     <section className="relative w-full bg-[#f7eee3] overflow-hidden">
-      {/* Mobile: square banner (1:1); Desktop: wide banner (~3.2:1) */}
-      <div className="relative w-full aspect-square sm:aspect-auto sm:h-[31vw] sm:max-h-[400px] sm:min-h-[250px]">
+      {/* Container aspect adapts to uploaded banner dimensions; max-h +
+          matching max-w cap prevents square/portrait uploads from blowing
+          up the viewport (container shrinks + centers instead). */}
+      <div
+        className="relative w-full mx-auto
+                   [aspect-ratio:var(--ar-m)] sm:[aspect-ratio:var(--ar-d)]
+                   [max-height:var(--max-h-m)] sm:[max-height:var(--max-h-d)]
+                   [max-width:calc(var(--max-h-m)*var(--ar-m))]
+                   sm:[max-width:calc(var(--max-h-d)*var(--ar-d))]"
+        style={{
+          '--ar-m': String(mobileAR),
+          '--ar-d': String(desktopAR),
+          '--max-h-m': `${MOBILE_MAX_H}px`,
+          '--max-h-d': `${DESKTOP_MAX_H}px`,
+        } as React.CSSProperties}
+      >
         {slides.map((slide, i) => (
           <Link
             key={slide.id}

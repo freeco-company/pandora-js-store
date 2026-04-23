@@ -279,7 +279,11 @@ export interface Banner {
   id: number;
   title: string;
   image: string;
+  image_width: number | null;
+  image_height: number | null;
   mobile_image: string | null;
+  mobile_image_width: number | null;
+  mobile_image_height: number | null;
   link: string | null;
 }
 

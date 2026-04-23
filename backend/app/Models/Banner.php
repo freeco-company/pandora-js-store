@@ -13,12 +13,18 @@ class Banner extends Model
     protected $fillable = [
         'title', 'image', 'mobile_image', 'link', 'sort_order',
         'is_active', 'starts_at', 'ends_at',
+        'image_width', 'image_height',
+        'mobile_image_width', 'mobile_image_height',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
         'starts_at' => 'datetime',
         'ends_at' => 'datetime',
+        'image_width' => 'integer',
+        'image_height' => 'integer',
+        'mobile_image_width' => 'integer',
+        'mobile_image_height' => 'integer',
     ];
 
     public function scopeActive(Builder $query): Builder
