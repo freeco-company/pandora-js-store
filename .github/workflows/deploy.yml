@@ -121,6 +121,43 @@ jobs:
         run: |
           rsync -az scripts/ root@${{ secrets.SERVER_HOST }}:/var/www/pandora/scripts/ || true
 
+      # ── Sync runtime secrets into prod .env ──────────────────────
+      # .env* is excluded from rsync (to protect prod secrets), but that
+      # also means new secrets added in GH never reach the server. This
+      # step upserts runtime secrets into prod .env so Laravel/Next can
+      # read them. Must run BEFORE `config:cache` snapshots config.
+      - name: Sync runtime secrets to prod .env
+        env:
+          REVALIDATE_SECRET: ${{ secrets.REVALIDATE_SECRET }}
+          CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          ssh -o ServerAliveInterval=30 root@${{ secrets.SERVER_HOST }} \
+            "REVALIDATE_SECRET='$REVALIDATE_SECRET' \
+             CLOUDFLARE_ZONE_ID='$CLOUDFLARE_ZONE_ID' \
+             CLOUDFLARE_API_TOKEN='$CLOUDFLARE_API_TOKEN' \
+             bash -s" <<'EOF'
+            set -e
+            BE=/var/www/pandora/backend/.env
+            FE=/var/www/pandora/frontend/.env.production
+
+            upsert() {
+              local file=$1 key=$2 val=$3
+              if grep -q "^${key}=" "$file"; then
+                # Use # as sed delimiter — our values are hex / tokens,
+                # never contain #.
+                sed -i "s#^${key}=.*#${key}=${val}#" "$file"
+              else
+                printf '\n%s=%s\n' "$key" "$val" >> "$file"
+              fi
+            }
+
+            upsert "$BE" REVALIDATE_SECRET    "$REVALIDATE_SECRET"
+            upsert "$BE" CLOUDFLARE_ZONE_ID   "$CLOUDFLARE_ZONE_ID"
+            upsert "$BE" CLOUDFLARE_API_TOKEN "$CLOUDFLARE_API_TOKEN"
+            upsert "$FE" REVALIDATE_SECRET    "$REVALIDATE_SECRET"
+          EOF
+
       # ── Backend install + migrate + cache ────────────────────────
       - name: Backend install + migrate + cache
         run: |
