@@ -93,7 +93,7 @@ export default function HeroBanner({
                 alt={slide.title}
                 fill
                 sizes="100vw"
-                className="object-contain"
+                className="object-cover"
                 priority={i === 0}
                 fetchPriority={i === 0 ? 'high' : 'auto'}
               />
