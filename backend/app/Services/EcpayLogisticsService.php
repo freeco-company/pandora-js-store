@@ -52,6 +52,19 @@ class EcpayLogisticsService
             return ['already' => true, 'logistics_id' => $order->ecpay_logistics_id];
         }
 
+        // If we already sent this MerchantTradeNo to ECPay (rtn_code 300 pending
+        // waiting for callback), don't resend — ECPay will reject with
+        // 「廠商訂單編號重覆」. Admin must use「清除物流」先.
+        if ($order->logistics_created_at && str_starts_with((string) $order->logistics_status_msg, '[300]')) {
+            throw new \RuntimeException('此訂單已送至綠界且處理中（rtn_code 300），請等待綠界 callback；若要重送請先點「清除物流」。');
+        }
+
+        // Credit-card orders: shipment must wait until payment is confirmed.
+        // COD can ship pre-payment (cash at pickup).
+        if ($order->payment_method !== 'cod' && $order->payment_status !== 'paid') {
+            throw new \RuntimeException('信用卡訂單尚未付款成功，請等付款完成後再建立物流。');
+        }
+
         if (! in_array($order->shipping_method, ['cvs_711', 'cvs_family'])) {
             throw new \InvalidArgumentException('createCvsShipment called on non-CVS order');
         }
@@ -123,6 +136,22 @@ class EcpayLogisticsService
 
         $rtnCode = (int) ($parsed['RtnCode'] ?? 0);
         $rtnMsg = (string) ($parsed['RtnMsg'] ?? '');
+
+        // rtn_code 300 「訂單處理中(綠界已收到訂單資料)」— NOT a failure.
+        // Green World已收下單，最終結果會透過 ServerReplyURL callback 回來填
+        // AllPayLogisticsID。此時若重送會吃到「廠商訂單編號重覆」。
+        // 我們標記為 pending、寫 logistics_created_at 擋後續重試，並提早返回。
+        if ($rtnCode === 300) {
+            $order->update([
+                'logistics_status_msg' => "[300] {$rtnMsg}（等待綠界回傳物流編號）",
+                'logistics_created_at' => now(),
+            ]);
+            Log::info('ECPay logistics pending (rtn_code=300)', [
+                'order' => $order->order_number,
+                'rtn_msg' => $rtnMsg,
+            ]);
+            return ['pending' => true, 'rtn_code' => 300, 'rtn_msg' => $rtnMsg];
+        }
 
         if ($rtnCode !== 1) {
             $order->update(['logistics_status_msg' => "[{$rtnCode}] {$rtnMsg}"]);

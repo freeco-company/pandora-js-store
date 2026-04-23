@@ -338,7 +338,11 @@ class OrderResource extends Resource
                     ->icon('heroicon-o-building-storefront')
                     ->color('warning')
                     ->visible(fn ($record) => in_array($record->shipping_method, ['cvs_711', 'cvs_family'])
-                        && ! $record->ecpay_logistics_id)
+                        && ! $record->ecpay_logistics_id
+                        // Non-COD must be paid before we ask ECPay to create the shipment.
+                        && ($record->payment_method === 'cod' || $record->payment_status === 'paid')
+                        // Hide while previous 300 「處理中」 is awaiting ECPay callback.
+                        && ! ($record->logistics_created_at && str_starts_with((string) $record->logistics_status_msg, '[300]')))
                     ->requiresConfirmation()
                     ->modalHeading('向綠界建立超商物流單？')
                     ->modalDescription(fn ($record) => "訂單 {$record->order_number}（{$record->total}）將送往綠界 Express/Create，成功後自動回填物流編號與寄件編號。")

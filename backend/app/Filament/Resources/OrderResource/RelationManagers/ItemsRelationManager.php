@@ -25,10 +25,11 @@ class ItemsRelationManager extends RelationManager
                         return !empty($gallery) ? [$gallery[0]] : [];
                     })
                     ->disk('public'),
-                Tables\Columns\TextColumn::make('product_name')
+                Tables\Columns\TextColumn::make('display_name')
                     ->label('商品')
                     ->weight('bold')
-                    ->wrap(),
+                    ->wrap()
+                    ->description(fn ($record) => $record->bundle_is_gift ? '贈品' : null),
                 Tables\Columns\TextColumn::make('quantity')
                     ->label('數量')
                     ->alignCenter(),
@@ -41,6 +42,13 @@ class ItemsRelationManager extends RelationManager
                     ->weight('bold')
                     ->color('primary'),
             ])
+            ->defaultGroup(
+                Tables\Grouping\Group::make('bundle_group')
+                    ->label('套組')
+                    ->titlePrefixedWithLabel(false)
+                    ->collapsible(false)
+            )
+            ->groupingSettingsHidden()
             ->paginated(false);
     }
 }
