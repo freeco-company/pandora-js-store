@@ -67,7 +67,8 @@ class VisitController extends Controller
             // etc.) leak into the "direct" bucket and inflate organic UV counts.
             // Keep the row so we can audit who's crawling us, but label it so
             // widgets can exclude it from organic traffic math.
-            'referer_source'  => $this->isBot($ua) ? 'bot' : $this->normalizeSource(
+            'referer_source'  => $this->resolveSource(
+                $ua,
                 $data['referer_url'] ?? null,
                 $data['utm_source'] ?? null,
                 $data['utm_medium'] ?? null,
@@ -108,6 +109,51 @@ class VisitController extends Controller
     }
 
     /**
+     * Layered attribution:
+     *   1. Bot UA → 'bot' (keeps row but excluded from organic math).
+     *   2. Explicit signals (click_source / utm / referer) via normalizeSource.
+     *   3. If still 'direct', check UA for in-app browser (LINE / FB / IG).
+     *      Real humans tapping links inside LINE/FB/IG send no referer but
+     *      their UA carries `Line/x.y.z`, `FBAN/FBIOS`, `Instagram …`.
+     *
+     * Without step 3, LINE in-app visitors used to end up in the bot bucket
+     * (because `Line/` was in the bot regex — but LINE doesn't have a
+     * link-preview crawler, only user webviews). Now they correctly land
+     * in the `line` organic bucket.
+     */
+    private function resolveSource(
+        string $ua,
+        ?string $refererUrl,
+        ?string $utmSource,
+        ?string $utmMedium,
+        ?string $clickSource,
+    ): string {
+        if ($this->isBot($ua)) return 'bot';
+
+        $source = $this->normalizeSource($refererUrl, $utmSource, $utmMedium, $clickSource);
+        if ($source !== 'direct') return $source;
+
+        return $this->inAppSource($ua) ?? 'direct';
+    }
+
+    /**
+     * UA sniff for social-app in-app browsers. Returns the matching source
+     * bucket, or null if UA doesn't look like an in-app webview.
+     *
+     * - LINE: appends `Line/x.y.z` to an otherwise-Safari UA.
+     * - Meta apps: add `FBAN/` + `FBIOS`/`FBAV` tokens.
+     * - Instagram app: adds `Instagram <ver>` to UA.
+     */
+    private function inAppSource(string $ua): ?string
+    {
+        if ($ua === '') return null;
+        if (preg_match('~\bLine/~', $ua)) return 'line';
+        if (preg_match('~\bInstagram\b~', $ua)) return 'instagram';
+        if (preg_match('~FBAN/|FBAV/|FBIOS\b~', $ua)) return 'facebook';
+        return null;
+    }
+
+    /**
      * UA-based bot detection. Catches well-known crawlers regardless of whether
      * the edge proxy's AI-traffic detector recognised them. Anything matching
      * here is bucketed as `referer_source = 'bot'` so it doesn't inflate the
@@ -129,7 +175,7 @@ class VisitController extends Controller
             '~'
             . 'AdsBot-Google|Googlebot|Bingbot|DuckDuckBot|Baiduspider|YandexBot|Sogou|Yeti|'
             . 'facebookexternalhit|facebookcatalog|LinkedInBot|Twitterbot|Slackbot|TelegramBot|Discordbot|'
-            . 'WhatsApp|Line/|ia_archiver|archive\.org_bot|PetalBot|Seekport|AhrefsBot|SemrushBot|MJ12bot|'
+            . 'WhatsApp|ia_archiver|archive\.org_bot|PetalBot|Seekport|AhrefsBot|SemrushBot|MJ12bot|'
             . 'DotBot|BLEXBot|DataForSeoBot|serpstatbot|ZoominfoBot|MegaIndex|'
             . 'HeadlessChrome|PhantomJS|puppeteer|Playwright|Selenium|Lighthouse|'
             . 'curl/|wget/|python-requests|Go-http-client|node-fetch|axios/|okhttp/|Java/|'
