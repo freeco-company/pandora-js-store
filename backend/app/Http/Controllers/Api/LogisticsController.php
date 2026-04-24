@@ -131,18 +131,57 @@ HTML;
     }
 
     /**
-     * ECPay Express/Create reply URL — they re-POST the create response
-     * here asynchronously. The synchronous HTTP response to our /Express/Create
-     * call is already the authoritative one; this is just belt-and-braces
-     * in case of intermittent failures.
+     * ECPay Express/Create reply URL — they POST here asynchronously. CVS
+     * Create often returns [300] 訂單處理中 synchronously WITHOUT the
+     * AllPayLogisticsID; the real logistics id lands here later. We MUST
+     * persist it, otherwise the order sits in "等待綠界回傳" forever
+     * (2026-04-24 stuck order PD260424CW1P64 root cause).
+     *
+     * Also log the raw body so signature-verification failures are
+     * debuggable without reproducing.
      */
     public function ecpayReply(Request $request, EcpayService $ecpay): string
     {
         $data = $request->all();
+
+        // Always log the full payload first — if CheckMacValue fails we
+        // still want to see what came in so we can backfill manually.
+        Log::info('ECPay logistics reply received', [
+            'data' => $data,
+            'raw' => (string) $request->getContent(),
+        ]);
+
         if (! $ecpay->verifyCallback($data, 'md5')) {
+            Log::warning('ECPay logistics reply signature failed', [
+                'merchant_trade_no' => $data['MerchantTradeNo'] ?? null,
+                'logistics_id' => $data['AllPayLogisticsID'] ?? null,
+            ]);
             return '0|CheckMacValue Error';
         }
-        Log::info('ECPay logistics reply callback', ['data' => $data]);
+
+        $rtnCode = (int) ($data['RtnCode'] ?? 0);
+        $rtnMsg = (string) ($data['RtnMsg'] ?? '');
+        $logisticsId = (string) ($data['AllPayLogisticsID'] ?? '');
+        $merchantTradeNo = (string) ($data['MerchantTradeNo'] ?? '');
+
+        if ($merchantTradeNo && $logisticsId) {
+            $order = Order::where('order_number', $merchantTradeNo)->first();
+            if ($order && empty($order->ecpay_logistics_id)) {
+                $updates = [
+                    'ecpay_logistics_id' => $logisticsId,
+                    'logistics_status_msg' => "[{$rtnCode}] {$rtnMsg}",
+                ];
+                if (! empty($data['BookingNote']))      $updates['booking_note']       = (string) $data['BookingNote'];
+                if (! empty($data['CVSPaymentNo']))     $updates['cvs_payment_no']     = (string) $data['CVSPaymentNo'];
+                if (! empty($data['CVSValidationNo'])) $updates['cvs_validation_no'] = (string) $data['CVSValidationNo'];
+                $order->update($updates);
+                Log::info('ECPay logistics reply — backfilled logistics id', [
+                    'order' => $order->order_number,
+                    'logistics_id' => $logisticsId,
+                ]);
+            }
+        }
+
         return '1|OK';
     }
 
