@@ -82,9 +82,7 @@ class OrderResource extends Resource
                         ->label('付款狀態'),
                     Forms\Components\TextInput::make('ecpay_trade_no')
                         ->label('綠界交易編號')
-                        ->helperText('綠界金流的 TradeNo，付款成功後由 API 自動回填，不可手動編輯。')
-                        ->disabled()
-                        ->dehydrated(false),
+                        ->helperText('綠界金流的 TradeNo，付款成功後由 API 自動回填。API 失敗或需修正時可手動編輯。'),
                 ])->columns(2),
 
                 \Filament\Schemas\Components\Section::make('配送資訊')->schema([
@@ -111,75 +109,43 @@ class OrderResource extends Resource
                 \Filament\Schemas\Components\Section::make('綠界物流（CVS）')->schema([
                     Forms\Components\TextInput::make('ecpay_logistics_id')
                         ->label('綠界物流單號 (AllPayLogisticsID)')
-                        ->helperText('由綠界 API 回填，不可手動編輯。若未建立，請用下方「建立物流單」按鈕；若 [300] 卡住，請用「查詢綠界並補回填」。')
-                        ->disabled()
-                        ->dehydrated(false),
+                        ->helperText('付款後系統自動向綠界建立；卡在 [300] 時可去綠界廠商後台查詢後手動貼入。'),
                     Forms\Components\TextInput::make('booking_note')
                         ->label('寄件編號')
-                        ->helperText('交件時出示給超商店員使用。API 自動回填，不可編輯。')
-                        ->disabled()
-                        ->dehydrated(false),
+                        ->helperText('交件時出示給超商店員使用。'),
                     Forms\Components\TextInput::make('cvs_payment_no')
                         ->label('代收款編號')
-                        ->helperText('僅貨到付款訂單會有。API 自動回填。')
-                        ->disabled()
-                        ->dehydrated(false),
+                        ->helperText('僅貨到付款訂單會有。'),
                     Forms\Components\TextInput::make('cvs_validation_no')
-                        ->label('驗證碼')
-                        ->helperText('API 自動回填，不可編輯。')
-                        ->disabled()
-                        ->dehydrated(false),
+                        ->label('驗證碼'),
                     Forms\Components\TextInput::make('logistics_status_msg')
                         ->label('綠界回傳訊息')
-                        ->columnSpanFull()
-                        ->disabled()
-                        ->dehydrated(false),
+                        ->columnSpanFull(),
                     Forms\Components\DateTimePicker::make('logistics_created_at')
-                        ->label('物流建立時間')
-                        ->disabled()
-                        ->dehydrated(false),
+                        ->label('物流建立時間'),
                     \Filament\Schemas\Components\Actions::make([
-                        \Filament\Actions\Action::make('backfill_logistics')
-                            ->label('手動補回填物流單號')
+                        \Filament\Actions\Action::make('query_other_fields')
+                            ->label('向綠界查詢其他欄位')
                             ->icon('heroicon-o-arrow-path')
-                            ->color('warning')
-                            ->visible(fn ($record) =>
-                                (bool) $record?->logistics_created_at
-                                && empty($record?->ecpay_logistics_id)
-                                && in_array($record?->shipping_method, ['cvs_711', 'cvs_family'], true))
-                            ->modalHeading('手動補回填綠界物流單號')
-                            ->modalDescription('訂單卡在 [300] 訂單處理中 = 綠界沒把物流單號回傳回來。請到綠界廠商後台 → 物流訂單查詢，用「廠商訂單編號」找到此訂單，複製 AllPayLogisticsID 貼進來。存檔後系統會用這個 ID 向綠界查詢寄件編號 / CVS 驗證碼等其餘資料。')
-                            ->schema([
-                                \Filament\Forms\Components\TextInput::make('logistics_id')
-                                    ->label('綠界物流單號 (AllPayLogisticsID)')
-                                    ->required()
-                                    ->numeric()
-                                    ->helperText('在綠界廠商後台找此訂單取得。'),
-                            ])
-                            ->action(function (array $data, $record) {
-                                $logisticsId = trim((string) ($data['logistics_id'] ?? ''));
-                                if ($logisticsId === '') {
-                                    \Filament\Notifications\Notification::make()->title('請輸入物流單號')->danger()->send();
-                                    return;
-                                }
-                                $record->update([
-                                    'ecpay_logistics_id' => $logisticsId,
-                                    'logistics_status_msg' => '[手動補填] 由管理員貼入，待綠界查詢補其他欄位',
-                                ]);
-                                // 接著用剛存入的 ID 打綠界抓 BookingNote / CVSPaymentNo 等
+                            ->color('info')
+                            ->visible(fn ($record) => (bool) $record?->ecpay_logistics_id)
+                            ->requiresConfirmation()
+                            ->modalHeading('用目前的物流單號向綠界查詢其他欄位？')
+                            ->modalDescription('會呼叫綠界 /Helper/QueryLogisticsInfo，自動補寫「寄件編號 / 代收款編號 / 驗證碼 / 狀態訊息」。')
+                            ->action(function ($record) {
                                 try {
-                                    $fresh = app(\App\Services\EcpayLogisticsService::class)
+                                    $data = app(\App\Services\EcpayLogisticsService::class)
                                         ->queryByLogisticsId($record);
                                     \Filament\Notifications\Notification::make()
-                                        ->title('補回填完成 ✓')
-                                        ->body(sprintf('寄件編號：%s', $fresh['BookingNote'] ?? '（綠界無回傳）'))
+                                        ->title('查詢成功 ✓')
+                                        ->body(sprintf('寄件編號：%s', $data['BookingNote'] ?? '（無）'))
                                         ->success()
                                         ->send();
                                 } catch (\Throwable $e) {
                                     \Filament\Notifications\Notification::make()
-                                        ->title('物流單號已存，但綠界查詢失敗')
-                                        ->body($e->getMessage() . '（寄件編號等其他欄位需手動從綠界後台補）')
-                                        ->warning()
+                                        ->title('查詢失敗')
+                                        ->body($e->getMessage())
+                                        ->danger()
                                         ->persistent()
                                         ->send();
                                 }
