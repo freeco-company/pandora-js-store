@@ -113,7 +113,7 @@ function SelfUsePanel() {
               '首次任挑商品滿 NT$6,600 完成購買',
             ]}
             afterwards={[
-              '啟用加盟身分，後續商品皆為成本價',
+              '啟用加盟身分，首次滿額皆為成本價',
               '活動期間贈品照常領取',
             ]}
             suitable="適合日常保養、習慣持續回購的你"
@@ -125,18 +125,23 @@ function SelfUsePanel() {
         <ScrollReveal variant="fade-up" delay={200}>
           <PlanCard
             tone="premium"
-            badge="更划算"
+            badge="限時半門檻優惠"
             planLabel="PLAN B"
             headlineIcon={<IconCrown className="text-[#D4A053]" />}
-            price="滿額 NT$19,600"
+            price={
+              <>
+                滿額 <span className="text-gray-400 line-through font-bold mr-2">NT$19,600</span>
+                <span className="text-red-600">NT$9,600</span>
+              </>
+            }
             fee="+ NT$200 工本費"
             steps={[
               'App 會員註冊',
               '完成 3.5 小時線上課程考核',
-              '首次任挑商品滿 NT$19,600 完成購買',
+              '首次任挑商品滿 NT$9,600 完成購買',
             ]}
             afterwards={[
-              '啟用加盟身分，後續商品皆為成本價',
+              '啟用加盟身分，首次滿額皆為成本價',
               '成本價再優惠一些',
               '活動期間贈品照常領取',
             ]}
@@ -395,7 +400,7 @@ interface PlanCardProps {
   badge: string | null;
   planLabel: string;
   headlineIcon: React.ReactNode;
-  price: string;
+  price: React.ReactNode;
   fee: string;
   steps: string[];
   afterwards: string[];
@@ -415,7 +420,7 @@ function PlanCard({
   return (
     <div className={`${wrap} rounded-3xl p-6 sm:p-8 h-full flex flex-col relative overflow-hidden`}>
       {badge && (
-        <span className="absolute top-3 right-3 bg-[#9F6B3E] text-white text-[10px] font-black px-2.5 py-1 rounded-full">
+        <span className="absolute top-3 right-3 bg-red-600 text-white text-xs sm:text-sm font-black px-3 py-1.5 rounded-full shadow-md">
           {badge}
         </span>
       )}
