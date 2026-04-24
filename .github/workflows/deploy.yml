@@ -217,10 +217,15 @@ jobs:
             exit 1
           fi
 
-      # Precision Cloudflare purge — clear HTML/sitemap so visitors never
-      # see a mid-deploy mixed response. /_next/static/* is hashed so it's
-      # safe to leave cached; /storage/* doesn't change on deploy.
-      - name: Purge Cloudflare cache (HTML + sitemap)
+      # Full Cloudflare purge. Precision purge (specific URLs) used to be
+      # enough when we only cared about HTML freshness, BUT on 2026-04-24 a
+      # mid-deploy request hit a transient 404 on /_next/static/chunks/*
+      # and Cloudflare cached it for 24h → site broken for 46 min until we
+      # manually purged. /_next/static/* is never explicitly listed, so
+      # precision purge can't reach it. Full purge avoids this class of
+      # bug entirely. Trade-off: slightly higher origin load for ~1 min
+      # after deploy, negligible at our traffic scale.
+      - name: Purge Cloudflare cache (everything)
         if: success()
         env:
           CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -230,19 +235,7 @@ jobs:
             "https://api.cloudflare.com/client/v4/zones/${CF_ZONE}/purge_cache" \
             -H "Authorization: Bearer ${CF_TOKEN}" \
             -H "Content-Type: application/json" \
-            --data '{
-              "files": [
-                "https://pandora.js-store.com.tw/",
-                "https://pandora.js-store.com.tw/products",
-                "https://pandora.js-store.com.tw/articles",
-                "https://pandora.js-store.com.tw/reviews",
-                "https://pandora.js-store.com.tw/where-to-buy",
-                "https://pandora.js-store.com.tw/sitemap.xml",
-                "https://pandora.js-store.com.tw/sitemap-images.xml",
-                "https://pandora.js-store.com.tw/robots.txt",
-                "https://pandora.js-store.com.tw/manifest.webmanifest"
-              ]
-            }' | tee /tmp/cf-purge.json
+            --data '{"purge_everything": true}' | tee /tmp/cf-purge.json
           grep -q '"success":true' /tmp/cf-purge.json || { echo "Cloudflare purge failed"; exit 1; }
 
   notify:

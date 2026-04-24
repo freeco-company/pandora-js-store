@@ -384,6 +384,18 @@ class OrderResource extends Resource
                     ->modalCancelActionLabel('關閉')
                     ->modalContent(fn ($record) => view('filament.order-items-modal', [
                         'items' => $record->items()->with('product')->get(),
+                        // Map bundle display name → Bundle row so the modal
+                        // can show the real bundle cover art (not a
+                        // constituent product's image).
+                        'bundles' => \App\Models\Bundle::whereIn('name', $record
+                            ->items()
+                            ->pluck('product_name')
+                            ->map(fn ($n) => preg_match('/^【([^｜】]+?)(?:｜贈品)?】/u', (string) $n, $m) ? $m[1] : null)
+                            ->filter()
+                            ->unique()
+                            ->values())
+                            ->get()
+                            ->keyBy('name'),
                         'order' => $record,
                     ])),
 

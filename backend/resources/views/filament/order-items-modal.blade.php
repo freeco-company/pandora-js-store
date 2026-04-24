@@ -1,25 +1,27 @@
-{{-- Modal content for the "商品" action on the order list page.
-     Groups items by bundle_group so an activity bundle renders as ONE
-     card listing its constituent items, not N separate cards. Standalone
-     products (the '單品' group) still render individually. --}}
+{{-- Order items modal — mirrors the frontend cart's bundle card design
+     (活動限時優惠 red badge + 購買內容 / 加贈 sections + FREE badges).
+     Standalone products render as individual rows. --}}
 @php
     /** @var \Illuminate\Support\Collection $items */
+    /** @var \Illuminate\Support\Collection $bundles  keyed by bundle name */
     /** @var \App\Models\Order $order */
     $grouped = $items->groupBy('bundle_group');
     $totalQty = $items->sum('quantity');
     $grandTotal = $items->sum('subtotal');
+
+    $storage = \Illuminate\Support\Facades\Storage::disk('public');
+    $thumbFor = function ($path) use ($storage) {
+        return $path ? $storage->url($path) : null;
+    };
 @endphp
 
 <div class="space-y-3">
     @forelse ($grouped as $groupName => $groupItems)
         @if ($groupName === '單品')
-            {{-- Single products: one card per line item --}}
             @foreach ($groupItems as $item)
                 @php
                     $gallery = $item->product?->gallery ?? [];
-                    $thumb = ! empty($gallery)
-                        ? \Illuminate\Support\Facades\Storage::disk('public')->url($gallery[0])
-                        : null;
+                    $thumb = ! empty($gallery) ? $storage->url($gallery[0]) : null;
                 @endphp
                 <div class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800">
                     <div class="w-14 h-14 shrink-0 rounded overflow-hidden bg-white dark:bg-gray-900 flex items-center justify-center">
@@ -45,31 +47,29 @@
                 </div>
             @endforeach
         @else
-            {{-- Activity bundle: header + nested constituent list --}}
             @php
+                $bundle = $bundles[$groupName] ?? null;
+                $bundleThumb = $thumbFor($bundle?->image);
                 $bundleSubtotal = $groupItems->sum('subtotal');
-                $firstItem = $groupItems->first();
-                $firstGallery = $firstItem->product?->gallery ?? [];
-                $firstThumb = ! empty($firstGallery)
-                    ? \Illuminate\Support\Facades\Storage::disk('public')->url($firstGallery[0])
-                    : null;
+                // Split buy vs gift (mirrors frontend cart)
+                [$giftItems, $buyItems] = $groupItems->partition(fn ($i) => $i->bundle_is_gift);
             @endphp
-            <div class="rounded-lg border border-[#e7d9cb] bg-[#fdf7ef] p-3">
-                <div class="flex items-center gap-3 mb-3">
-                    <div class="w-14 h-14 shrink-0 rounded overflow-hidden bg-white flex items-center justify-center border border-[#e7d9cb]">
-                        @if ($firstThumb)
-                            <img src="{{ $firstThumb }}" alt="{{ $groupName }}" class="w-full h-full object-cover" />
+            <div class="rounded-xl border border-[#e7d9cb] bg-[#fdf7ef] p-4">
+                <div class="flex items-start gap-3 mb-3">
+                    {{-- Bundle cover thumbnail --}}
+                    <div class="w-20 h-20 shrink-0 rounded-lg overflow-hidden bg-white flex items-center justify-center border border-[#e7d9cb]">
+                        @if ($bundleThumb)
+                            <img src="{{ $bundleThumb }}" alt="{{ $groupName }}" class="w-full h-full object-contain" />
                         @else
                             <x-filament::icon icon="heroicon-o-gift" class="w-6 h-6 text-[#9F6B3E]" />
                         @endif
                     </div>
                     <div class="flex-1 min-w-0">
-                        <div class="text-[10px] font-black tracking-[0.15em] text-[#9F6B3E] mb-0.5">活動套組</div>
-                        <div class="font-bold text-gray-900 truncate" title="{{ $groupName }}">
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#c0392b] text-white text-[10px] font-black mb-1.5">
+                            活動限時優惠
+                        </span>
+                        <div class="font-bold text-gray-900 leading-tight" title="{{ $groupName }}">
                             {{ $groupName }}
-                        </div>
-                        <div class="text-xs text-gray-500 mt-0.5">
-                            {{ $groupItems->count() }} 項 · {{ $groupItems->sum('quantity') }} 件
                         </div>
                     </div>
                     <div class="shrink-0 text-right">
@@ -78,21 +78,33 @@
                         </div>
                     </div>
                 </div>
-                <div class="space-y-1.5 pl-4 border-l-2 border-[#9F6B3E]/25">
-                    @foreach ($groupItems as $item)
-                        <div class="flex items-start gap-2 text-sm">
-                            <div class="flex-1 text-gray-700">
-                                {{ $item->display_name }}
-                                @if ($item->bundle_is_gift)
-                                    <span class="text-[10px] px-1.5 py-0.5 bg-pink-100 text-pink-700 rounded ml-1 font-semibold">贈品</span>
-                                @endif
+
+                @if ($buyItems->isNotEmpty())
+                    <div class="space-y-1 mb-2">
+                        <div class="text-[10px] font-black text-[#9F6B3E] tracking-wider">購買內容</div>
+                        @foreach ($buyItems as $item)
+                            <div class="flex items-center gap-2 text-sm text-gray-700">
+                                <span class="w-1.5 h-1.5 rounded-full bg-[#9F6B3E] shrink-0"></span>
+                                <span class="flex-1 min-w-0">{{ $item->display_name }}</span>
+                                <span class="shrink-0 text-gray-500 tabular-nums">× {{ $item->quantity }}</span>
                             </div>
-                            <div class="shrink-0 text-xs text-gray-500 tabular-nums">
-                                × {{ $item->quantity }}
+                        @endforeach
+                    </div>
+                @endif
+
+                @if ($giftItems->isNotEmpty())
+                    <div class="space-y-1">
+                        <div class="text-[10px] font-black text-[#e74c3c] tracking-wider">加贈</div>
+                        @foreach ($giftItems as $item)
+                            <div class="flex items-center gap-2 text-sm text-gray-700">
+                                <span class="w-1.5 h-1.5 rounded-full bg-[#e74c3c] shrink-0"></span>
+                                <span class="flex-1 min-w-0">{{ $item->display_name }}</span>
+                                <span class="shrink-0 text-gray-500 tabular-nums">× {{ $item->quantity }}</span>
+                                <span class="shrink-0 text-[10px] font-black text-[#e74c3c] bg-[#e74c3c]/10 px-1.5 py-0.5 rounded-full">FREE</span>
                             </div>
-                        </div>
-                    @endforeach
-                </div>
+                        @endforeach
+                    </div>
+                @endif
             </div>
         @endif
     @empty
