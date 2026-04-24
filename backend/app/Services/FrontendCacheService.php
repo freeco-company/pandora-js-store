@@ -34,7 +34,7 @@ class FrontendCacheService
         try {
             Http::timeout(3)
                 ->withHeaders(['x-revalidate-secret' => $secret])
-                ->post($base . '/api/revalidate', [
+                ->post($base . '/revalidate', [
                     'tags' => array_values($tags),
                     'paths' => array_values($paths),
                 ]);
