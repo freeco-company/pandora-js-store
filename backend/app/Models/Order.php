@@ -19,6 +19,7 @@ class Order extends Model
         'shipping_address', 'shipping_store_id', 'shipping_store_name',
         'note', 'wp_order_id', 'abandoned_reminder_sent_at', 'review_reminder_sent_at',
         'shipped_at', 'pickup_reminder_sent_at',
+        'referer_source', 'utm_source', 'utm_medium', 'utm_campaign', 'landing_path',
     ];
 
     protected $casts = [

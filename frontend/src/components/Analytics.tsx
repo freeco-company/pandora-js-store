@@ -218,29 +218,41 @@ function trackPageView(pathname: string) {
       sessionStorage.setItem('pandora-landing-path', landing);
     }
 
+    // Freeze first-touch attribution in localStorage (30d) so the order
+    // POST at checkout knows which campaign introduced this customer.
+    // Pure pageview analytics stays in the separate visits flow below.
+    import('@/lib/attribution').then(m => m.captureAttribution(landing!)).catch(() => {});
+
     const params = new URLSearchParams(window.location.search);
 
-    // Paid-click IDs — every major ad platform auto-tags landing URLs with
-    // one of these when traffic comes from paid. Presence = definitive paid
-    // signal, independent of whether utm_medium was also set.
+    // Paid-click IDs — most are definitive paid signals (gclid, msclkid,
+    // ttclid, li_fat_id only auto-append on real ad clicks). fbclid is the
+    // odd one out: Meta appends it to EVERY link click inside FB/IG/
+    // Messenger apps, organic or paid. Requiring utm_medium=paid for fbclid
+    // stops us classifying organic shares as "Meta Ads".
     //   gclid / gbraid / wbraid / gad_source → Google Ads
-    //   fbclid                               → Meta (FB/IG) ads
+    //   fbclid + utm_medium=cpc/paid/ads     → Meta Ads (paid)
+    //   fbclid alone                         → facebook organic (ignored here)
     //   msclkid                              → Microsoft (Bing) ads
     //   ttclid                               → TikTok ads
     //   li_fat_id                            → LinkedIn ads
+    const utmMedium = (params.get('utm_medium') || '').toLowerCase();
+    const isPaidMedium = ['cpc', 'paid', 'ads', 'ppc'].includes(utmMedium);
+    const fbclidPaid = !!(params.get('fbclid') && isPaidMedium);
+
     const clickId =
       params.get('gclid') ||
       params.get('gbraid') ||
       params.get('wbraid') ||
       params.get('gad_source') ||
-      params.get('fbclid') ||
+      (fbclidPaid ? params.get('fbclid') : null) ||
       params.get('msclkid') ||
       params.get('ttclid') ||
       params.get('li_fat_id') ||
       null;
     const clickIdSource = params.get('gclid') || params.get('gbraid') || params.get('wbraid') || params.get('gad_source')
       ? 'google_ads'
-      : params.get('fbclid') ? 'facebook_ads'
+      : fbclidPaid ? 'facebook_ads'
       : params.get('msclkid') ? 'bing_ads'
       : params.get('ttclid') ? 'tiktok_ads'
       : params.get('li_fat_id') ? 'linkedin_ads'

@@ -212,12 +212,52 @@ class OrderResource extends Resource
                     })
                     ->label('配送方式'),
 
+                Tables\Columns\TextColumn::make('ecpay_trade_no')
+                    ->label('綠界交易編號')
+                    ->placeholder('—')
+                    ->copyable()
+                    ->toggleable(),
+
                 Tables\Columns\TextColumn::make('ecpay_logistics_id')
                     ->label('物流編號')
                     ->placeholder('—')
                     ->copyable()
                     ->description(fn ($record) => $record->booking_note ? "寄件 {$record->booking_note}" : null)
                     ->toggleable(),
+
+                Tables\Columns\TextColumn::make('referer_source')
+                    ->label('來源')
+                    ->badge()
+                    ->placeholder('—')
+                    ->formatStateUsing(fn (?string $state) => match ($state) {
+                        'direct' => '直接',
+                        'google' => 'Google',
+                        'google_ads' => 'Google Ads',
+                        'bing' => 'Bing',
+                        'bing_ads' => 'Bing Ads',
+                        'yahoo' => 'Yahoo',
+                        'facebook' => 'Facebook',
+                        'facebook_ads' => 'Meta Ads',
+                        'instagram' => 'Instagram',
+                        'line' => 'LINE',
+                        'tiktok_ads' => 'TikTok Ads',
+                        'linkedin_ads' => 'LinkedIn Ads',
+                        'other_ads' => '其他廣告',
+                        'email' => 'Email',
+                        'ai_referral' => 'AI 引薦',
+                        'other' => '其他',
+                        default => $state ?? '—',
+                    })
+                    ->color(fn (?string $state) => match ($state) {
+                        'direct' => 'success',
+                        'google', 'bing', 'yahoo' => 'info',
+                        'google_ads', 'facebook_ads', 'bing_ads', 'tiktok_ads', 'linkedin_ads', 'other_ads' => 'warning',
+                        'facebook', 'instagram', 'line' => 'primary',
+                        'ai_referral' => 'success',
+                        default => 'gray',
+                    })
+                    ->description(fn ($record) => $record->utm_campaign ? "活動：{$record->utm_campaign}" : null)
+                    ->tooltip(fn ($record) => $record->landing_path ? "落地頁：{$record->landing_path}" : null),
 
                 Tables\Columns\TextColumn::make('payment_method')
                     ->badge()
@@ -314,6 +354,20 @@ class OrderResource extends Resource
                         ->whereIn('shipping_method', ['cvs_711', 'cvs_family'])
                         ->whereNull('ecpay_logistics_id')
                         ->where('payment_status', 'paid')),
+                Tables\Filters\SelectFilter::make('referer_source')
+                    ->options([
+                        'direct' => '直接',
+                        'instagram' => 'Instagram',
+                        'line' => 'LINE',
+                        'facebook' => 'Facebook',
+                        'google' => 'Google',
+                        'facebook_ads' => 'Meta Ads',
+                        'google_ads' => 'Google Ads',
+                        'email' => 'Email',
+                        'ai_referral' => 'AI 引薦',
+                        'other' => '其他',
+                    ])
+                    ->label('來源'),
             ])
             ->actions([
                 // Inline item preview — clicking opens a modal with all line

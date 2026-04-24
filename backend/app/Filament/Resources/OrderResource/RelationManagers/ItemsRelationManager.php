@@ -43,8 +43,16 @@ class ItemsRelationManager extends RelationManager
                     ->color('primary'),
             ])
             ->defaultGroup(
+                // bundle_group is a computed accessor on OrderItem (parsed
+                // from product_name prefix 【…】), NOT a DB column. Filament
+                // would otherwise emit `ORDER BY bundle_group` and explode
+                // with "Column not found". Sort by product_name instead —
+                // same bundle prefix naturally clusters rows together.
                 Tables\Grouping\Group::make('bundle_group')
                     ->label('套組')
+                    ->getKeyFromRecordUsing(fn ($record) => $record->bundle_group)
+                    ->getTitleFromRecordUsing(fn ($record) => $record->bundle_group)
+                    ->orderQueryUsing(fn ($query, string $direction) => $query->orderBy('product_name', $direction))
                     ->titlePrefixedWithLabel(false)
                     ->collapsible(false)
             )

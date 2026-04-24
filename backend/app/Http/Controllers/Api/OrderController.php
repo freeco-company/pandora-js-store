@@ -54,6 +54,13 @@ class OrderController extends Controller
             'shipping_store_name' => 'required_if:shipping_method,cvs_711,cvs_family|nullable|string',
             'coupon_code' => 'nullable|string',
             'idempotency_key' => 'nullable|string|max:64',
+            // First-touch attribution from the frontend (lib/attribution).
+            // Tells /admin/orders which campaign / social post drove this sale.
+            'referer_source' => 'nullable|string|max:32',
+            'utm_source' => 'nullable|string|max:64',
+            'utm_medium' => 'nullable|string|max:64',
+            'utm_campaign' => 'nullable|string|max:128',
+            'landing_path' => 'nullable|string|max:255',
         ]);
 
         // Normalize email: trim + lowercase to prevent duplicate customers
@@ -197,6 +204,11 @@ class OrderController extends Controller
                     'shipping_store_id' => $request->shipping_store_id,
                     'shipping_store_name' => $request->shipping_store_name,
                     'note' => $request->note,
+                    'referer_source' => $request->input('referer_source'),
+                    'utm_source' => $request->input('utm_source'),
+                    'utm_medium' => $request->input('utm_medium'),
+                    'utm_campaign' => $request->input('utm_campaign'),
+                    'landing_path' => $request->input('landing_path'),
                 ]);
 
                 foreach ($pricing['items'] as $item) {

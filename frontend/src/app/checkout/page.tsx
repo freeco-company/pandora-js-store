@@ -238,6 +238,12 @@ export default function CheckoutPage() {
     trackBeginCheckout(finalTotal, gtmItems);
 
     try {
+      // First-touch attribution captured when the customer landed (stored
+      // in localStorage by Analytics.tsx → lib/attribution). Empty object
+      // if the visitor came in direct with no UTM.
+      const { attributionForOrderPayload } = await import('@/lib/attribution');
+      const attribution = attributionForOrderPayload();
+
       const payload = {
         items: [
           ...productItems.map((i) => ({ product_id: i.product.id, quantity: i.quantity, type: 'product' as const })),
@@ -260,6 +266,7 @@ export default function CheckoutPage() {
           form.note || '',
         ].filter((s) => s.trim()).join('\n') || undefined,
         idempotency_key: crypto.randomUUID(),
+        ...attribution,
       };
 
       const order = await fetchApi<{ order_number: string } & CelebrationKeys>('/orders', {
