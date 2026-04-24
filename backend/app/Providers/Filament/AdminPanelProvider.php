@@ -77,7 +77,7 @@ class AdminPanelProvider extends PanelProvider
             ->renderHook(
                 \Filament\View\PanelsRenderHook::HEAD_END,
                 fn () => new \Illuminate\Support\HtmlString(
-                    '<link rel="stylesheet" href="/css/filament-custom.css?v=' . filemtime(public_path('css/filament-custom.css') ?: 0) . '">'
+                    '<link rel="stylesheet" href="/css/filament/custom.css?v=' . filemtime(public_path('css/filament/custom.css') ?: 0) . '">'
                 ),
             )
 
