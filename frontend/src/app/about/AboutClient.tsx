@@ -345,7 +345,7 @@ export default function AboutPage() {
         <div className="relative max-w-4xl mx-auto px-6 text-center z-10">
           <div className="hero-enter">
             <div className="w-px h-16 mx-auto mb-6" style={{ background: 'linear-gradient(to bottom, transparent, var(--gold), transparent)' }} />
-            <span className="text-[11px] font-medium tracking-[0.6em] text-[var(--gold)] uppercase">FP TEAM · Est. 2019</span>
+            <span className="text-[11px] font-medium tracking-[0.6em] text-[var(--gold)] uppercase">FP TEAM · Est. 2024</span>
           </div>
           <div className="mt-10 sm:mt-12 max-w-full">
             <h1 className="sr-only">Fairy Pandora</h1>
@@ -391,7 +391,7 @@ export default function AboutPage() {
             <p className="text-base sm:text-lg text-[var(--ink-soft)] max-w-xl mx-auto leading-relaxed font-light">
               朵朵真實經歷 — 離開職場五年的全職二寶媽，<br />
               從零起步經營社群，到全網近 4 萬粉絲相伴，<br />
-              親身見證下半身蛻變的故事…
+              親身見證下半生蛻變的故事…
             </p>
           </div>
           <div className="hero-enter mt-14">

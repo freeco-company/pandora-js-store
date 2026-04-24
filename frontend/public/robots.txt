@@ -13,9 +13,9 @@ Disallow: /checkout
 Disallow: /order-complete
 Disallow: /order-lookup
 
-# 舊 WooCommerce 加入購物車參數（留著，避免浪費 crawl budget）
-Disallow: /*?add-to-cart=
-Disallow: /*&add-to-cart=
+# 舊 WooCommerce 加入購物車參數 — 改由 proxy 回 410 Gone，移除封鎖讓
+# Google 實際爬到 410 把這些 URL 從索引中移除（比保留 disallow 更徹底，
+# 索引會在幾週內清掉而不是停在「封鎖中」limbo）。
 
 # WordPress / WooCommerce 殘留路徑 — 不再 disallow，讓 Google 爬到 410 Gone
 # 以便加速從索引清除。nginx 直接回 410，不會浪費太多 crawl budget。

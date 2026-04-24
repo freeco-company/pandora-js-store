@@ -202,6 +202,23 @@ export async function proxy(req: NextRequest, event: NextFetchEvent) {
     event.waitUntil(postAiVisit(detection, req.nextUrl.pathname));
   }
 
+  // Legacy WooCommerce ?add-to-cart=<id> action URLs. These are not content
+  // pages and never should have been indexed. Return 410 Gone so Google
+  // removes them from the index faster than 404. robots.txt previously
+  // blocked crawling but that just parked them in "blocked" limbo forever.
+  if (req.nextUrl.searchParams.has('add-to-cart')) {
+    return new NextResponse(
+      'Gone. This WooCommerce add-to-cart URL is no longer supported.',
+      {
+        status: 410,
+        headers: {
+          'Content-Type': 'text/plain; charset=utf-8',
+          'X-Robots-Tag': 'noindex',
+        },
+      },
+    );
+  }
+
   // WP query-param 舊連結：?post_type=product / ?page_id=xxx。
   // 放 proxy 不放 next.config 的 redirects()，是因為後者會把 request query 帶
   // 到 destination，造成 `/?page_id=3 → /?page_id=3` 無限迴圈。
