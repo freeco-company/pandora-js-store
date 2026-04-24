@@ -82,7 +82,9 @@ class OrderResource extends Resource
                         ->label('付款狀態'),
                     Forms\Components\TextInput::make('ecpay_trade_no')
                         ->label('綠界交易編號')
-                        ->helperText('綠界金流的 TradeNo，付款成功後自動回填'),
+                        ->helperText('綠界金流的 TradeNo，付款成功後由 API 自動回填，不可手動編輯。')
+                        ->disabled()
+                        ->dehydrated(false),
                 ])->columns(2),
 
                 \Filament\Schemas\Components\Section::make('配送資訊')->schema([
@@ -108,24 +110,63 @@ class OrderResource extends Resource
 
                 \Filament\Schemas\Components\Section::make('綠界物流（CVS）')->schema([
                     Forms\Components\TextInput::make('ecpay_logistics_id')
-                        ->label('綠界物流編號 (AllPayLogisticsID)')
-                        ->helperText('CVS 訂單付款後由系統自動向綠界建立，若尚未產生可手動補填。'),
+                        ->label('綠界物流單號 (AllPayLogisticsID)')
+                        ->helperText('由綠界 API 回填，不可手動編輯。若未建立，請用下方「建立物流單」按鈕；若 [300] 卡住，請用「查詢綠界並補回填」。')
+                        ->disabled()
+                        ->dehydrated(false),
                     Forms\Components\TextInput::make('booking_note')
                         ->label('寄件編號')
-                        ->helperText('交件時出示給超商店員使用。'),
+                        ->helperText('交件時出示給超商店員使用。API 自動回填，不可編輯。')
+                        ->disabled()
+                        ->dehydrated(false),
                     Forms\Components\TextInput::make('cvs_payment_no')
                         ->label('代收款編號')
-                        ->helperText('僅貨到付款訂單會有。'),
+                        ->helperText('僅貨到付款訂單會有。API 自動回填。')
+                        ->disabled()
+                        ->dehydrated(false),
                     Forms\Components\TextInput::make('cvs_validation_no')
-                        ->label('驗證碼'),
+                        ->label('驗證碼')
+                        ->helperText('API 自動回填，不可編輯。')
+                        ->disabled()
+                        ->dehydrated(false),
                     Forms\Components\TextInput::make('logistics_status_msg')
                         ->label('綠界回傳訊息')
                         ->columnSpanFull()
-                        ->disabled(),
+                        ->disabled()
+                        ->dehydrated(false),
                     Forms\Components\DateTimePicker::make('logistics_created_at')
                         ->label('物流建立時間')
-                        ->disabled(),
+                        ->disabled()
+                        ->dehydrated(false),
                     \Filament\Schemas\Components\Actions::make([
+                        \Filament\Actions\Action::make('query_logistics')
+                            ->label('查詢綠界並補回填')
+                            ->icon('heroicon-o-arrow-path')
+                            ->color('warning')
+                            ->requiresConfirmation()
+                            ->modalHeading('向綠界 API 查詢此訂單的物流狀態？')
+                            ->modalDescription('適用於訂單建立後卡在「[300] 訂單處理中」狀態，callback 沒回傳 AllPayLogisticsID 的情況。查詢成功會自動寫回物流單號、寄件編號等資訊。')
+                            ->visible(fn ($record) =>
+                                (bool) $record?->logistics_created_at
+                                && empty($record?->ecpay_logistics_id)
+                                && in_array($record?->shipping_method, ['cvs_711', 'cvs_family'], true))
+                            ->action(function ($record) {
+                                try {
+                                    $data = app(\App\Services\EcpayLogisticsService::class)->queryAndBackfill($record);
+                                    \Filament\Notifications\Notification::make()
+                                        ->title('查詢成功 ✓')
+                                        ->body(sprintf('綠界物流單號：%s', $data['AllPayLogisticsID'] ?? '—'))
+                                        ->success()
+                                        ->send();
+                                } catch (\Throwable $e) {
+                                    \Filament\Notifications\Notification::make()
+                                        ->title('查詢失敗')
+                                        ->body($e->getMessage())
+                                        ->danger()
+                                        ->persistent()
+                                        ->send();
+                                }
+                            }),
                         \Filament\Actions\Action::make('clear_logistics')
                             ->label('清除物流單（重新建立用）')
                             ->icon('heroicon-o-trash')
@@ -212,18 +253,17 @@ class OrderResource extends Resource
                     })
                     ->label('配送方式'),
 
+                Tables\Columns\TextColumn::make('ecpay_logistics_id')
+                    ->label('綠界物流單號')
+                    ->placeholder('—')
+                    ->copyable()
+                    ->description(fn ($record) => $record->booking_note ? "寄件 {$record->booking_note}" : null),
+
                 Tables\Columns\TextColumn::make('ecpay_trade_no')
                     ->label('綠界交易編號')
                     ->placeholder('—')
                     ->copyable()
-                    ->toggleable(),
-
-                Tables\Columns\TextColumn::make('ecpay_logistics_id')
-                    ->label('物流編號')
-                    ->placeholder('—')
-                    ->copyable()
-                    ->description(fn ($record) => $record->booking_note ? "寄件 {$record->booking_note}" : null)
-                    ->toggleable(),
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 Tables\Columns\TextColumn::make('referer_source')
                     ->label('來源')

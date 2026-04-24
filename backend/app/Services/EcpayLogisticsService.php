@@ -27,16 +27,95 @@ class EcpayLogisticsService
     private string $senderName;
     private string $senderCellPhone;
 
+    private string $apiBaseUrl;
+
     public function __construct(private EcpayService $payment)
     {
         $this->merchantId = (string) config('services.ecpay.merchant_id');
         $this->hashKey = (string) config('services.ecpay.hash_key');
         $this->hashIv = (string) config('services.ecpay.hash_iv');
-        $this->apiUrl = config('services.ecpay.mode') === 'production'
-            ? 'https://logistics.ecpay.com.tw/Express/Create'
-            : 'https://logistics-stage.ecpay.com.tw/Express/Create';
+        $this->apiBaseUrl = config('services.ecpay.mode') === 'production'
+            ? 'https://logistics.ecpay.com.tw'
+            : 'https://logistics-stage.ecpay.com.tw';
+        $this->apiUrl = $this->apiBaseUrl . '/Express/Create';
         $this->senderName = (string) config('services.ecpay.sender_name', '法芮可有限公司');
         $this->senderCellPhone = (string) config('services.ecpay.sender_cellphone', '');
+    }
+
+    /**
+     * Query ECPay for this order's current logistics status and backfill
+     * any missing fields (AllPayLogisticsID, BookingNote, CVS*No).
+     *
+     * Used when Express/Create returned [300] 訂單處理中 and the async
+     * reply callback failed (e.g. CheckMacValue mismatch before v2.7.4)
+     * so the order is stuck without an AllPayLogisticsID.
+     *
+     * Endpoint: /Helper/QueryLogisticsInfo — takes MerchantTradeNo, returns
+     * the full current state. Response is key=value pairs separated by `&`.
+     *
+     * @throws \RuntimeException if ECPay can't find the order or returns
+     *         an error code.
+     */
+    public function queryAndBackfill(Order $order): array
+    {
+        if (! empty($order->ecpay_logistics_id)) {
+            return ['already' => true, 'logistics_id' => $order->ecpay_logistics_id];
+        }
+        if (! in_array($order->shipping_method, ['cvs_711', 'cvs_family'], true)) {
+            throw new \RuntimeException('此訂單不是超商取貨，無法查詢物流');
+        }
+
+        $params = [
+            'MerchantID' => $this->merchantId,
+            'MerchantTradeNo' => $order->order_number,
+            'TimeStamp' => (string) time(),
+        ];
+        $params['CheckMacValue'] = $this->payment->generateCheckMac($params, 'md5');
+
+        Log::info('ECPay QueryLogisticsInfo request', [
+            'order' => $order->order_number,
+            'params' => array_diff_key($params, ['CheckMacValue' => '']),
+        ]);
+
+        $response = Http::asForm()->post($this->apiBaseUrl . '/Helper/QueryLogisticsInfo', $params);
+
+        $body = (string) $response->body();
+        parse_str($body, $data);
+
+        Log::info('ECPay QueryLogisticsInfo response', [
+            'order' => $order->order_number,
+            'body' => $body,
+        ]);
+
+        // ECPay error responses are of the form `0|<ErrorMessage>` rather
+        // than key=value pairs. Detect and surface clearly.
+        if (str_starts_with($body, '0|')) {
+            throw new \RuntimeException('綠界回應：' . substr($body, 2));
+        }
+
+        $logisticsId = (string) ($data['AllPayLogisticsID'] ?? '');
+        if ($logisticsId === '') {
+            throw new \RuntimeException(
+                '綠界回傳沒有 AllPayLogisticsID。原始回應：' . mb_strimwidth($body, 0, 200, '…')
+            );
+        }
+
+        $updates = [
+            'ecpay_logistics_id' => $logisticsId,
+            'logistics_status_msg' => sprintf(
+                '[%s] %s（查詢回填）',
+                $data['RtnCode'] ?? '?',
+                $data['RtnMsg'] ?? '',
+            ),
+        ];
+        foreach (['BookingNote' => 'booking_note', 'CVSPaymentNo' => 'cvs_payment_no', 'CVSValidationNo' => 'cvs_validation_no'] as $src => $dst) {
+            if (! empty($data[$src])) {
+                $updates[$dst] = (string) $data[$src];
+            }
+        }
+        $order->update($updates);
+
+        return $data;
     }
 
     /**
