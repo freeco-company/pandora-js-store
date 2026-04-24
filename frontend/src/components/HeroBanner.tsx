@@ -128,7 +128,7 @@ export default function HeroBanner({
                 alt={slide.title}
                 fill
                 sizes="100vw"
-                className="object-cover"
+                className="object-contain"
                 priority={i === 0}
                 fetchPriority={i === 0 ? 'high' : 'auto'}
               />
@@ -144,7 +144,7 @@ export default function HeroBanner({
                 alt={slide.title}
                 fill
                 sizes="100vw"
-                className="object-cover"
+                className="object-contain"
                 priority={i === 0}
                 fetchPriority={i === 0 ? 'high' : 'auto'}
               />
