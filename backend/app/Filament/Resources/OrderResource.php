@@ -139,30 +139,47 @@ class OrderResource extends Resource
                         ->disabled()
                         ->dehydrated(false),
                     \Filament\Schemas\Components\Actions::make([
-                        \Filament\Actions\Action::make('query_logistics')
-                            ->label('查詢綠界並補回填')
+                        \Filament\Actions\Action::make('backfill_logistics')
+                            ->label('手動補回填物流單號')
                             ->icon('heroicon-o-arrow-path')
                             ->color('warning')
-                            ->requiresConfirmation()
-                            ->modalHeading('向綠界 API 查詢此訂單的物流狀態？')
-                            ->modalDescription('適用於訂單建立後卡在「[300] 訂單處理中」狀態，callback 沒回傳 AllPayLogisticsID 的情況。查詢成功會自動寫回物流單號、寄件編號等資訊。')
                             ->visible(fn ($record) =>
                                 (bool) $record?->logistics_created_at
                                 && empty($record?->ecpay_logistics_id)
                                 && in_array($record?->shipping_method, ['cvs_711', 'cvs_family'], true))
-                            ->action(function ($record) {
+                            ->modalHeading('手動補回填綠界物流單號')
+                            ->modalDescription('訂單卡在 [300] 訂單處理中 = 綠界沒把物流單號回傳回來。請到綠界廠商後台 → 物流訂單查詢，用「廠商訂單編號」找到此訂單，複製 AllPayLogisticsID 貼進來。存檔後系統會用這個 ID 向綠界查詢寄件編號 / CVS 驗證碼等其餘資料。')
+                            ->schema([
+                                \Filament\Forms\Components\TextInput::make('logistics_id')
+                                    ->label('綠界物流單號 (AllPayLogisticsID)')
+                                    ->required()
+                                    ->numeric()
+                                    ->helperText('在綠界廠商後台找此訂單取得。'),
+                            ])
+                            ->action(function (array $data, $record) {
+                                $logisticsId = trim((string) ($data['logistics_id'] ?? ''));
+                                if ($logisticsId === '') {
+                                    \Filament\Notifications\Notification::make()->title('請輸入物流單號')->danger()->send();
+                                    return;
+                                }
+                                $record->update([
+                                    'ecpay_logistics_id' => $logisticsId,
+                                    'logistics_status_msg' => '[手動補填] 由管理員貼入，待綠界查詢補其他欄位',
+                                ]);
+                                // 接著用剛存入的 ID 打綠界抓 BookingNote / CVSPaymentNo 等
                                 try {
-                                    $data = app(\App\Services\EcpayLogisticsService::class)->queryAndBackfill($record);
+                                    $fresh = app(\App\Services\EcpayLogisticsService::class)
+                                        ->queryByLogisticsId($record);
                                     \Filament\Notifications\Notification::make()
-                                        ->title('查詢成功 ✓')
-                                        ->body(sprintf('綠界物流單號：%s', $data['AllPayLogisticsID'] ?? '—'))
+                                        ->title('補回填完成 ✓')
+                                        ->body(sprintf('寄件編號：%s', $fresh['BookingNote'] ?? '（綠界無回傳）'))
                                         ->success()
                                         ->send();
                                 } catch (\Throwable $e) {
                                     \Filament\Notifications\Notification::make()
-                                        ->title('查詢失敗')
-                                        ->body($e->getMessage())
-                                        ->danger()
+                                        ->title('物流單號已存，但綠界查詢失敗')
+                                        ->body($e->getMessage() . '（寄件編號等其他欄位需手動從綠界後台補）')
+                                        ->warning()
                                         ->persistent()
                                         ->send();
                                 }

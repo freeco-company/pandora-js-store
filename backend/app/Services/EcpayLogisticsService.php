@@ -43,77 +43,66 @@ class EcpayLogisticsService
     }
 
     /**
-     * Query ECPay for this order's current logistics status and backfill
-     * any missing fields (AllPayLogisticsID, BookingNote, CVS*No).
+     * Query ECPay /Helper/QueryLogisticsInfo for an order that ALREADY has
+     * `ecpay_logistics_id` set, and backfill the remaining sub-fields
+     * (BookingNote / CVSPaymentNo / CVSValidationNo / status_msg).
      *
-     * Used when Express/Create returned [300] 訂單處理中 and the async
-     * reply callback failed (e.g. CheckMacValue mismatch before v2.7.4)
-     * so the order is stuck without an AllPayLogisticsID.
+     * Used after an admin manually pastes the AllPayLogisticsID from ECPay's
+     * backoffice (for an order stuck in [300] because the async callback
+     * was dropped due to a CheckMacValue mismatch before v2.7.4).
      *
-     * Endpoint: /Helper/QueryLogisticsInfo — takes MerchantTradeNo, returns
-     * the full current state. Response is key=value pairs separated by `&`.
-     *
-     * @throws \RuntimeException if ECPay can't find the order or returns
-     *         an error code.
+     * @throws \RuntimeException on ECPay error or unexpected response format.
      */
-    public function queryAndBackfill(Order $order): array
+    public function queryByLogisticsId(Order $order): array
     {
-        if (! empty($order->ecpay_logistics_id)) {
-            return ['already' => true, 'logistics_id' => $order->ecpay_logistics_id];
-        }
-        if (! in_array($order->shipping_method, ['cvs_711', 'cvs_family'], true)) {
-            throw new \RuntimeException('此訂單不是超商取貨，無法查詢物流');
+        if (empty($order->ecpay_logistics_id)) {
+            throw new \RuntimeException('此訂單沒有物流單號，無法查詢');
         }
 
         $params = [
             'MerchantID' => $this->merchantId,
-            'MerchantTradeNo' => $order->order_number,
+            'AllPayLogisticsID' => (string) $order->ecpay_logistics_id,
             'TimeStamp' => (string) time(),
         ];
         $params['CheckMacValue'] = $this->payment->generateCheckMac($params, 'md5');
 
         Log::info('ECPay QueryLogisticsInfo request', [
             'order' => $order->order_number,
-            'params' => array_diff_key($params, ['CheckMacValue' => '']),
+            'logistics_id' => $order->ecpay_logistics_id,
         ]);
 
         $response = Http::asForm()->post($this->apiBaseUrl . '/Helper/QueryLogisticsInfo', $params);
-
         $body = (string) $response->body();
-        parse_str($body, $data);
 
         Log::info('ECPay QueryLogisticsInfo response', [
             'order' => $order->order_number,
-            'body' => $body,
+            'body' => mb_strimwidth($body, 0, 500, '…'),
         ]);
 
-        // ECPay error responses are of the form `0|<ErrorMessage>` rather
-        // than key=value pairs. Detect and surface clearly.
+        // ECPay error responses use `0|<msg>` instead of key=value pairs.
         if (str_starts_with($body, '0|')) {
             throw new \RuntimeException('綠界回應：' . substr($body, 2));
         }
 
-        $logisticsId = (string) ($data['AllPayLogisticsID'] ?? '');
-        if ($logisticsId === '') {
-            throw new \RuntimeException(
-                '綠界回傳沒有 AllPayLogisticsID。原始回應：' . mb_strimwidth($body, 0, 200, '…')
-            );
+        parse_str($body, $data);
+        if (empty($data) || ! is_array($data)) {
+            throw new \RuntimeException('綠界回應無法解析：' . mb_strimwidth($body, 0, 200, '…'));
         }
 
-        $updates = [
-            'ecpay_logistics_id' => $logisticsId,
-            'logistics_status_msg' => sprintf(
-                '[%s] %s（查詢回填）',
-                $data['RtnCode'] ?? '?',
-                $data['RtnMsg'] ?? '',
-            ),
-        ];
+        $updates = [];
+        $rtnCode = $data['RtnCode'] ?? null;
+        $rtnMsg = (string) ($data['RtnMsg'] ?? '');
+        if ($rtnCode !== null) {
+            $updates['logistics_status_msg'] = "[{$rtnCode}] {$rtnMsg}（查詢回填）";
+        }
         foreach (['BookingNote' => 'booking_note', 'CVSPaymentNo' => 'cvs_payment_no', 'CVSValidationNo' => 'cvs_validation_no'] as $src => $dst) {
             if (! empty($data[$src])) {
                 $updates[$dst] = (string) $data[$src];
             }
         }
-        $order->update($updates);
+        if (! empty($updates)) {
+            $order->update($updates);
+        }
 
         return $data;
     }
