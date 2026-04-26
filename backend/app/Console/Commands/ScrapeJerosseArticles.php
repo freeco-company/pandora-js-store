@@ -574,7 +574,9 @@ class ScrapeJerosseArticles extends Command
                     return str_replace($originalSrc, '/storage/' . $localPath, $matches[0]);
                 }
 
-                return $matches[0];
+                // 抓不到就把整個 <img> tag 拿掉 — 不留外站 hotlink 在 DB，
+                // 避免之後又出現「線上文章圖看不到」的破圖。
+                return '';
             },
             $content
         );

@@ -24,6 +24,15 @@ Schedule::command('sitemap:generate')
     ->timezone('Asia/Taipei')
     ->appendOutputTo(storage_path('logs/sitemap.log'));
 
+// Daily article image audit — 外站圖落地 / 死圖移除（避免破圖 icon）。
+// 跑在 scrape 之後、compliance 之前，這樣下游 widget / RSS 拿到的內容已乾淨。
+Schedule::command('articles:audit-images')
+    ->dailyAt('04:15')
+    ->timezone('Asia/Taipei')
+    ->withoutOverlapping(60)
+    ->runInBackground()
+    ->appendOutputTo(storage_path('logs/articles-audit-images.log'));
+
 // Daily compliance audit — scan every product + article, auto-fix,
 // Discord-notify the summary (DISCORD_COMPLIANCE_WEBHOOK in .env).
 // Runs after scrape + sitemap, so the daily run reflects fresh content.
