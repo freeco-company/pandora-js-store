@@ -10,12 +10,15 @@ import FloatingShapes from '@/components/FloatingShapes';
 import { useAuth } from '@/components/AuthProvider';
 import SiteIcon from '@/components/SiteIcon';
 import OutfitIcon from '@/components/OutfitIcon';
-import { getCustomerDashboard, type CustomerDashboard } from '@/lib/api';
+import { getCustomerDashboard, type CustomerDashboard, API_URL, fetchApi } from '@/lib/api';
 import { ACHIEVEMENT_CATALOG, stageFromStreak, TIER_GRADIENTS } from '@/lib/achievements';
+import CodLineConfirmation from '@/components/CodLineConfirmation';
 
 function OrderCompleteContent() {
   const searchParams = useSearchParams();
   const orderNumber = searchParams.get('order');
+  const paymentMethod = searchParams.get('payment');
+  const justBound = searchParams.get('bound') === '1';
   const { token, isLoggedIn } = useAuth();
   const [data, setData] = useState<CustomerDashboard | null>(null);
 
@@ -37,8 +40,6 @@ function OrderCompleteContent() {
   const unearned = Object.values(ACHIEVEMENT_CATALOG)
     .filter((a) => !earnedSet.has(a.code))
     .slice(0, 3);
-
-  const paymentMethod = searchParams.get('payment');
 
   return (
     <div className="relative">
@@ -161,6 +162,13 @@ function OrderCompleteContent() {
       </section>
 
       <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 space-y-6 -mt-6 relative z-10">
+        {/* COD + 超商取貨：強制 LINE 確認出貨 */}
+        {paymentMethod === 'cod' && orderNumber && (
+          <ScrollReveal variant="fade-up">
+            <CodLineConfirmation orderNumber={orderNumber} justBound={justBound} />
+          </ScrollReveal>
+        )}
+
         {/* Bank transfer info — only shown for bank_transfer orders */}
         {paymentMethod === 'bank_transfer' && (
           <ScrollReveal variant="fade-up">

@@ -34,6 +34,7 @@ class OrderResource extends Resource
                     Forms\Components\Select::make('status')
                         ->options([
                             'pending' => '待處理',
+                            'pending_confirmation' => '待客戶 LINE 確認（COD）',
                             'processing' => '處理中',
                             'shipped' => '已出貨',
                             'completed' => '已完成',
@@ -189,6 +190,7 @@ class OrderResource extends Resource
     {
         $statusOptions = [
             'pending' => '待處理',
+            'pending_confirmation' => '待 LINE 確認',
             'processing' => '處理中',
             'shipped' => '已出貨',
             'completed' => '已完成',
