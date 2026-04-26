@@ -136,15 +136,64 @@ class OrderController extends Controller
             };
         }
 
-        // Find or create customer
-        $customer = Customer::firstOrCreate(
-            ['email' => $request->input('customer.email')],
-            [
-                'name' => $request->input('customer.name'),
-                'phone' => $request->input('customer.phone'),
-                'password' => bcrypt(Str::random(16)),
-            ]
-        );
+        // Find or create customer.
+        //
+        // 三條路徑（避免製造重複帳號 — 重要！）：
+        //   1. 已登入（Sanctum bearer 解得到 user）：直接用認證身分，**忽略**結帳表單填的 email。
+        //      避免「Google 登入後在結帳填了不同 email → 被當訪客結帳建第二個帳號」這個常見漏洞。
+        //   2. 未登入但 phone 比對到一個 email 還是 `@line.user` placeholder 的 customer：
+        //      認定為同一人（LINE 登入過 → 後來用訪客結帳補真實 email），升級該 row 的
+        //      placeholder email 為實填 email，並複用該 customer。
+        //   3. 都沒有：用實填 email 建新 customer（與舊行為一致）。
+        //
+        // 為什麼 phone fallback 只信 `@line.user` placeholder：phone 不是 unique，可能多人
+        // 共用同一支電話（家人、員工代下單）。只在「對方明顯是 placeholder 待補完」這個
+        // 強訊號下才合併，避免把無關帳號黏在一起。
+        $auth = \Illuminate\Support\Facades\Auth::guard('sanctum')->user();
+        $typedEmail = $request->input('customer.email');
+        $typedPhone = $request->input('customer.phone');
+
+        if ($auth) {
+            $customer = $auth;
+            // 登入用戶若 email 仍是 LINE placeholder、且 typed email 是真實未被佔用 → 順手升級。
+            // 其他情況不動 email（保留 Google / 自填 email 為唯一身分鍵）。
+            if (
+                str_ends_with((string) $customer->email, '@line.user')
+                && $typedEmail
+                && !str_ends_with($typedEmail, '@line.user')
+                && !Customer::where('email', $typedEmail)->where('id', '!=', $customer->id)->exists()
+            ) {
+                $customer->email = $typedEmail;
+                $customer->save();
+            }
+        } else {
+            $customer = Customer::where('email', $typedEmail)->first();
+
+            if (!$customer && $typedPhone) {
+                $candidate = Customer::where('phone', $typedPhone)
+                    ->where('email', 'like', '%@line.user')
+                    ->first();
+                // 雙重保險：若 typed email 已被別 row 佔用，不要強行覆蓋 placeholder
+                // （unique 會炸），改走「建新 customer」路徑。
+                if (
+                    $candidate
+                    && !Customer::where('email', $typedEmail)->where('id', '!=', $candidate->id)->exists()
+                ) {
+                    $candidate->email = $typedEmail;
+                    $candidate->save();
+                    $customer = $candidate;
+                }
+            }
+
+            if (!$customer) {
+                $customer = Customer::create([
+                    'email' => $typedEmail,
+                    'name' => $request->input('customer.name'),
+                    'phone' => $typedPhone,
+                    'password' => bcrypt(Str::random(16)),
+                ]);
+            }
+        }
 
         $total = $pricing['total'] - $discount;
 
