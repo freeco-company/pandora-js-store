@@ -12,12 +12,13 @@ class Article extends Model
     protected $fillable = [
         'title', 'slug', 'content', 'excerpt', 'featured_image',
         'source_url', 'source_type', 'status', 'is_pinned', 'sort_order',
-        'published_at', 'promo_ends_at',
+        'published_at', 'promo_ends_at', 'rewritten_at',
     ];
 
     protected $casts = [
         'published_at' => 'datetime',
         'promo_ends_at' => 'datetime',
+        'rewritten_at' => 'datetime',
         'is_pinned' => 'boolean',
     ];
 

@@ -15,6 +15,7 @@ class Product extends Model
         'sku', 'hf_cert_no', 'hf_cert_claim', 'badges',
         'stock_quantity', 'stock_status', 'weight',
         'image', 'gallery', 'is_active', 'sort_order', 'wp_id',
+        'rewritten_at',
     ];
 
     protected $casts = [
@@ -26,6 +27,7 @@ class Product extends Model
         'gallery' => 'array',
         'is_active' => 'boolean',
         'weight' => 'decimal:2',
+        'rewritten_at' => 'datetime',
     ];
 
     public function categories()
