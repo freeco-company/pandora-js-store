@@ -100,6 +100,16 @@ class EcpayLogisticsService
                 $updates[$dst] = (string) $data[$src];
             }
         }
+
+        // COD：BookingNote 不會回，靠 寄件代碼+驗證碼 串接補。讀現值優先，回傳值為輔。
+        if (empty($updates['booking_note']) && $order->payment_method === 'cod') {
+            $pay = $updates['cvs_payment_no'] ?? $order->cvs_payment_no;
+            $val = $updates['cvs_validation_no'] ?? $order->cvs_validation_no;
+            if ($pay && $val) {
+                $updates['booking_note'] = $pay . $val;
+            }
+        }
+
         if (! empty($updates)) {
             $order->update($updates);
         }
@@ -231,11 +241,19 @@ class EcpayLogisticsService
             throw new \RuntimeException("綠界建立物流失敗：[{$rtnCode}] {$rtnMsg}");
         }
 
+        $bookingNote = $parsed['BookingNote'] ?? null;
+        $cvsPay = $parsed['CVSPaymentNo'] ?? null;
+        $cvsVal = $parsed['CVSValidationNo'] ?? null;
+        // COD：綠界 BookingNote 永遠空，後台「托運單號」= 寄件代碼+驗證碼。
+        if (empty($bookingNote) && $order->payment_method === 'cod' && $cvsPay && $cvsVal) {
+            $bookingNote = $cvsPay . $cvsVal;
+        }
+
         $order->update([
             'ecpay_logistics_id' => $parsed['AllPayLogisticsID'] ?? null,
-            'cvs_payment_no' => $parsed['CVSPaymentNo'] ?? null,
-            'cvs_validation_no' => $parsed['CVSValidationNo'] ?? null,
-            'booking_note' => $parsed['BookingNote'] ?? null,
+            'cvs_payment_no' => $cvsPay,
+            'cvs_validation_no' => $cvsVal,
+            'booking_note' => $bookingNote,
             'logistics_status_msg' => "[1] {$rtnMsg}",
             'logistics_created_at' => now(),
         ]);

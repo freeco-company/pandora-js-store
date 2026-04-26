@@ -174,6 +174,15 @@ HTML;
                 if (! empty($data['BookingNote']))      $updates['booking_note']       = (string) $data['BookingNote'];
                 if (! empty($data['CVSPaymentNo']))     $updates['cvs_payment_no']     = (string) $data['CVSPaymentNo'];
                 if (! empty($data['CVSValidationNo'])) $updates['cvs_validation_no'] = (string) $data['CVSValidationNo'];
+
+                // COD：綠界後台「托運單號」= CVSPaymentNo + CVSValidationNo 串接，
+                // BookingNote 永遠空字串。自己拼起來，UI 顯示才跟綠界後台一致。
+                if (empty($updates['booking_note'])
+                    && $order->payment_method === 'cod'
+                    && ! empty($updates['cvs_payment_no'])
+                    && ! empty($updates['cvs_validation_no'])) {
+                    $updates['booking_note'] = $updates['cvs_payment_no'] . $updates['cvs_validation_no'];
+                }
                 $order->update($updates);
                 Log::info('ECPay logistics reply — backfilled logistics id', [
                     'order' => $order->order_number,
