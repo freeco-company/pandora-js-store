@@ -22,7 +22,7 @@ function FooterInner() {
       <div className="bg-gradient-to-b md:bg-gradient-to-r from-[#2a1f17] via-[#1e1e1e] to-[#2a1f17] border-b border-white/5">
         <div className="max-w-[1290px] mx-auto px-5 sm:px-6 lg:px-8 py-5 grid grid-cols-1 md:grid-cols-3 gap-4">
           {([
-            { icon: <Icons.Lock className="w-4 h-4 text-[#e7d9cb] icon-shimmer" />, title: 'JEROSSE 正品授權經銷', desc: '法芮可有限公司（婕樂纖仙女館）授權經銷出貨' },
+            { icon: <Icons.Lock className="w-4 h-4 text-[#e7d9cb] icon-shimmer" />, title: 'JEROSSE 正品授權經銷', desc: '婕樂纖仙女館授權經銷出貨' },
             { icon: <Icons.AlertTriangle className="w-4 h-4 text-[#E8A93B] icon-pulse" />, title: '小心詐騙電商', desc: '認明官方域名 pandora.js-store.com.tw' },
             { icon: <Icons.CheckCircle className="w-4 h-4 text-[#4A9D5F] icon-float" />, title: '食品合規聲明', desc: '本站商品為食品，非藥品，不具醫療療效' },
           ]).map(({ icon, title, desc }) => (
