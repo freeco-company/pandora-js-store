@@ -5,11 +5,13 @@ namespace App\Providers;
 use App\Models\Article;
 use App\Models\Banner;
 use App\Models\Campaign;
+use App\Models\Customer;
 use App\Models\Order;
 use App\Models\Product;
 use App\Observers\ArticleComplianceObserver;
 use App\Observers\BannerObserver;
 use App\Observers\CampaignObserver;
+use App\Observers\CustomerObserver;
 use App\Observers\OrderObserver;
 use App\Observers\ProductComplianceObserver;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -46,6 +48,10 @@ class AppServiceProvider extends ServiceProvider
 
         // Bust Next.js + Cloudflare cache when banners change
         Banner::observe(BannerObserver::class);
+
+        // Mirror customers.{email,phone,google_id,line_id} into customer_identities
+        // for unified identity lookup + dedupe support.
+        Customer::observe(CustomerObserver::class);
     }
 
     private function configureRateLimiting(): void
