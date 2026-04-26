@@ -260,7 +260,7 @@ export default function AboutPage() {
           </Reveal>
           <div className="grid sm:grid-cols-3 gap-6">
             {[
-              { Icon: Icons.Shield, color: 'text-[#9F6B3E]', title: '正品堅持', desc: 'JEROSSE 官方授權經銷，每一件都是原廠出貨。你買到的，跟品牌官網完全一樣。' },
+              { Icon: Icons.Shield, color: 'text-[#9F6B3E]', title: '正品堅持', desc: 'JEROSSE 官方授權經銷，由婕樂纖仙女館出貨。每件都是 JEROSSE 正品，與品牌官網販售商品一致。' },
               { Icon: Icons.Heart, color: 'text-[#e91e63]', title: '真心陪伴', desc: '不催促、不話術。你想了解，我就說；你想等等，我就等。陪伴不是壓力。' },
               { Icon: Icons.Star, color: 'text-[#ff8f00]', title: '長期價值', desc: '健康不是一次性消費。三階梯定價讓你買越多越划算，營養師陪伴讓改變持續。' },
             ].map((v, i) => (

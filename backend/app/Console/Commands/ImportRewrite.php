@@ -48,12 +48,31 @@ class ImportRewrite extends Command
 
         $applied = 0;
         $skipped = 0;
+        $marked_skip = 0;
         $relinked = 0;
 
         foreach ($rows as $i => $row) {
+            // Agent-marked skip — record skip_reason in DB by stamping
+            // rewritten_at without modifying content. Prevents the row
+            // from being picked up again on the next export.
+            if (! empty($row['skip_reason'])) {
+                if (! $this->option('dry')) {
+                    DB::transaction(function () use ($type, $row) {
+                        if ($type === 'article') {
+                            Article::where('id', $row['id'])->update(['rewritten_at' => now()]);
+                        } else {
+                            Product::where('id', $row['id'])->update(['rewritten_at' => now()]);
+                        }
+                    });
+                }
+                $this->line("  [skip-mark #{$row['id']}] {$row['skip_reason']}");
+                $marked_skip++;
+                continue;
+            }
+
             $err = $this->validate($type, $row);
             if ($err !== null) {
-                $this->warn("  [skip #{$row['id']}] {$err}");
+                $this->warn("  [reject #{$row['id']}] {$err}");
                 $skipped++;
                 continue;
             }
@@ -101,10 +120,11 @@ class ImportRewrite extends Command
 
         $this->newLine();
         $this->info('--- Summary ---');
-        $this->line("Applied: {$applied}");
-        $this->line("Skipped: {$skipped}");
+        $this->line("Applied         : {$applied}");
+        $this->line("Marked-as-skip  : {$marked_skip}");
+        $this->line("Rejected        : {$skipped}");
         if ($type === 'article' && ! $this->option('no-relink')) {
-            $this->line("Re-linked: {$relinked}");
+            $this->line("Re-linked       : {$relinked}");
         }
 
         if ($this->option('dry')) {
