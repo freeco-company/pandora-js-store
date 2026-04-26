@@ -184,6 +184,14 @@ jobs:
                      storage/framework/views
             chown -R www-data:www-data storage bootstrap/cache
             chmod -R 775 storage bootstrap/cache
+
+            # Background audit: 外站圖落地 / 死圖移除（含 Wayback fallback）。
+            # 跑在背景因為一篇 Wayback lookup 可能 10s+，整批 5-15 分鐘。
+            # daily 排程已存在；這裡只是 deploy 後立刻跑一次保險，
+            # 確保新版上線就立刻清乾淨。log 落 storage/logs/articles-audit-images.log。
+            nohup sudo -u www-data php artisan articles:audit-images \
+              >> storage/logs/articles-audit-images.log 2>&1 &
+            disown || true
           EOF
 
       # ── Frontend: just npm install + pm2 reload (no build!) ──────
