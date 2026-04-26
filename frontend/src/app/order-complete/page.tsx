@@ -180,7 +180,7 @@ function OrderCompleteContent() {
                 <div>
                   <h3 className="text-base font-black text-slate-800">請完成轉帳，我們立即為您出貨</h3>
                   <p className="text-xs text-slate-500 mt-0.5">
-                    婕樂纖仙女館由<strong>法芮可有限公司</strong>合法經營，所有商品皆為 JEROSSE 官方正品授權。
+                    婕樂纖仙女館為 JEROSSE 婕樂纖授權經銷商，所有商品皆為原廠正品。
                   </p>
                 </div>
               </div>
