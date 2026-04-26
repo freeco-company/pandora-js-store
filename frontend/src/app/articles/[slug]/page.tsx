@@ -5,7 +5,7 @@ import { getArticle, getArticles, getProducts, imageUrl } from '@/lib/api';
 import ImageWithFallback, { LogoPlaceholder } from '@/components/ImageWithFallback';
 import ShareButtons from '@/components/ShareButtons';
 import ProductCardGrid from '@/components/ProductCardGrid';
-import { sanitizeHtml } from '@/lib/sanitize';
+import { sanitizeHtml, stripLeadingCoverImage } from '@/lib/sanitize';
 import { breadcrumbSchema, articleSchema, jsonLdScript } from '@/lib/jsonld';
 import { SITE_URL } from '@/lib/site';
 import { estimateReadingTime } from '@/lib/reading-time';
@@ -215,7 +215,13 @@ export default async function ArticleDetailPage({ params }: Props) {
       {/* Content */}
       <div
         className="prose-article"
-        dangerouslySetInnerHTML={{ __html: sanitizeHtml(article.content) }}
+        dangerouslySetInnerHTML={{
+          __html: sanitizeHtml(
+            article.featured_image
+              ? stripLeadingCoverImage(article.content)
+              : article.content
+          ),
+        }}
       />
 
       {/* Recommended Products (Content-to-Commerce) */}

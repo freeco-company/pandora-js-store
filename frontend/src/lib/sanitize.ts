@@ -36,3 +36,22 @@ export function sanitizeHtml(html: string): string {
     ALLOW_DATA_ATTR: false,
   });
 }
+
+/**
+ * Strip the leading image-only paragraph from article content.
+ * WP-imported articles often start with a <p> wrapping just the cover <img>
+ * (plus <noscript> fallback), which duplicates the featured_image we render
+ * separately. Only removes when the first block is essentially image-only.
+ */
+export function stripLeadingCoverImage(html: string): string {
+  const trimmed = html.replace(/^\s+/, '');
+  // Match leading <p>...</p> that contains an <img> and no real text content.
+  const m = trimmed.match(/^<p\b[^>]*>([\s\S]*?)<\/p>/i);
+  if (!m) return html;
+  const inner = m[1];
+  if (!/<img\b/i.test(inner)) return html;
+  // Strip tags and whitespace; if anything text-like remains, keep the <p>.
+  const text = inner.replace(/<[^>]+>/g, '').replace(/&nbsp;/gi, '').trim();
+  if (text.length > 0) return html;
+  return trimmed.slice(m[0].length);
+}

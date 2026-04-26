@@ -762,7 +762,7 @@ export default function AboutPage() {
                 }} />
                 <div className="relative space-y-6">
                   {[
-                    { word: '安心', desc: '每一件都是 JEROSSE 原廠出貨，正品保證。' },
+                    { word: '安心', desc: '每一件都是 JEROSSE 正品授權，由婕樂纖仙女館出貨。' },
                     { word: '放心', desc: '不催促、不話術。你的節奏就是最好的節奏。' },
                     { word: '看得見', desc: '三階梯定價透明公開，改變用時間證明。' },
                   ].map((item) => (
