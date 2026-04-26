@@ -383,8 +383,9 @@ export default async function ProductDetailPage({ params }: Props) {
       {/* Recently viewed — only shows if user has history (localStorage) */}
       <RecentlyViewed excludeSlug={product.slug} />
 
-      {/* Internal cross-link: recent articles, boosts SEO + dwell time */}
-      <RelatedArticles />
+      {/* Internal cross-link: articles that mention this product (pivot-driven),
+          falls back to latest blog/news if pivot empty. */}
+      <RelatedArticles articles={product.related_articles} />
 
       {/* Description — full width container, readable prose width */}
       {product.description && (

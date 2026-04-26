@@ -48,6 +48,13 @@ class Product extends Model
         return $this->hasMany(Review::class);
     }
 
+    public function articles()
+    {
+        return $this->belongsToMany(Article::class, 'article_product')
+            ->withPivot('mention_count')
+            ->withTimestamps();
+    }
+
     /** Bundles this product appears in (as buy or gift item). */
     public function bundles()
     {

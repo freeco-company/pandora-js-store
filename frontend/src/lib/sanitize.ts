@@ -18,6 +18,14 @@ export function sanitizeHtml(html: string): string {
     clean = clean.replace(/\son\w+="[^"]*"/gi, '');
     clean = clean.replace(/\son\w+='[^']*'/gi, '');
     clean = clean.replace(/javascript:/gi, '');
+    // Strip Elementor icon SVGs scraped from jerosse.com.tw — we don't load
+    // Elementor CSS, so they render unsized and blow up to container width.
+    // Client-side DOMPurify already drops all <svg> via ALLOWED_TAGS, but the
+    // SSR pass goes through this regex path and was leaking them.
+    clean = clean.replace(
+      /<svg\b[^>]*\bclass="[^"]*\b(?:e-font-icon-svg|e-eicon|elementor-toc__spinner)\b[^"]*"[^>]*>[\s\S]*?<\/svg>/gi,
+      ''
+    );
     return clean;
   }
 

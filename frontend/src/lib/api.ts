@@ -99,6 +99,17 @@ export interface Product {
   /** Badge codes: snq, monde_selection, clean_label, patent, official */
   badges?: string[] | null;
   created_at?: string;
+  /** Articles that mention this product, ordered by mention density. */
+  related_articles?: RelatedArticleSummary[];
+}
+
+export interface RelatedArticleSummary {
+  id: number;
+  slug: string;
+  title: string;
+  excerpt: string | null;
+  featured_image: string | null;
+  source_type: 'blog' | 'news' | 'brand' | 'recommend';
 }
 
 export interface ProductCategory {

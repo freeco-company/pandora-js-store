@@ -1,18 +1,28 @@
 import Link from 'next/link';
-import { getArticles, imageUrl } from '@/lib/api';
+import { getArticles, imageUrl, type RelatedArticleSummary } from '@/lib/api';
 import ImageWithFallback, { LogoPlaceholder } from './ImageWithFallback';
 
 /**
- * Server-rendered "相關閱讀" strip.
- * Pulls the 3 most recent 婕樂纖誌 (blog+news) articles.
- * Shown on the product detail page as an internal-linking SEO boost.
+ * "相關閱讀" strip on the product detail page.
+ *
+ * If `articles` is supplied (from product.related_articles — fed by the
+ * article_product pivot), uses those. Otherwise falls back to the most
+ * recent 婕樂纖誌 (blog+news) articles so the slot is never empty.
  */
-export default async function RelatedArticles() {
-  let articles: Awaited<ReturnType<typeof getArticles>>['data'] = [];
-  try {
-    const res = await getArticles('blog,news', 1, 3);
-    articles = res.data;
-  } catch {}
+export default async function RelatedArticles({
+  articles: provided,
+}: {
+  articles?: RelatedArticleSummary[];
+} = {}) {
+  let articles: Array<RelatedArticleSummary | Awaited<ReturnType<typeof getArticles>>['data'][number]> =
+    provided && provided.length > 0 ? provided.slice(0, 3) : [];
+
+  if (articles.length === 0) {
+    try {
+      const res = await getArticles('blog,news', 1, 3);
+      articles = res.data;
+    } catch {}
+  }
 
   if (articles.length === 0) return null;
 

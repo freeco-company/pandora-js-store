@@ -76,7 +76,27 @@ class ProductController extends Controller
                 ->with(['categories', 'seoMeta'])
                 ->firstOrFail();
 
-            return $this->serializeProduct($product);
+            $payload = $this->serializeProduct($product);
+
+            // Top 6 articles that mention this product, ordered by mention density.
+            $related = $product->articles()
+                ->where('articles.status', 'published')
+                ->orderByPivot('mention_count', 'desc')
+                ->orderByDesc('articles.published_at')
+                ->limit(6)
+                ->get(['articles.id', 'articles.slug', 'articles.title', 'articles.excerpt', 'articles.featured_image', 'articles.source_type'])
+                ->map(fn ($a) => [
+                    'id' => $a->id,
+                    'slug' => $a->slug,
+                    'title' => $a->title,
+                    'excerpt' => $a->excerpt,
+                    'featured_image' => $a->featured_image,
+                    'source_type' => $a->source_type,
+                ])
+                ->all();
+            $payload['related_articles'] = $related;
+
+            return $payload;
         });
 
         return response()->json($payload)

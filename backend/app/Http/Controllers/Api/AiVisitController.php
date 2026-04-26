@@ -52,6 +52,29 @@ class AiVisitController extends Controller
             ]
         );
 
+        // Per-path bucket — answers "which products/articles is AI citing most?"
+        // Truncate to 255 chars (column width) and normalize empty/missing.
+        $path = $data['path'] ?? null;
+        if ($path !== null && $path !== '') {
+            $path = mb_substr($path, 0, 255);
+            DB::statement(
+                'INSERT INTO ai_visits_by_path (date, path, bot_type, hits, last_seen_at, created_at, updated_at)
+                 VALUES (?, ?, ?, 1, ?, ?, ?)
+                 ON DUPLICATE KEY UPDATE
+                   hits = hits + 1,
+                   last_seen_at = VALUES(last_seen_at),
+                   updated_at = VALUES(updated_at)',
+                [
+                    $now->toDateString(),
+                    $path,
+                    $botType,
+                    $now,
+                    $now,
+                    $now,
+                ]
+            );
+        }
+
         return response()->json(['ok' => true]);
     }
 }

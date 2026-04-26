@@ -30,4 +30,11 @@ class Article extends Model
     {
         return $this->morphOne(SeoMeta::class, 'metable');
     }
+
+    public function products()
+    {
+        return $this->belongsToMany(Product::class, 'article_product')
+            ->withPivot('mention_count')
+            ->withTimestamps();
+    }
 }

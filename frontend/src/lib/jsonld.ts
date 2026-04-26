@@ -490,10 +490,6 @@ export function articleSchema(article: {
   publishedAt: string;
   updatedAt?: string | null;
   wordCount?: number;
-  // Original source URL (jerosse.com.tw) — emits isBasedOn for syndication
-  // transparency. Signals to Google this is authorized republication, not
-  // scraped duplicate content.
-  sourceUrl?: string | null;
 }) {
   return {
     '@context': 'https://schema.org',
@@ -511,18 +507,6 @@ export function articleSchema(article: {
       logo: { '@type': 'ImageObject', url: `${siteUrl}/favicon.svg` },
     },
     mainEntityOfPage: { '@type': 'WebPage', '@id': `${siteUrl}/articles/${article.slug}` },
-    ...(article.sourceUrl
-      ? {
-          isBasedOn: article.sourceUrl,
-          // Also emit as CreativeWork reference — stronger signal than plain URL
-          sourceOrganization: {
-            '@type': 'Organization',
-            name: 'JEROSSE 婕樂纖',
-            url: 'https://jerosse.com.tw',
-          },
-        }
-      : {}),
-    // Speakable — H1 + the rendered lead paragraph (data-speakable attr in template)
     speakable: {
       '@type': 'SpeakableSpecification',
       cssSelector: ['h1', '[data-speakable]'],

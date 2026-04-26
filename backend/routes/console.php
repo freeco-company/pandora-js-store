@@ -33,6 +33,14 @@ Schedule::command('compliance:audit')
     ->withoutOverlapping(30)
     ->appendOutputTo(storage_path('logs/compliance-audit.log'));
 
+// Article ↔ product internal-linking — incremental (last 24h) at 04:45.
+// First-time/full-rebuild: run `php artisan content:link-articles-products --all`.
+Schedule::command('content:link-articles-products')
+    ->dailyAt('04:45')
+    ->timezone('Asia/Taipei')
+    ->withoutOverlapping(20)
+    ->appendOutputTo(storage_path('logs/article-product-link.log'));
+
 // Back-in-stock notifier — hourly scan
 Schedule::command('stock:notify')
     ->hourly()
