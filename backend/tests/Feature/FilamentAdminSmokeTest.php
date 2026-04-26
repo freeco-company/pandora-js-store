@@ -208,4 +208,35 @@ class FilamentAdminSmokeTest extends TestCase
             ->get('/admin/reviews')
             ->assertSuccessful();
     }
+
+    public function test_customer_merger_renders_with_no_duplicates(): void
+    {
+        Customer::create([
+            'name' => 'Solo', 'email' => 'solo@example.com', 'phone' => '0911000000',
+            'password' => bcrypt('x'),
+        ]);
+
+        $this->actingAs($this->admin())
+            ->get('/admin/customer-merger')
+            ->assertSuccessful()
+            ->assertSeeText('沒有偵測到重複會員');
+    }
+
+    public function test_customer_merger_renders_with_high_confidence_pair(): void
+    {
+        Customer::create([
+            'name' => 'Real', 'email' => 'real@example.com', 'phone' => '0911999999',
+            'password' => bcrypt('x'),
+        ]);
+        Customer::create([
+            'name' => 'Real', 'email' => 'Uxxx@line.user', 'line_id' => 'Uxxx',
+            'phone' => '0911999999', 'password' => bcrypt('x'),
+        ]);
+
+        $this->actingAs($this->admin())
+            ->get('/admin/customer-merger')
+            ->assertSuccessful()
+            ->assertSeeText('信心：高')
+            ->assertSeeText('LINE placeholder');
+    }
 }
