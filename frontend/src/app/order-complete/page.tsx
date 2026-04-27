@@ -98,8 +98,12 @@ function OrderCompleteContent() {
             </div>
           </ScrollReveal>
           <ScrollReveal variant="fade-up" delay={150}>
-            <div className="text-[10px] font-black tracking-[0.3em] text-[#9F6B3E] mb-2">SUCCESS · 訂單成立</div>
-            <h1 className="text-3xl sm:text-5xl font-bold text-[#9F6B3E] tracking-tight">感謝您的訂購！</h1>
+            <div className="text-[10px] font-black tracking-[0.3em] text-[#9F6B3E] mb-2">
+              {paymentMethod === 'cod' ? 'PENDING · 待您確認' : 'SUCCESS · 訂單成立'}
+            </div>
+            <h1 className="text-3xl sm:text-5xl font-bold text-[#9F6B3E] tracking-tight">
+              {paymentMethod === 'cod' ? '訂單已收到，請完成確認' : '感謝您的訂購！'}
+            </h1>
           </ScrollReveal>
           <ScrollReveal variant="fade-up" delay={300}>
             {orderNumber && (
@@ -108,7 +112,9 @@ function OrderCompleteContent() {
               </p>
             )}
             <p className="text-sm text-gray-500 mt-3 max-w-md mx-auto leading-relaxed">
-              我們會盡快處理您的訂單，出貨後您會收到通知。
+              {paymentMethod === 'cod'
+                ? '請依下方步驟在 LINE 上完成確認，我們才會安排出貨。48 小時未確認訂單將自動取消。'
+                : '我們會盡快處理您的訂單，出貨後您會收到通知。'}
             </p>
           </ScrollReveal>
         </div>

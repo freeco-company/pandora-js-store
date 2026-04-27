@@ -291,16 +291,21 @@ export default function CheckoutPage() {
       celebrateMany(order._achievements, order._outfits);
       if (order._serendipity) showSerendipity(order._serendipity);
 
-      clearCart();
-
       // ECPay credit cards need a hand-off to their hosted payment page;
       // COD / bank transfer can go straight to the order-complete thank-you.
+      //
+      // 為什麼 clearCart() 移到 ECPay 跳轉成功之後：之前 clearCart 在 ECPay
+      // createPayment 之前跑，若 createPayment 失敗（網路 / 綠界 timeout），
+      // 訂單已建立但 cart 已清空，user 想重付款找不到原商品就放棄了 → 變孤兒訂單。
+      // 現在 ECPay 跳轉真正成功（form.submit 前）才清，失敗時 cart 保留 + 提示
+      // user 可在「訂單查詢」頁重發付款連結。
       if (form.payment_method === 'ecpay_credit') {
         try {
           const pay = await fetchApi<{ action: string; params: Record<string, string> }>('/payment/create', {
             method: 'POST',
             body: JSON.stringify({ order_number: order.order_number }),
           });
+          clearCart();
           const f = document.createElement('form');
           f.method = 'POST';
           f.action = pay.action;
@@ -315,12 +320,17 @@ export default function CheckoutPage() {
           f.submit();                        // navigates the window away
           return;
         } catch (e: any) {
-          toast(`ECPay 付款跳轉失敗：${e?.message ?? ''}，請稍後重試`, 'error');
+          toast(
+            `付款跳轉失敗：${e?.message ?? '請稍後重試'}。您的訂單 ${order.order_number} 已建立，可至「訂單查詢」重新發起付款。`,
+            'error'
+          );
           setSubmitting(false);
           return;
         }
       }
 
+      // COD / bank_transfer：訂單成立即清空 cart 跳到完成頁
+      clearCart();
       setTimeout(() => {
         const params = new URLSearchParams({ order: order.order_number, payment: form.payment_method });
         if (form.payment_method === 'bank_transfer') params.set('total', String(finalTotal));
