@@ -200,15 +200,27 @@ class ReviewController extends Controller
         // Bust cache
         Cache::forget("reviews:product:{$validated['product_id']}");
 
-        // Award first-review achievement
-        $celebrationKeys = [];
-        if (class_exists(\App\Services\AchievementService::class)) {
-            $celebrationKeys = AchievementService::award($customer, 'first_review');
-        }
+        // Evaluate review-related achievements (idempotent, AchievementService handles dedupe)
+        // - first_review: 第一則評論
+        // - review_3 / 5 / 10: 累積評論里程碑
+        // - quality_review: 寫超過 30 字的詳細評論
+        $reviewCount = \App\Models\Review::where('customer_id', $customer->id)
+            ->where('is_seeded', false)
+            ->count();
+
+        $codes = [\App\Services\AchievementCatalog::FIRST_REVIEW];
+        if ($reviewCount >= 3) $codes[] = \App\Services\AchievementCatalog::REVIEW_3;
+        if ($reviewCount >= 5) $codes[] = \App\Services\AchievementCatalog::REVIEW_5;
+        if ($reviewCount >= 10) $codes[] = \App\Services\AchievementCatalog::REVIEW_10;
+
+        $contentLen = mb_strlen(trim((string) $review->content));
+        if ($contentLen >= 30) $codes[] = \App\Services\AchievementCatalog::QUALITY_REVIEW;
+
+        $awarded = app(\App\Services\AchievementService::class)->awardMany($customer, $codes);
 
         return response()->json(array_merge(
             ['message' => '感謝您的評論！', 'review' => $review],
-            $celebrationKeys,
+            ['_achievements' => $awarded],
         ), 201);
     }
 

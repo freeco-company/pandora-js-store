@@ -35,6 +35,10 @@ class AchievementCatalog
 
     // Reviews
     public const FIRST_REVIEW = 'first_review';
+    public const REVIEW_3 = 'review_3';
+    public const REVIEW_5 = 'review_5';
+    public const REVIEW_10 = 'review_10';
+    public const QUALITY_REVIEW = 'quality_review';
 
     // Engagement
     public const FIRST_COUPON = 'first_coupon';
@@ -59,6 +63,7 @@ class AchievementCatalog
      *   streak_days        — current consecutive-visit streak
      *   referral_count     — successful referrals
      *   category_count     — distinct product categories ever purchased
+     *   review_count       — total reviews submitted by customer
      *
      * Achievements without a progress key are binary (you either did it or you didn't)
      * and the UI just shows locked/unlocked.
@@ -99,6 +104,13 @@ class AchievementCatalog
                                   'progress' => ['type' => 'category_count', 'target' => 3]],
 
             self::FIRST_REVIEW => ['emoji' => 'clipboard', 'name' => '首評達成', 'description' => '留下第一則商品評論', 'tier' => 'silver'],
+            self::REVIEW_3 => ['emoji' => 'book', 'name' => '勤評仙女', 'description' => '累積 3 則商品評論', 'tier' => 'silver',
+                               'progress' => ['type' => 'review_count', 'target' => 3]],
+            self::REVIEW_5 => ['emoji' => 'star', 'name' => '評論達人', 'description' => '累積 5 則商品評論', 'tier' => 'gold',
+                               'progress' => ['type' => 'review_count', 'target' => 5]],
+            self::REVIEW_10 => ['emoji' => 'crown', 'name' => '口碑大使', 'description' => '累積 10 則商品評論', 'tier' => 'gold',
+                                'progress' => ['type' => 'review_count', 'target' => 10]],
+            self::QUALITY_REVIEW => ['emoji' => 'heart-eyes', 'name' => '走心仙女', 'description' => '寫下超過 30 字的詳細評論', 'tier' => 'silver'],
 
             self::FIRST_COUPON => ['emoji' => 'gift', 'name' => '省錢仙女', 'description' => '首次使用優惠碼', 'tier' => 'bronze'],
             self::STREAK_7 => ['emoji' => 'fire', 'name' => '七日連訪', 'description' => '連續 7 天造訪', 'tier' => 'silver',

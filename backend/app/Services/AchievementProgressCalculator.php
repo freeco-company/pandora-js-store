@@ -62,6 +62,9 @@ class AchievementProgressCalculator
                                           ->flatMap(fn ($i) => $i->product?->categories?->pluck('slug') ?? collect())
                                           ->unique()
                                           ->count(),
+            'review_count'    => \App\Models\Review::where('customer_id', $customer->id)
+                                          ->where('is_seeded', false)
+                                          ->count(),
             default           => 0,
         };
     }
