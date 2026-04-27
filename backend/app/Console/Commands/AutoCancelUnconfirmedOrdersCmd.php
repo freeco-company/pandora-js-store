@@ -39,7 +39,7 @@ class AutoCancelUnconfirmedOrdersCmd extends Command
                             order: $order,
                             reason: "超過 {$cancelAfter} 小時未在 LINE 確認出貨",
                             emailSubject: "【婕樂纖仙女館】訂單 {$order->order_number} 已自動取消",
-                            emailBody: "您的訂單 {$order->order_number} 因未在期限內於 LINE 完成確認，已自動取消。如仍要購買請重新下單，謝謝 🙏",
+                            emailBody: "您的訂單 {$order->order_number} 因未在期限內於 LINE 完成確認，已自動取消。如仍要購買請重新下單，謝謝。",
                         );
                         $stats['cancelled']++;
                     } catch (\Throwable $e) {

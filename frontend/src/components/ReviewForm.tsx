@@ -5,6 +5,7 @@ import { useAuth } from './AuthProvider';
 import { getReviewableProducts, submitReview } from '@/lib/api';
 import type { ReviewableItem } from '@/lib/api';
 import { useToast } from './Toast';
+import { useCelebrate } from './Celebration';
 
 function StarInput({ value, onChange }: { value: number; onChange: (v: number) => void }) {
   const [hover, setHover] = useState(0);
@@ -38,6 +39,7 @@ export default function ReviewForm({
 }) {
   const { token, isLoggedIn } = useAuth();
   const { toast } = useToast();
+  const { celebrateMany } = useCelebrate();
   const [reviewable, setReviewable] = useState<ReviewableItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -66,7 +68,7 @@ export default function ReviewForm({
     if (!token || submitting) return;
     setSubmitting(true);
     try {
-      await submitReview(token, {
+      const res = await submitReview(token, {
         product_id: productId,
         order_id: item.order_id,
         rating,
@@ -75,6 +77,7 @@ export default function ReviewForm({
       toast('感謝您的評論！');
       setSubmitted(true);
       onReviewSubmitted?.();
+      celebrateMany(res._achievements, res._outfits);
     } catch {
       toast('送出失敗，請稍後再試');
     } finally {
