@@ -12,6 +12,11 @@ import CartStickyCTA from '@/components/CartStickyCTA';
 
 const VIP_THRESHOLD = 4000;
 
+// 實習會員門檻（依整車合計判定）
+// 達 $6,600 → 私訊官方 LINE 由顧問啟用會員身份，未來購物再省
+const MEMBER_TRAINEE_THRESHOLD = 6600;
+const LINE_OFFICIAL_URL = 'https://lin.ee/62wj7qa';
+
 const UNAVAILABLE_LABELS: Record<string, string> = {
   not_found: '商品已下架',
   inactive: '商品已下架',
@@ -398,6 +403,7 @@ export default function CartPage() {
       {/* Summary */}
       <div className="bg-gray-50 rounded-[10px] p-6">
         <SlimmingProgress items={productItems} itemPrices={itemPrices} />
+        <MembershipProgress total={total} />
 
         <div className="space-y-3">
           <div className="flex justify-between text-sm">
@@ -655,6 +661,61 @@ function SlimmingProgress({
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+/**
+ * 實習會員門檻進度（依整車合計判定）
+ * 達 $6,600 → 整張卡升級為「達標 + LINE 啟用」單一行動單元。
+ */
+function MembershipProgress({ total }: { total: number }) {
+  const T1 = MEMBER_TRAINEE_THRESHOLD;
+  if (total <= 0) return null;
+
+  const reached = total >= T1;
+  const remaining = Math.max(0, T1 - total);
+
+  if (reached) {
+    return (
+      <div className="mb-5 pb-4 border-b border-gray-200">
+        <div className="rounded-2xl bg-gradient-to-br from-[#faf5ff] to-[#f3e8ff] border-2 border-[#d8b4fe] p-4 shadow-sm">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 rounded-full bg-[#7e22ce] flex items-center justify-center shrink-0 shadow-sm">
+              <Icons.Diamond className="w-5 h-5 text-white" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-black text-[#6b21a8] leading-tight">已達實習會員門檻！</div>
+              <div className="text-xs text-[#7e22ce] leading-snug mt-0.5">啟用後未來購物再省，限時方案請洽顧問</div>
+            </div>
+          </div>
+
+          <a
+            href={LINE_OFFICIAL_URL}
+            target="_blank"
+            rel="noopener"
+            className="flex items-center justify-center gap-2 w-full py-3 bg-[#06C755] text-white text-center font-black rounded-full hover:bg-[#05b34c] active:scale-[0.98] transition-all shadow-md shadow-[#06C755]/30"
+          >
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+              <path d="M19.365 9.863c.349 0 .63.283.63.631 0 .347-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .348-.281.63-.63.63h-2.386c-.345 0-.627-.283-.627-.63V8.108c0-.345.282-.63.63-.63h2.386c.346 0 .627.285.627.63 0 .348-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.63V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.63V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.63V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314"/>
+            </svg>
+            私訊 LINE 顧問啟用
+            <span aria-hidden>→</span>
+          </a>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mb-5 pb-4 border-b border-gray-200">
+      <div className="flex items-center gap-3 p-3.5 rounded-xl bg-gray-50">
+        <Icons.Diamond className="w-6 h-6 shrink-0 text-gray-500" />
+        <div className="flex-1 min-w-0 text-sm leading-snug text-gray-600">
+          <span className="font-black">再加 ${remaining.toLocaleString()} 即達實習會員門檻</span>{' '}
+          <span>達標後私訊 LINE 顧問啟用，未來購物再省。</span>
+        </div>
+      </div>
     </div>
   );
 }

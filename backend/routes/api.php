@@ -42,6 +42,11 @@ Route::post('/orders', [OrderController::class, 'store'])->middleware('throttle:
 Route::get('/orders/{orderNumber}', [OrderController::class, 'show'])->middleware('throttle:strict');
 Route::post('/orders/check-cod', [OrderController::class, 'checkCod'])->middleware('throttle:strict');
 
+// COD pending-confirmation flow — frontend polls status; LINE webhook delivers postback.
+Route::get('/orders/{orderNumber}/confirmation-status', [\App\Http\Controllers\Api\OrderConfirmationController::class, 'status']);
+Route::post('/line/webhook', [\App\Http\Controllers\Api\LineWebhookController::class, 'handle'])
+    ->withoutMiddleware(['web']);
+
 // Payment
 Route::post('/payment/create', [PaymentController::class, 'createPayment'])->middleware('throttle:strict');
 Route::post('/payment/ecpay/callback', [PaymentController::class, 'ecpayCallback']);

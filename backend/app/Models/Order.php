@@ -19,6 +19,7 @@ class Order extends Model
         'shipping_address', 'shipping_store_id', 'shipping_store_name',
         'note', 'wp_order_id', 'abandoned_reminder_sent_at', 'review_reminder_sent_at',
         'shipped_at', 'pickup_reminder_sent_at',
+        'confirmed_at', 'line_user_id', 'confirmation_token', 'confirmation_reminder_sent_at',
         'referer_source', 'utm_source', 'utm_medium', 'utm_campaign', 'landing_path',
     ];
 
@@ -32,6 +33,12 @@ class Order extends Model
         'review_reminder_sent_at' => 'datetime',
         'shipped_at' => 'datetime',
         'pickup_reminder_sent_at' => 'datetime',
+        'confirmed_at' => 'datetime',
+        'confirmation_reminder_sent_at' => 'datetime',
+    ];
+
+    protected $hidden = [
+        'confirmation_token',
     ];
 
     public function coupon()
