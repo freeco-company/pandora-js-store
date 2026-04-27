@@ -58,7 +58,7 @@ export default function CartStickyCTA({ hasUnavailable = false }: { hasUnavailab
               href={LINE_OFFICIAL_URL}
               target="_blank"
               rel="noopener"
-              aria-label="LINE 諮詢會員價"
+              aria-label="LINE 專屬客服啟用"
               className="h-11 w-11 rounded-full bg-white border-2 border-[#06C755] text-[#06C755] flex items-center justify-center active:scale-[0.95] transition-transform"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
