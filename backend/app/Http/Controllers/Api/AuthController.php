@@ -37,19 +37,15 @@ class AuthController extends Controller
 
         // Three cases, mirrored from LINE callback:
         //   1. Already have this google_id → just log them in.
-        //   2. Have a customer with this email but no google_id (guest
-        //      checkout, email/password register, or LINE-first user) →
-        //      link Google and reuse that account.
+        //   2. Have a customer with this email but no google_id → link Google to that account.
         //   3. Totally new → create.
-        // The previous implementation used updateOrCreate(google_id=...)
-        // which tried to INSERT when no google_id match existed — and then
-        // hit 1062 on the email unique index. The fallback that would have
-        // linked the existing email user never ran because the exception
-        // fired mid-insert. Fixed by searching both keys BEFORE create.
-        $customer = Customer::where('google_id', $googleId)->first();
+        //
+        // 用 Customer::findByIdentity 統一查詢，自動兼容 customer_identities 多 identity
+        // （客戶曾經換過 email，舊 email 還能找回原帳號）+ fallback 查 customers 欄位。
+        $customer = Customer::findByIdentity('google_id', $googleId);
 
         if (! $customer && $email) {
-            $customer = Customer::where('email', $email)->first();
+            $customer = Customer::findByIdentity('email', $email);
             if ($customer) {
                 $updates = ['google_id' => $googleId];
                 if (! $customer->name && $name) $updates['name'] = $name;
@@ -166,12 +162,11 @@ class AuthController extends Controller
             return redirect()->to($frontendUrl . '/order-complete?' . $qs);
         }
 
-        // Try matching by line_id first
-        $customer = Customer::where('line_id', $lineId)->first();
+        // Same pattern as Google：先 line_id，再 email fallback；用 findByIdentity 統一查詢
+        $customer = Customer::findByIdentity('line_id', $lineId);
 
         if (!$customer && $email) {
-            // Try matching by email (link LINE to existing account)
-            $customer = Customer::where('email', $email)->first();
+            $customer = Customer::findByIdentity('email', $email);
             if ($customer) {
                 $customer->update(['line_id' => $lineId, 'name' => $name]);
             }

@@ -82,15 +82,33 @@ class Customer extends Model
     }
 
     /**
-     * 由 identity 反查 customer。OAuth callback / dedupe 用。
+     * 由 identity 反查 customer。OAuth callback / dedupe / 結帳合併用。
+     *
+     * 兩階段查詢：
+     *   1. 先查 customer_identities（支援多 identity，例如客人換 email 後舊 email 還能找回原帳號）
+     *   2. 找不到時 fallback 查 customers 表對應欄位（過渡期相容：identities backfill 還沒
+     *      跑完、Observer 上線前已存在的 customer 用得到）
+     *
+     * 過渡期結束後可以移除 fallback，但留著的成本極小、避免 regression 風險高。
+     *
      * 回傳 null 表示沒人擁有這條 identity。
      */
     public static function findByIdentity(string $type, ?string $value): ?Customer
     {
         if (!$value) return null;
+
         $row = CustomerIdentity::where('type', $type)
             ->where('value', $value)
             ->first();
-        return $row ? static::find($row->customer_id) : null;
+        if ($row) {
+            return static::find($row->customer_id);
+        }
+
+        // Fallback：identities 表沒這條 → 查 customers 表的同名欄位
+        if (in_array($type, ['email', 'phone', 'google_id', 'line_id'], true)) {
+            return static::where($type, $value)->first();
+        }
+
+        return null;
     }
 }

@@ -151,4 +151,51 @@ class CustomerIdentityTest extends TestCase
 
         $this->assertSame(0, CustomerIdentity::count());
     }
+
+    public function test_findByIdentity_falls_back_to_customers_column_when_identities_empty(): void
+    {
+        // 模擬「升級前已存在的 customer」— 直接 INSERT 不走 model（避開 observer 寫 identities）
+        \DB::table('customers')->insert([
+            'id' => 999,
+            'name' => 'Pre-Backfill', 'email' => 'old@example.com',
+            'google_id' => 'OLD_G', 'phone' => '0911000777',
+            'password' => bcrypt('x'),
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+
+        $this->assertSame(0, CustomerIdentity::count(), 'identities 確實是空的');
+
+        // 仍能由 customers 欄位 fallback 查到
+        $byEmail = Customer::findByIdentity('email', 'old@example.com');
+        $byGoogle = Customer::findByIdentity('google_id', 'OLD_G');
+        $byPhone = Customer::findByIdentity('phone', '0911000777');
+
+        $this->assertNotNull($byEmail);
+        $this->assertNotNull($byGoogle);
+        $this->assertNotNull($byPhone);
+        $this->assertSame(999, $byEmail->id);
+        $this->assertSame(999, $byGoogle->id);
+    }
+
+    public function test_findByIdentity_finds_via_historical_email_after_change(): void
+    {
+        // 客人改 email 後舊 email 仍是 identities 表上的記錄（observer 標 is_primary=false 但保留）
+        $c = Customer::create([
+            'name' => 'C', 'email' => 'first@example.com', 'password' => bcrypt('x'),
+        ]);
+        $c->update(['email' => 'second@example.com']);
+
+        $this->assertNotNull(Customer::findByIdentity('email', 'first@example.com'));
+        $this->assertSame($c->id, Customer::findByIdentity('email', 'first@example.com')->id);
+        // 新 email 同樣找得到
+        $this->assertSame($c->id, Customer::findByIdentity('email', 'second@example.com')->id);
+    }
+
+    public function test_findByIdentity_returns_null_for_unknown_value(): void
+    {
+        $this->assertNull(Customer::findByIdentity('email', 'never@example.com'));
+        $this->assertNull(Customer::findByIdentity('google_id', null));
+        // unknown type 也回 null（不 throw）
+        $this->assertNull(Customer::findByIdentity('not_a_real_type', 'whatever'));
+    }
 }
