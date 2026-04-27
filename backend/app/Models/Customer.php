@@ -75,4 +75,22 @@ class Customer extends Model
     {
         return $this->hasMany(Review::class);
     }
+
+    public function identities()
+    {
+        return $this->hasMany(CustomerIdentity::class);
+    }
+
+    /**
+     * 由 identity 反查 customer。OAuth callback / dedupe 用。
+     * 回傳 null 表示沒人擁有這條 identity。
+     */
+    public static function findByIdentity(string $type, ?string $value): ?Customer
+    {
+        if (!$value) return null;
+        $row = CustomerIdentity::where('type', $type)
+            ->where('value', $value)
+            ->first();
+        return $row ? static::find($row->customer_id) : null;
+    }
 }
