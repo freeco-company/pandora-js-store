@@ -185,11 +185,18 @@ class OrderController extends Controller
                     $coupon->increment('used_count');
                 }
 
+                // COD + CVS 訂單需客人在 LINE 確認後才出貨（過濾棄件風險）
+                $isCodCvs = $request->payment_method === 'cod'
+                    && in_array($request->shipping_method, ['cvs_711', 'cvs_family']);
+                $initialStatus = $isCodCvs ? 'pending_confirmation' : 'pending';
+                $confirmationToken = $isCodCvs ? bin2hex(random_bytes(16)) : null;
+
                 $order = Order::create([
                     'order_number' => 'PD' . now()->format('ymd') . strtoupper(Str::random(6)),
                     'customer_id' => $customer->id,
                     'coupon_id' => $coupon?->id,
-                    'status' => 'pending',
+                    'status' => $initialStatus,
+                    'confirmation_token' => $confirmationToken,
                     'pricing_tier' => $pricing['tier'],
                     'subtotal' => $pricing['total'],
                     'shipping_fee' => 0,
@@ -275,25 +282,26 @@ class OrderController extends Controller
 
         // Celebrations (achievements / referral reward / outfit unlocks) only
         // fire once payment is confirmed — otherwise we'd have to revoke when
-        // a bank transfer never arrives. COD celebrates immediately because
-        // intent is firm (shipment ships before cash is collected).
+        // a bank transfer never arrives.
         //   - ecpay_credit: ECPay callback with RtnCode=1 triggers runCelebrations
         //   - bank_transfer: OrderObserver triggers on payment_status→paid
-        //   - cod: celebrate now
+        //   - cod (home_delivery): celebrate now (intent is firm)
+        //   - cod (CVS): defer to LINE-confirmation webhook (棄件風險高，先過濾)
         $awardedCodes = [];
         $newOutfits = [];
         $serendipity = null;
-        if ($order->payment_method === 'cod') {
+        if ($order->payment_method === 'cod' && $order->status !== 'pending_confirmation') {
             [$awardedCodes, $newOutfits, $serendipity] = $this->runCelebrations($order);
         }
 
-        // COD + CVS orders: book logistics immediately (seller ships and
-        // collects cash at pickup, so the shipment can be created at order
-        // time). ecpay_credit + CVS defer to payment-callback path.
-        // Gated by ECPAY_LOGISTICS_AUTO so user can sandbox-test first.
+        // 物流建立同樣分流：
+        //   - COD + 宅配: 立即建（不適用此 controller，目前 home_delivery 走另一路徑）
+        //   - COD + CVS: 等客人在 LINE 確認後才建（避免無效物流單）
+        //   - ecpay_credit + CVS: 走 PaymentController 的 callback 路徑
         if (
             config('services.ecpay.logistics_auto')
             && $order->payment_method === 'cod'
+            && $order->status !== 'pending_confirmation'
             && in_array($order->shipping_method, ['cvs_711', 'cvs_family'])
         ) {
             $this->tryCreateLogistics($order);
@@ -309,8 +317,15 @@ class OrderController extends Controller
             ]);
         }
 
+        // pending_confirmation 訂單需把 token 回給前端，前端才能組出 LINE Login bind URL
+        $payload = $order->toArray();
+        if ($order->status === 'pending_confirmation' && $order->confirmation_token) {
+            $payload['confirmation_token'] = $order->confirmation_token; // hidden by default; expose only on creation response
+            $payload['needs_line_confirmation'] = true;
+        }
+
         return response()->json([
-            ...$order->toArray(),
+            ...$payload,
             '_achievements' => $awardedCodes,
             '_outfits' => $newOutfits,
             '_serendipity' => $serendipity,

@@ -269,10 +269,22 @@ export default function CheckoutPage() {
         ...attribution,
       };
 
-      const order = await fetchApi<{ order_number: string } & CelebrationKeys>('/orders', {
+      const order = await fetchApi<{
+        order_number: string;
+        confirmation_token?: string;
+        needs_line_confirmation?: boolean;
+      } & CelebrationKeys>('/orders', {
         method: 'POST',
         body: JSON.stringify(payload),
       });
+
+      // COD + 超商取貨 → 後端把訂單擱在 pending_confirmation，需在 LINE 上點按鈕才出貨。
+      // confirmation_token 只用一次（綁 LINE userId），存 sessionStorage 避免在 URL 裡走完整流程。
+      if (order.needs_line_confirmation && order.confirmation_token) {
+        try {
+          sessionStorage.setItem(`cod_token_${order.order_number}`, order.confirmation_token);
+        } catch {}
+      }
 
       trackPurchase(order.order_number, finalTotal, gtmItems, form.payment_method);
 
