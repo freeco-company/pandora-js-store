@@ -148,16 +148,29 @@ class AuthController extends Controller
         $email = $lineUser->getEmail(); // May be null — LINE email is optional
 
         // bind-order intent: 把 LINE userId 綁到 pending_confirmation 訂單上，
-        // 並推 Flex 確認訊息。完成後導回 order-complete 顯示「已加入 LINE，等待您點按鈕確認」
+        // 並推 Flex 確認訊息。
         if (($stateData['i'] ?? null) === 'bind-order') {
             $orderNumber = (string) ($stateData['o'] ?? '');
             $token = (string) ($stateData['t'] ?? '');
             $bindResult = app(\App\Http\Controllers\Api\OrderConfirmationController::class)
                 ->bindLineAndPush($orderNumber, $token, $lineId, $name, $email);
 
+            // Bind 成功 → 直接導去 LINE app 的 OA 對話視窗，user 一打開就看到剛
+            // 推的「確認出貨」Flex 訊息。比導回 web 流暢（mobile 上會直接開
+            // LINE app；desktop 退而求其次顯示 line.me 網頁版 OA profile）。
+            //
+            // 為什麼要導 LINE app 而不是回 web：v2.10.1 user 回報「跳轉 LINE
+            // 後又自動跳回網站變訂單成功」，預期是停在 LINE 點按鈕。改成這樣
+            // 後 user 全程在 LINE 內完成確認，只有訂單狀態同步透過 webhook。
+            if ($bindResult) {
+                $oaBasicId = config('services.line.oa_basic_id', '@177chupq');
+                return redirect()->away('https://line.me/R/ti/p/' . urlencode($oaBasicId));
+            }
+
+            // Bind 失敗 → 回 web 顯示錯誤狀態
             $qs = http_build_query([
                 'order' => $orderNumber,
-                'bound' => $bindResult ? '1' : '0',
+                'bound' => '0',
             ]);
             return redirect()->to($frontendUrl . '/order-complete?' . $qs);
         }
