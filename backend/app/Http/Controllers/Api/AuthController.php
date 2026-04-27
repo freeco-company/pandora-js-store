@@ -82,51 +82,16 @@ class AuthController extends Controller
      * with APP_KEY via HMAC so the callback can verify it without session
      * storage, and pass it through the OAuth redirect.
      */
-    public function redirectToLine(Request $request)
+    public function redirectToLine()
     {
-        $payload = ['n' => bin2hex(random_bytes(8))];
-
-        // Optional: piggy-back the COD-confirmation bind intent onto the same
-        // OAuth dance. Frontend hits /api/auth/line?intent=bind-order&order=X&token=Y
-        // when the customer taps "加 LINE 確認出貨" on order-complete. The
-        // callback verifies the token and binds the line_user_id to the order.
-        if ($request->query('intent') === 'bind-order') {
-            $order = (string) $request->query('order', '');
-            $token = (string) $request->query('token', '');
-            if ($order !== '' && $token !== '') {
-                $payload['i'] = 'bind-order';
-                $payload['o'] = $order;
-                $payload['t'] = $token;
-            }
-        }
-
-        $statePayload = $this->encodeLineState($payload);
+        $state = bin2hex(random_bytes(16));
+        $signature = hash_hmac('sha256', $state, config('app.key'));
+        $statePayload = $state . '.' . $signature;
 
         return Socialite::driver('line')
             ->stateless()
             ->with(['state' => $statePayload])
             ->redirect();
-    }
-
-    private function encodeLineState(array $payload): string
-    {
-        $body = rtrim(strtr(base64_encode(json_encode($payload, JSON_UNESCAPED_UNICODE)), '+/', '-_'), '=');
-        $signature = hash_hmac('sha256', $body, config('app.key'));
-        return $body . '.' . $signature;
-    }
-
-    private function decodeLineState(string $stateParam): ?array
-    {
-        if (!str_contains($stateParam, '.')) return null;
-        [$body, $signature] = explode('.', $stateParam, 2);
-        $expected = hash_hmac('sha256', $body, config('app.key'));
-        if (!hash_equals($expected, $signature)) return null;
-
-        $padded = $body . str_repeat('=', (4 - strlen($body) % 4) % 4);
-        $json = base64_decode(strtr($padded, '-_', '+/'), true);
-        if ($json === false) return null;
-        $data = json_decode($json, true);
-        return is_array($data) ? $data : null;
     }
 
     /**
@@ -136,12 +101,18 @@ class AuthController extends Controller
     {
         $frontendUrl = config('services.ecpay.frontend_url', 'https://pandora.js-store.com.tw');
 
-        $stateData = $this->decodeLineState((string) $request->query('state', ''));
-        if ($stateData === null) {
-            return redirect()->to($frontendUrl . '/auth/line/callback?error=auth_failed');
-        }
-
         try {
+            // Verify the HMAC-signed state to prevent CSRF
+            $stateParam = $request->query('state', '');
+            if (!str_contains($stateParam, '.')) {
+                throw new \RuntimeException('Invalid LINE OAuth state');
+            }
+            [$state, $signature] = explode('.', $stateParam, 2);
+            $expected = hash_hmac('sha256', $state, config('app.key'));
+            if (!hash_equals($expected, $signature)) {
+                throw new \RuntimeException('LINE OAuth state signature mismatch');
+            }
+
             $lineUser = Socialite::driver('line')->stateless()->user();
         } catch (\Exception $e) {
             return redirect()->to($frontendUrl . '/auth/line/callback?error=auth_failed');
@@ -150,21 +121,6 @@ class AuthController extends Controller
         $lineId = $lineUser->getId();
         $name = $lineUser->getName() ?: 'LINE 會員';
         $email = $lineUser->getEmail(); // May be null — LINE email is optional
-
-        // bind-order intent: 把 LINE userId 綁到 pending_confirmation 訂單上，
-        // 並推 Flex 確認訊息。完成後導回 order-complete 顯示「已加入 LINE，等待您點按鈕確認」
-        if (($stateData['i'] ?? null) === 'bind-order') {
-            $orderNumber = (string) ($stateData['o'] ?? '');
-            $token = (string) ($stateData['t'] ?? '');
-            $bindResult = app(\App\Http\Controllers\Api\OrderConfirmationController::class)
-                ->bindLineAndPush($orderNumber, $token, $lineId, $name, $email);
-
-            $qs = http_build_query([
-                'order' => $orderNumber,
-                'bound' => $bindResult ? '1' : '0',
-            ]);
-            return redirect()->to($frontendUrl . '/order-complete?' . $qs);
-        }
 
         // Try matching by line_id first
         $customer = Customer::where('line_id', $lineId)->first();

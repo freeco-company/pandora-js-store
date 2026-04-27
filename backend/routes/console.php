@@ -108,15 +108,6 @@ Schedule::command('pipeline:daily-report')
     ->runInBackground()
     ->appendOutputTo(storage_path('logs/pipeline-daily-report.log'));
 
-// COD 取件率改善 — pending_confirmation 訂單 48h 未確認 → 自動取消、還原庫存/coupon、
-// 通知客人。每 30 分鐘掃一次（48h 邊界誤差最多 30 分鐘可接受）。
-Schedule::command('cod:auto-cancel-unconfirmed')
-    ->everyThirtyMinutes()
-    ->timezone('Asia/Taipei')
-    ->withoutOverlapping(10)
-    ->runInBackground()
-    ->appendOutputTo(storage_path('logs/cod-auto-cancel.log'));
-
 // ── 本機開發專用：每天 03:00 從正式站 pull DB 覆蓋本地 ──
 // 指令內建 PHP_OS_FAMILY === 'Darwin' 守門，Linux 正式機跑 schedule:run
 // 也會被 guard 拒絕執行，不會循環同步自己。

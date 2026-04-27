@@ -49,12 +49,6 @@ return [
         // Required for pushing messages (e.g. abandoned-cart reminders) to a userId.
         // Login + Messaging channels must be in the same Provider for the userId to match.
         'messaging_access_token' => env('LINE_MESSAGING_ACCESS_TOKEN'),
-        // Messaging channel secret — used to verify X-Line-Signature on webhook
-        // requests (NOT the Login channel secret above).
-        'messaging_channel_secret' => env('LINE_MESSAGING_CHANNEL_SECRET'),
-        // OA basic id (e.g. @123abcd) — used to render the QR / friend-add URL
-        // on the order-complete page so the customer can add the OA before binding.
-        'oa_basic_id' => env('LINE_OA_BASIC_ID'),
     ],
 
     'discord' => [
