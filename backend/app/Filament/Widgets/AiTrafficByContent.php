@@ -98,9 +98,10 @@ class AiTrafficByContent extends BaseWidget
         $productSlugs = [];
         $articleSlugs = [];
         foreach ($rows as $r) {
-            if (preg_match('#^/products/([^/?#]+)#', $r->path, $m)) {
+            // 用 `~` 當 delimiter，避免 character class 內的 `#` 跟 delimiter 撞
+            if (preg_match('~^/products/([^/?#]+)~', $r->path, $m)) {
                 $productSlugs[] = $m[1];
-            } elseif (preg_match('#^/articles/([^/?#]+)#', $r->path, $m)) {
+            } elseif (preg_match('~^/articles/([^/?#]+)~', $r->path, $m)) {
                 $articleSlugs[] = $m[1];
             }
         }
@@ -112,7 +113,7 @@ class AiTrafficByContent extends BaseWidget
             $type = $this->classifyPath($r->path);
             $title = $this->resolveTitle($r->path, $type, $products, $articles);
             $out[] = [
-                'id' => $i,
+                'id' => (string) $i, // Filament TableWidget::getTableRecordKey() 簽名要 string，不能回 int/null
                 'rank' => $i + 1,
                 'content_type' => $type,
                 'title' => $title,
