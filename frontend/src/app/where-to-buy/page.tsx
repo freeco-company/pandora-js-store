@@ -108,7 +108,7 @@ export default function WhereToBuyPage() {
               { name: '纖纖飲X', desc: '世界品質金獎・代謝小綠', slug: '纖纖飲X-纖纖輕鬆飲X' },
               { name: '益生菌', desc: '15 種菌種・調整體質', slug: '高機能益生菌-30包-盒' },
               { name: '水光錠', desc: '日本專利玻尿酸・口服美容', slug: '婕樂纖水光錠-日本hyabest專利玻尿酸-60顆-盒' },
-              { name: '肽可可', desc: '比利時可可・控卡飽足', slug: '輕卡肽纖飲-肽可可-10包-盒' },
+              { name: '肽可可', desc: '比利時可可・順口好喝', slug: '輕卡肽纖飲-肽可可-10包-盒' },
             ].map(({ name, desc, slug }) => (
               <Link
                 key={slug}
