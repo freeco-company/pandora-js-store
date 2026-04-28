@@ -2,13 +2,13 @@ import type { MetadataRoute } from 'next';
 import { fetchApi, imageUrl, type Product, type Article, type ProductCategory } from '@/lib/api';
 import { SITE_URL } from '@/lib/site';
 
-// Render at runtime on the prod server, not at CI build time. A previous
+// Render at runtime on the prod server, never at CI build time. A previous
 // silent-fail at build (Cloudflare/network blocked the GH runner) baked an
 // 11-URL sitemap into .next and shipped it for weeks — Google never saw
-// the 450+ product/article URLs. With ISR the prod server regenerates
-// hourly using the in-network API call, which is far more reliable than
-// CI build → API round trip through Cloudflare.
-export const revalidate = 3600;
+// the 450+ product/article URLs. force-dynamic bypasses the prerender step
+// entirely so a broken build can't ship an empty sitemap; downstream CDN
+// (Cloudflare) still caches the response for typical crawl frequencies.
+export const dynamic = 'force-dynamic';
 
 interface Campaign {
   id: number;

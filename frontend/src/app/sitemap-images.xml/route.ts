@@ -4,8 +4,11 @@ import { SITE_URL } from '@/lib/site';
 /**
  * Image sitemap for Google Image search discovery.
  * Separate file per Google recommendation (easier to diagnose image-only indexing).
+ *
+ * force-dynamic for the same reason as sitemap.ts: build-time prerender +
+ * silent fetch failure = empty sitemap shipped forever. Render at runtime.
  */
-export const revalidate = 3600;
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
   const baseUrl = SITE_URL;
