@@ -1,20 +1,31 @@
 <?php
 
+use App\Http\Controllers\Api\AiVisitController;
 use App\Http\Controllers\Api\ArticleController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BannerController;
+use App\Http\Controllers\Api\BundleController;
 use App\Http\Controllers\Api\CampaignController;
 use App\Http\Controllers\Api\CartController;
+use App\Http\Controllers\Api\CartEventController;
 use App\Http\Controllers\Api\CouponController;
 use App\Http\Controllers\Api\CustomerController;
 use App\Http\Controllers\Api\CustomerProfileController;
+use App\Http\Controllers\Api\IdentityWebhookController;
+use App\Http\Controllers\Api\Internal\ConversionOrdersController;
+use App\Http\Controllers\Api\LineWebhookController;
 use App\Http\Controllers\Api\LogisticsController;
-use App\Http\Controllers\Api\StockNotificationController;
+use App\Http\Controllers\Api\OrderConfirmationController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\PopupController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\ReviewController;
+use App\Http\Controllers\Api\SocialProofController;
+use App\Http\Controllers\Api\StockNotificationController;
+use App\Http\Controllers\Api\VisitController;
+use App\Http\Controllers\Api\WishlistController;
+use Illuminate\Routing\Middleware\ThrottleRequests;
 use Illuminate\Support\Facades\Route;
 
 // Auth (Google + LINE OAuth)
@@ -43,8 +54,8 @@ Route::get('/orders/{orderNumber}', [OrderController::class, 'show'])->middlewar
 Route::post('/orders/check-cod', [OrderController::class, 'checkCod'])->middleware('throttle:strict');
 
 // COD pending-confirmation flow — frontend polls status; LINE webhook delivers postback.
-Route::get('/orders/{orderNumber}/confirmation-status', [\App\Http\Controllers\Api\OrderConfirmationController::class, 'status']);
-Route::post('/line/webhook', [\App\Http\Controllers\Api\LineWebhookController::class, 'handle'])
+Route::get('/orders/{orderNumber}/confirmation-status', [OrderConfirmationController::class, 'status']);
+Route::post('/line/webhook', [LineWebhookController::class, 'handle'])
     ->withoutMiddleware(['web']);
 
 // Payment
@@ -61,23 +72,23 @@ Route::get('/banners', [BannerController::class, 'index']);
 Route::get('/popups', [PopupController::class, 'index']);
 
 // Real social proof — cumulative sales + recent viewers for product pages.
-Route::get('/products/{slug}/social-proof', [\App\Http\Controllers\Api\SocialProofController::class, 'show']);
+Route::get('/products/{slug}/social-proof', [SocialProofController::class, 'show']);
 
 // AI traffic counter — called by Next.js proxy when AI bot UA or AI-origin
 // referer is detected. Aggregates by (date, bot_type, source).
-Route::post('/track/ai-visit', [\App\Http\Controllers\Api\AiVisitController::class, 'store'])
+Route::post('/track/ai-visit', [AiVisitController::class, 'store'])
     ->middleware('throttle:600,1'); // 10/s burst cap — upsert is cheap, AI bots crawl fast
 
 // Human visit logger — called client-side by Analytics.tsx on every route
 // change. Inserts one raw row per hit for later UV/source/device breakdowns.
-Route::post('/track/visit', [\App\Http\Controllers\Api\VisitController::class, 'store'])
+Route::post('/track/visit', [VisitController::class, 'store'])
     ->middleware('throttle:600,1');
 
 // Cart event logger — fired from CartProvider alongside GTM dataLayer pushes
 // so the pipeline report can compute funnel rates without GA4 API access.
 // Throttle is generous because one user can easily trigger 5+ events/min
 // (view_item on every product card hover, rapid add_to_cart etc.).
-Route::post('/track/cart-event', [\App\Http\Controllers\Api\CartEventController::class, 'store'])
+Route::post('/track/cart-event', [CartEventController::class, 'store'])
     ->middleware('throttle:1000,1');
 
 // Customer gamification dashboard (requires auth)
@@ -101,10 +112,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/customer/addresses/{address}', [CustomerProfileController::class, 'addressDestroy']);
 
     // Wishlist
-    Route::get('/wishlist', [\App\Http\Controllers\Api\WishlistController::class, 'index']);
-    Route::post('/wishlist', [\App\Http\Controllers\Api\WishlistController::class, 'store']);
-    Route::post('/wishlist/sync', [\App\Http\Controllers\Api\WishlistController::class, 'sync']);
-    Route::delete('/wishlist/{productId}', [\App\Http\Controllers\Api\WishlistController::class, 'destroy']);
+    Route::get('/wishlist', [WishlistController::class, 'index']);
+    Route::post('/wishlist', [WishlistController::class, 'store']);
+    Route::post('/wishlist/sync', [WishlistController::class, 'sync']);
+    Route::delete('/wishlist/{productId}', [WishlistController::class, 'destroy']);
 });
 
 // ECPay 物流 CVS 超商地圖選店（需開放 POST 給 ECPay callback）
@@ -129,7 +140,7 @@ Route::get('/campaigns', [CampaignController::class, 'index']);
 Route::get('/campaigns/{slug}', [CampaignController::class, 'show']);
 
 // Bundle detail — /api/bundles/{slug}. 404 when parent campaign not running.
-Route::get('/bundles/{slug}', [\App\Http\Controllers\Api\BundleController::class, 'show']);
+Route::get('/bundles/{slug}', [BundleController::class, 'show']);
 
 // Pandora Core identity webhook — platform-side single source of truth pushes
 // here when group_users / group_user_identities change. HMAC + replay 防護
@@ -138,6 +149,19 @@ Route::get('/bundles/{slug}', [\App\Http\Controllers\Api\BundleController::class
 // withoutMiddleware('throttle:api')：內部 server-to-server 流量不該走 60/min
 // public rate limit（backfill 時 platform 一次推 100+ events 會被 429 踢成
 // dead_letter）。HMAC + nonce dedup 已足夠擋 abuse。
-Route::post('/internal/identity/webhook', \App\Http\Controllers\Api\IdentityWebhookController::class)
+Route::post('/internal/identity/webhook', IdentityWebhookController::class)
     ->middleware('identity.webhook')
-    ->withoutMiddleware([\Illuminate\Routing\Middleware\ThrottleRequests::class.':api']);
+    ->withoutMiddleware([ThrottleRequests::class.':api']);
+
+// Pandora Conversion (py-service, ADR-003 §3.2) — outbound query for the
+// loyalist rule's "≥2 母艦復購 in last 90d" branch. HMAC-signed; see
+// VerifyConversionInternalSignature for header / signing-base spec.
+//
+// withoutMiddleware('throttle:api')：server-to-server，公開 60/min 限流會在
+// 批次評估 lifecycle 時誤殺。HMAC + timestamp window 已足夠擋 abuse。
+Route::get(
+    '/internal/conversion/customer-orders/{pandora_user_uuid}',
+    ConversionOrdersController::class
+)
+    ->middleware('conversion.internal')
+    ->withoutMiddleware([ThrottleRequests::class.':api']);
