@@ -2,6 +2,14 @@ import type { MetadataRoute } from 'next';
 import { fetchApi, imageUrl, type Product, type Article, type ProductCategory } from '@/lib/api';
 import { SITE_URL } from '@/lib/site';
 
+// Render at runtime on the prod server, not at CI build time. A previous
+// silent-fail at build (Cloudflare/network blocked the GH runner) baked an
+// 11-URL sitemap into .next and shipped it for weeks — Google never saw
+// the 450+ product/article URLs. With ISR the prod server regenerates
+// hourly using the in-network API call, which is far more reliable than
+// CI build → API round trip through Cloudflare.
+export const revalidate = 3600;
+
 interface Campaign {
   id: number;
   slug: string;
@@ -68,7 +76,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         ...(imgs.length > 0 ? { images: imgs } : {}),
       };
     });
-  } catch {}
+  } catch (e) {
+    console.error('[sitemap] products fetch failed:', e);
+  }
 
   // Articles — paginate through ALL pages (~430+ entries).
   let articlePages: MetadataRoute.Sitemap = [];
@@ -84,7 +94,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         ...(img ? { images: [img] } : {}),
       };
     });
-  } catch {}
+  } catch (e) {
+    console.error('[sitemap] articles fetch failed:', e);
+  }
 
   let categoryPages: MetadataRoute.Sitemap = [];
   try {
@@ -97,7 +109,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         changeFrequency: 'weekly' as const,
         priority: 0.8,
       }));
-  } catch {}
+  } catch (e) {
+    console.error('[sitemap] categories fetch failed:', e);
+  }
 
   let campaignPages: MetadataRoute.Sitemap = [];
   try {
@@ -110,7 +124,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         changeFrequency: 'weekly' as const,
         priority: 0.7,
       }));
-  } catch {}
+  } catch (e) {
+    console.error('[sitemap] campaigns fetch failed:', e);
+  }
 
   return [...staticPages, ...categoryPages, ...productPages, ...articlePages, ...campaignPages];
 }
