@@ -63,7 +63,10 @@ class PlatformOAuthBridge
             return null;
         }
 
-        $uuid = $response->data['uuid']
+        // platform MirrorController 實際回傳 'group_user_id'；'uuid'/'user.uuid'
+        // 是早期設計遺留的相容別名。
+        $uuid = $response->data['group_user_id']
+            ?? $response->data['uuid']
             ?? $response->data['user']['uuid']
             ?? $response->data['data']['uuid']
             ?? null;
