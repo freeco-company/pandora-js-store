@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Events\OrderPaid;
+use App\Listeners\PushOrderPaidToConversion;
 use App\Models\Article;
 use App\Models\Banner;
 use App\Models\Campaign;
@@ -12,6 +14,7 @@ use App\Observers\ArticleComplianceObserver;
 use App\Observers\BannerObserver;
 use App\Observers\CampaignObserver;
 use App\Observers\CustomerObserver;
+use App\Observers\OrderConversionObserver;
 use App\Observers\OrderObserver;
 use App\Observers\ProductComplianceObserver;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -42,6 +45,14 @@ class AppServiceProvider extends ServiceProvider
 
         // Auto-blacklist on COD no-pickup
         Order::observe(OrderObserver::class);
+
+        // ADR-008 §2.3 — fires OrderPaid event on payment_status → paid
+        // (separate from OrderObserver to keep concerns isolated).
+        Order::observe(OrderConversionObserver::class);
+
+        // ADR-008 §2.3 — push conversion event to py-service when an order
+        // becomes paid. Queued; noop when env not configured.
+        Event::listen(OrderPaid::class, PushOrderPaidToConversion::class);
 
         // Bust product cache when campaigns change
         Campaign::observe(CampaignObserver::class);

@@ -11,7 +11,9 @@ use App\Http\Controllers\Api\CartEventController;
 use App\Http\Controllers\Api\CouponController;
 use App\Http\Controllers\Api\CustomerController;
 use App\Http\Controllers\Api\CustomerProfileController;
+use App\Http\Controllers\Api\FranchiseConsultationController;
 use App\Http\Controllers\Api\IdentityWebhookController;
+use App\Http\Controllers\Api\Internal\ConversionMonthlyPurchasesController;
 use App\Http\Controllers\Api\Internal\ConversionOrdersController;
 use App\Http\Controllers\Api\LineWebhookController;
 use App\Http\Controllers\Api\LogisticsController;
@@ -162,6 +164,20 @@ Route::post('/internal/identity/webhook', IdentityWebhookController::class)
 Route::get(
     '/internal/conversion/customer-orders/{pandora_user_uuid}',
     ConversionOrdersController::class
+)
+    ->middleware('conversion.internal')
+    ->withoutMiddleware([ThrottleRequests::class.':api']);
+
+// ADR-008 §2.2 段 1 訊號 — franchise consultation form. STUB until business
+// team finalises the form schema; see controller PHPDoc for TODO list.
+Route::post('/franchise/consultation', [FranchiseConsultationController::class, 'store'])
+    ->middleware('throttle:strict');
+
+// Pandora Conversion (py-service, ADR-008 §2.3) — feeds the段 2 訊號 (a)
+// "月進貨連續 N 個月 > NT$30K". Same HMAC + no public throttle as above.
+Route::get(
+    '/internal/conversion/customer-monthly-purchases/{pandora_user_uuid}',
+    ConversionMonthlyPurchasesController::class
 )
     ->middleware('conversion.internal')
     ->withoutMiddleware([ThrottleRequests::class.':api']);
