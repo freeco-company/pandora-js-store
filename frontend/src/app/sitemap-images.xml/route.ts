@@ -31,7 +31,9 @@ export async function GET() {
         entries.push({ page: `${baseUrl}/products/${p.slug}`, images: imgs });
       }
     }
-  } catch {}
+  } catch (e) {
+    console.error('[sitemap-images] products fetch failed:', e);
+  }
 
   // Articles
   try {
@@ -45,7 +47,9 @@ export async function GET() {
         images: [{ loc: url, title: a.title }],
       });
     }
-  } catch {}
+  } catch (e) {
+    console.error('[sitemap-images] articles fetch failed:', e);
+  }
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
