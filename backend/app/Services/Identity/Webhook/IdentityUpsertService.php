@@ -4,6 +4,7 @@ namespace App\Services\Identity\Webhook;
 
 use App\Models\Customer;
 use App\Models\CustomerIdentity;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -169,11 +170,17 @@ class IdentityUpsertService
             }
             $localType = self::TYPE_REVERSE_MAP[$platformType] ?? $platformType;
 
+            // updateOrInsert 走 raw SQL，不過 Eloquent cast — ISO-8601 字串會炸 MariaDB
+            // DATETIME 欄位（SQLSTATE 22007）。手動 parse 成 Y-m-d H:i:s。
+            $verifiedAt = isset($identity['verified_at']) && $identity['verified_at'] !== null
+                ? Carbon::parse($identity['verified_at'])->utc()->format('Y-m-d H:i:s')
+                : null;
+
             CustomerIdentity::query()->updateOrInsert(
                 ['type' => $localType, 'value' => $value],
                 [
                     'customer_id' => $customer->id,
-                    'verified_at' => $identity['verified_at'] ?? null,
+                    'verified_at' => $verifiedAt,
                     'is_primary' => (bool) ($identity['is_primary'] ?? false),
                     'updated_at' => now(),
                     'created_at' => now(),

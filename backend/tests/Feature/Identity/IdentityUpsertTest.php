@@ -5,6 +5,7 @@ namespace Tests\Feature\Identity;
 use App\Models\Customer;
 use App\Services\Identity\Webhook\IdentityUpsertService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Tests\TestCase;
 
 /**
@@ -154,5 +155,35 @@ class IdentityUpsertTest extends TestCase
         $this->assertSame(['email', 'google_id', 'line_id'], $types);
         $this->assertSame('g-1', $c->google_id);
         $this->assertSame('l-1', $c->line_id);
+    }
+
+    /**
+     * Regression: 2026-04-28 prod 第一次接通 platform → 母艦 webhook 時，
+     * platform payload 的 verified_at 是 ISO-8601 字串（'2026-04-28T05:29:31+00:00'），
+     * updateOrInsert 走 raw SQL 不過 Eloquent cast → 直接塞 MariaDB DATETIME 欄位
+     * 觸發 SQLSTATE[22007] Invalid datetime value。
+     */
+    public function test_iso8601_verified_at_is_normalized_to_mysql_datetime(): void
+    {
+        app(IdentityUpsertService::class)->upsert([
+            'uuid' => 'uuid-iso',
+            'email_canonical' => 'iso@example.com',
+            'identities' => [
+                [
+                    'type' => 'email',
+                    'value' => 'iso@example.com',
+                    'is_primary' => true,
+                    'verified_at' => '2026-04-28T05:29:31+00:00',  // ISO-8601 帶 timezone
+                ],
+            ],
+        ]);
+
+        $c = Customer::where('pandora_user_uuid', 'uuid-iso')->first();
+        $this->assertNotNull($c);
+        $emailIdentity = $c->identities()->where('type', 'email')->first();
+        $this->assertNotNull($emailIdentity);
+        // 驗 verified_at 確實有寫入且是合法 datetime（沒在 raw SQL insert 階段炸 SQLSTATE 22007）
+        $this->assertNotNull($emailIdentity->verified_at);
+        $this->assertInstanceOf(Carbon::class, $emailIdentity->verified_at);
     }
 }
