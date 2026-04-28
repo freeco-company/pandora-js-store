@@ -135,4 +135,17 @@ return [
         'logistics_auto' => (bool) env('ECPAY_LOGISTICS_AUTO', false),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Pandora Core Identity Service (ADR-001)
+    |--------------------------------------------------------------------------
+    | Shadow-mirror writes to集團 identity service。dev 預設 disabled，
+    | staging / prod 等 platform skeleton 部署完才打開。
+    */
+    'pandora_core' => [
+        'mirror_enabled' => (bool) env('IDENTITY_MIRROR_ENABLED', false),
+        'base_url' => env('PANDORA_CORE_BASE_URL'),
+        'internal_secret' => env('PANDORA_CORE_INTERNAL_SECRET'),
+    ],
+
 ];

@@ -124,6 +124,16 @@ Schedule::command('bank-transfer:auto-cancel')
     ->runInBackground()
     ->appendOutputTo(storage_path('logs/bank-transfer-auto-cancel.log'));
 
+// Pandora Core identity shadow-mirror outbox dispatch — every 5 min.
+// Pulls outbox_identity_events.status=pending + due → ProcessIdentityOutbox jobs.
+// Feature-flag IDENTITY_MIRROR_ENABLED 控制 service 層是否寫 outbox；schedule
+// 永遠跑（idempotent，沒 pending 就空轉）。ADR-001 §4.1 Step 1.
+Schedule::command('mirror:dispatch-pending')
+    ->everyFiveMinutes()
+    ->withoutOverlapping(5)
+    ->runInBackground()
+    ->appendOutputTo(storage_path('logs/identity-mirror.log'));
+
 // ── 本機開發專用：每天 03:00 從正式站 pull DB 覆蓋本地 ──
 // 指令內建 PHP_OS_FAMILY === 'Darwin' 守門，Linux 正式機跑 schedule:run
 // 也會被 guard 拒絕執行，不會循環同步自己。
