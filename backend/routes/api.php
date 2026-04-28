@@ -134,5 +134,10 @@ Route::get('/bundles/{slug}', [\App\Http\Controllers\Api\BundleController::class
 // Pandora Core identity webhook — platform-side single source of truth pushes
 // here when group_users / group_user_identities change. HMAC + replay 防護
 // 由 'identity.webhook' middleware 處理。POST /api/internal/identity/webhook
+//
+// withoutMiddleware('throttle:api')：內部 server-to-server 流量不該走 60/min
+// public rate limit（backfill 時 platform 一次推 100+ events 會被 429 踢成
+// dead_letter）。HMAC + nonce dedup 已足夠擋 abuse。
 Route::post('/internal/identity/webhook', \App\Http\Controllers\Api\IdentityWebhookController::class)
-    ->middleware('identity.webhook');
+    ->middleware('identity.webhook')
+    ->withoutMiddleware([\Illuminate\Routing\Middleware\ThrottleRequests::class.':api']);
