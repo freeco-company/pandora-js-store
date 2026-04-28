@@ -103,6 +103,29 @@ class CutoverOAuthServiceTest extends TestCase
         $this->assertSame('cut-uuid-1', $customer->pandora_user_uuid);
     }
 
+    /**
+     * Regression: platform MirrorController 實際 response key 是 group_user_id，
+     * 不是 uuid。Bridge 必須能讀。
+     */
+    public function test_bridge_reads_group_user_id_response_key(): void
+    {
+        config()->set('identity.cutover_mode', 'cutover');
+        config()->set('identity.cutover_whitelist', []);
+
+        $this->mockClient()
+            ->shouldReceive('customerUpsert')
+            ->once()
+            ->andReturn(PandoraCoreResponse::ok([
+                'group_user_id' => 'group-uuid-from-platform',
+                'mirrored_at' => '2026-04-28T00:00:00+00:00',
+            ]));
+
+        $customer = app(CutoverOAuthService::class)
+            ->loginOrCreate('google', 'g-prod-shape', 'prod@example.com', 'Prod');
+
+        $this->assertSame('group-uuid-from-platform', $customer->pandora_user_uuid);
+    }
+
     public function test_cutover_mode_whitelist_excluded_user_does_not_call_platform(): void
     {
         config()->set('identity.cutover_mode', 'cutover');

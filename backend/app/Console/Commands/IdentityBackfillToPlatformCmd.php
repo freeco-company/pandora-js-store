@@ -87,7 +87,11 @@ class IdentityBackfillToPlatformCmd extends Command
             $response = $client->customerUpsert($payload);
 
             if ($response->success) {
-                $uuid = $response->data['uuid'] ?? $response->data['user']['uuid'] ?? null;
+                // platform 端 key 是 'group_user_id'；其餘為相容別名
+                $uuid = $response->data['group_user_id']
+                    ?? $response->data['uuid']
+                    ?? $response->data['user']['uuid']
+                    ?? null;
                 if (! is_string($uuid) || $uuid === '') {
                     $this->error("Customer #{$customer->id}: platform 回 200 但沒給 uuid，data=".json_encode($response->data));
                     $failed++;
