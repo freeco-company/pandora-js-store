@@ -164,6 +164,14 @@ return [
     'pandora_conversion' => [
         'internal_secret' => env('PANDORA_CONVERSION_INTERNAL_SECRET'),
         'window_seconds' => (int) env('PANDORA_CONVERSION_WINDOW_SECONDS', 300),
+
+        // ADR-008 §2.3 — outbound event push to py-service `conversion/`.
+        // When base_url is empty we noop (log only) so local/dev order flow
+        // never breaks just because py-service isn't running. App ID lets
+        // py-service tell which source App fired the event (mothership = fairy_pandora).
+        'base_url' => env('PANDORA_CONVERSION_BASE_URL'),
+        'app_id' => env('PANDORA_CONVERSION_APP_ID', 'fairy_pandora'),
+        'push_timeout_seconds' => (int) env('PANDORA_CONVERSION_PUSH_TIMEOUT', 5),
     ],
 
 ];
