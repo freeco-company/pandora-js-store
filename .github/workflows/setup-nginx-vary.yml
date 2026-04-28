@@ -1,0 +1,104 @@
+name: Setup nginx Vary header strip
+on:
+  workflow_dispatch:
+
+# 一次性設定：在 prod nginx 加 Vary header 改寫（CF Free 方案 Vary 限制相容）。
+# 詳見 PR #25 / commit message。idempotent，重跑安全。
+
+jobs:
+  patch:
+    name: Patch nginx config + reload
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SERVER_SSH_KEY }}
+
+      - name: Add server to known_hosts
+        run: ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Apply nginx Vary patch
+        run: |
+          ssh root@${{ secrets.SERVER_HOST }} bash -s <<'REMOTE'
+          set -euo pipefail
+
+          TS=$(date +%s)
+          BACKUP_DIR=/root/nginx-backups
+          mkdir -p "$BACKUP_DIR"
+
+          # 找出 proxy 到 Next.js 的設定檔
+          CONFIG=$(grep -rlE "proxy_pass[[:space:]]+http://(127\.0\.0\.1|localhost):3000" /etc/nginx/ | head -1)
+          if [ -z "$CONFIG" ]; then
+            echo "ERROR: 找不到指向 Next.js (port 3000) 的 nginx 設定檔"
+            grep -rE "proxy_pass" /etc/nginx/ || true
+            exit 1
+          fi
+          echo "目標設定檔: $CONFIG"
+
+          BACKUP="$BACKUP_DIR/$(basename "$CONFIG").bak.$TS"
+          cp "$CONFIG" "$BACKUP"
+          echo "備份: $BACKUP"
+
+          # 1) http context: map block (放 conf.d/，會被 main nginx.conf include)
+          cat > /etc/nginx/conf.d/00-vary-rsc.conf <<'NGINX'
+          # CF Free 方案 Vary 只認 Accept-Encoding。Next.js 16 App Router
+          # 對所有 response 帶多值 Vary（rsc, next-router-state-tree, ...）
+          # 會讓 CF DYNAMIC 拒快取。對「非 RSC」請求把 Vary 簡化讓 CF 快取，
+          # RSC 請求保留多值 Vary 讓 CF 不快取（永遠回源拿正確 RSC payload）。
+          map $http_rsc $vary_value {
+              default "Accept-Encoding";
+              "1"     "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch, Accept-Encoding";
+          }
+          NGINX
+          echo "已寫 /etc/nginx/conf.d/00-vary-rsc.conf"
+
+          # 2) Next.js location block: 加 proxy_hide_header + add_header（idempotent）
+          if grep -q "vary_value" "$CONFIG"; then
+            echo "Config 已 patch 過（含 vary_value），跳過 sed"
+          else
+            # 在每一行 proxy_pass http://(127.0.0.1|localhost):3000; 之後插入兩行
+            sed -i -E '/proxy_pass[[:space:]]+http:\/\/(127\.0\.0\.1|localhost):3000;/a\
+              proxy_hide_header Vary;\
+              add_header Vary $vary_value always;' "$CONFIG"
+            echo "已 patch $CONFIG"
+          fi
+
+          # 3) 測試
+          if ! nginx -t 2>&1; then
+            echo "ERROR: nginx -t 失敗，rollback"
+            cp "$BACKUP" "$CONFIG"
+            rm -f /etc/nginx/conf.d/00-vary-rsc.conf
+            nginx -t
+            exit 1
+          fi
+
+          # 4) Reload
+          systemctl reload nginx
+          echo "nginx reloaded"
+
+          # 5) 驗證 — origin 直接打（繞過 CF）
+          sleep 2
+          echo
+          echo "=== Origin response (no CF) ==="
+          curl -sI -H "Host: pandora.js-store.com.tw" http://127.0.0.1/ | grep -iE "^(vary|content-type|strict-transport):" | tr -d '\r'
+
+          echo
+          echo "=== Origin RSC request (應該保留多值 Vary) ==="
+          curl -sI -H "Host: pandora.js-store.com.tw" -H "rsc: 1" http://127.0.0.1/ | grep -iE "^(vary|content-type):" | tr -d '\r'
+          REMOTE
+
+      - name: Verify CF cache via public URL
+        run: |
+          echo "等 CF 邊緣快取重整 5 秒..."
+          sleep 5
+          for i in 1 2 3; do
+            echo "=== Try $i (公開) ==="
+            curl -sI "https://pandora.js-store.com.tw/" | grep -iE "^(vary|cf-cache-status|age):" | tr -d '\r'
+            echo
+            sleep 2
+          done
+
+          echo "=== RSC 請求（應該維持 DYNAMIC，不被快取）==="
+          curl -sI -H "rsc: 1" "https://pandora.js-store.com.tw/" | grep -iE "^(vary|cf-cache-status):" | tr -d '\r'
