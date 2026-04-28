@@ -16,6 +16,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->api(prepend: [
             \Illuminate\Routing\Middleware\ThrottleRequests::class.':api',
         ]);
+        $middleware->alias([
+            'identity.webhook' => \App\Http\Middleware\VerifyIdentityWebhookSignature::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         // Sentry reports exceptions when SENTRY_LARAVEL_DSN env is set; no-op otherwise.

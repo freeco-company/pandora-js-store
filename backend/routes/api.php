@@ -130,3 +130,9 @@ Route::get('/campaigns/{slug}', [CampaignController::class, 'show']);
 
 // Bundle detail — /api/bundles/{slug}. 404 when parent campaign not running.
 Route::get('/bundles/{slug}', [\App\Http\Controllers\Api\BundleController::class, 'show']);
+
+// Pandora Core identity webhook — platform-side single source of truth pushes
+// here when group_users / group_user_identities change. HMAC + replay 防護
+// 由 'identity.webhook' middleware 處理。POST /api/internal/identity/webhook
+Route::post('/internal/identity/webhook', \App\Http\Controllers\Api\IdentityWebhookController::class)
+    ->middleware('identity.webhook');

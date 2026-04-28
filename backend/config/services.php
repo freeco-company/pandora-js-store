@@ -146,6 +146,11 @@ return [
         'mirror_enabled' => (bool) env('IDENTITY_MIRROR_ENABLED', false),
         'base_url' => env('PANDORA_CORE_BASE_URL'),
         'internal_secret' => env('PANDORA_CORE_INTERNAL_SECRET'),
+
+        // Phase 2 (ADR-007 / pandora-js-store#11)：platform → 母艦 webhook receiver
+        // 簽章 secret，與 platform 端 IDENTITY_CONSUMER_PANDORA_JS_STORE_SECRET 一致
+        'webhook_secret' => env('PANDORA_CORE_WEBHOOK_SECRET'),
+        'webhook_window_seconds' => (int) env('PANDORA_CORE_WEBHOOK_WINDOW_SECONDS', 300),
     ],
 
 ];
