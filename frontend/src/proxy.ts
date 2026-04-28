@@ -239,7 +239,21 @@ export async function proxy(req: NextRequest, event: NextFetchEvent) {
   if (wpRedirect) return wpRedirect;
 
   const redirect = await redirectLegacySlug(req);
-  return redirect ?? NextResponse.next();
+  if (redirect) return redirect;
+
+  // CF Free plan only honors `Vary: Accept-Encoding`. Next.js App Router
+  // emits `Vary: rsc, next-router-state-tree, ..., Accept-Encoding` on
+  // every response, which makes CF flag everything DYNAMIC and refuse to
+  // cache HTML at the edge — defeating the Cache Rule we set up. For
+  // regular full-HTML requests (no `RSC: 1` header), override Vary down
+  // to `Accept-Encoding` so CF can cache. RSC navigation requests keep
+  // the multi-Vary header, which keeps CF DYNAMIC on those — correct,
+  // because RSC payloads vary by router state and must not be cached.
+  const response = NextResponse.next();
+  if (req.headers.get('rsc') !== '1') {
+    response.headers.set('Vary', 'Accept-Encoding');
+  }
+  return response;
 }
 
 export const config = {
