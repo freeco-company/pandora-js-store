@@ -225,15 +225,24 @@ jobs:
             exit 1
           fi
 
-      # Full Cloudflare purge. Precision purge (specific URLs) used to be
-      # enough when we only cared about HTML freshness, BUT on 2026-04-24 a
-      # mid-deploy request hit a transient 404 on /_next/static/chunks/*
-      # and Cloudflare cached it for 24h → site broken for 46 min until we
-      # manually purged. /_next/static/* is never explicitly listed, so
-      # precision purge can't reach it. Full purge avoids this class of
-      # bug entirely. Trade-off: slightly higher origin load for ~1 min
-      # after deploy, negligible at our traffic scale.
-      - name: Purge Cloudflare cache (everything)
+      # Selective Cloudflare purge — only routes whose content can change
+      # on every deploy. /_next/static/* uses content-hash filenames
+      # (auto-invalidated when bundle changes) and /storage/* assets don't
+      # change on code deploy, so excluding them lets the CDN cache survive
+      # across deploys (was killing cache-hit-rate at ~18% under
+      # purge_everything; expected ~50%+ after this).
+      #
+      # Historical note (2026-04-24): we used purge_everything because a
+      # transient 404 on /_next/static/chunks/* during rsync --delete got
+      # cached by CF for 24h. That risk only applies if CF actually caches
+      # those 404s — current cf-cache-status on /_next/static/* is MISS
+      # (asset present) and HTML is DYNAMIC (uncached), so the recurrence
+      # path is gone in the current configuration. Re-evaluate this list
+      # when adding a Cache Rule that caches HTML at the edge — at that
+      # point, all HTML routes whose content depends on deploy-time data
+      # (e.g. layout/nav changes) need to be added here too, OR rsync
+      # needs to stop --delete'ing .next/ to keep old chunks reachable.
+      - name: Purge Cloudflare cache (selective)
         if: success()
         env:
           CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -243,7 +252,15 @@ jobs:
             "https://api.cloudflare.com/client/v4/zones/${CF_ZONE}/purge_cache" \
             -H "Authorization: Bearer ${CF_TOKEN}" \
             -H "Content-Type: application/json" \
-            --data '{"purge_everything": true}' | tee /tmp/cf-purge.json
+            --data '{"files":[
+              "https://pandora.js-store.com.tw/",
+              "https://pandora.js-store.com.tw/sitemap.xml",
+              "https://pandora.js-store.com.tw/sitemap-images.xml",
+              "https://pandora.js-store.com.tw/robots.txt",
+              "https://pandora.js-store.com.tw/llms.txt",
+              "https://pandora.js-store.com.tw/llms-full.txt",
+              "https://pandora.js-store.com.tw/opensearch.xml"
+            ]}' | tee /tmp/cf-purge.json
           grep -q '"success":true' /tmp/cf-purge.json || { echo "Cloudflare purge failed"; exit 1; }
 
   notify:
