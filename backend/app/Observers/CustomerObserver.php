@@ -4,6 +4,7 @@ namespace App\Observers;
 
 use App\Models\Customer;
 use App\Models\CustomerIdentity;
+use App\Services\Identity\IdentityMirrorService;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -40,12 +41,17 @@ class CustomerObserver
                 $this->upsertIdentity($customer->id, $type, $value, isPrimary: true);
             }
         }
+
+        // ADR-001 Step 1: 鏡寫到 Pandora Core (shadow mode, fire-and-forget)
+        IdentityMirrorService::queueCustomerUpsert($customer);
     }
 
     public function updated(Customer $customer): void
     {
+        $identityChanged = false;
         foreach (self::TYPE_MAP as $column => $type) {
             if (!$customer->wasChanged($column)) continue;
+            $identityChanged = true;
 
             $newValue = $customer->{$column};
             $oldValue = $customer->getOriginal($column);
@@ -69,6 +75,12 @@ class CustomerObserver
             if ($newValue) {
                 $this->upsertIdentity($customer->id, $type, $newValue, isPrimary: true);
             }
+        }
+
+        // ADR-001 Step 1: 鏡寫到 Pandora Core (只在 identity / 通用 profile 有變動時)
+        $profileColumns = ['name', 'email', 'phone', 'google_id', 'line_id'];
+        if ($identityChanged || $customer->wasChanged($profileColumns)) {
+            IdentityMirrorService::queueCustomerUpsert($customer);
         }
     }
 
