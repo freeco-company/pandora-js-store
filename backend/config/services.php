@@ -58,9 +58,9 @@ return [
     ],
 
     'discord' => [
-        'compliance_webhook'   => env('DISCORD_COMPLIANCE_WEBHOOK'),
-        'orders_webhook'       => env('DISCORD_ORDERS_WEBHOOK'),
-        'ads_webhook'          => env('DISCORD_ADS_WEBHOOK'),
+        'compliance_webhook' => env('DISCORD_COMPLIANCE_WEBHOOK'),
+        'orders_webhook' => env('DISCORD_ORDERS_WEBHOOK'),
+        'ads_webhook' => env('DISCORD_ADS_WEBHOOK'),
         // Strategy channel — for Claude-generated analysis. Separate from
         // ads_webhook (which carries raw daily numbers) so the two streams
         // don't noise each other. Falls back to ads_webhook if unset.
@@ -75,15 +75,15 @@ return [
     | See /Users/chris/.claude/notes/... for setup runbook.
     */
     'google_ads' => [
-        'developer_token'    => env('GOOGLE_ADS_DEVELOPER_TOKEN'),
-        'client_id'          => env('GOOGLE_ADS_CLIENT_ID'),
-        'client_secret'      => env('GOOGLE_ADS_CLIENT_SECRET'),
-        'refresh_token'      => env('GOOGLE_ADS_REFRESH_TOKEN'),
+        'developer_token' => env('GOOGLE_ADS_DEVELOPER_TOKEN'),
+        'client_id' => env('GOOGLE_ADS_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_ADS_CLIENT_SECRET'),
+        'refresh_token' => env('GOOGLE_ADS_REFRESH_TOKEN'),
         // Paid account being queried (10-digit, no dashes)
-        'customer_id'        => env('GOOGLE_ADS_CUSTOMER_ID'),
+        'customer_id' => env('GOOGLE_ADS_CUSTOMER_ID'),
         // MCC account that manages it (10-digit, no dashes). Required when
         // paid account is a child of a manager.
-        'login_customer_id'  => env('GOOGLE_ADS_LOGIN_CUSTOMER_ID'),
+        'login_customer_id' => env('GOOGLE_ADS_LOGIN_CUSTOMER_ID'),
     ],
 
     /*
@@ -151,6 +151,19 @@ return [
         // 簽章 secret，與 platform 端 IDENTITY_CONSUMER_PANDORA_JS_STORE_SECRET 一致
         'webhook_secret' => env('PANDORA_CORE_WEBHOOK_SECRET'),
         'webhook_window_seconds' => (int) env('PANDORA_CORE_WEBHOOK_WINDOW_SECONDS', 300),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Pandora Conversion Service (py-service, ADR-003)
+    |--------------------------------------------------------------------------
+    | Internal HMAC secret for signed inbound queries from py-service's
+    | `HttpMothershipOrderClient` (loyalist rule needs 母艦 order summary).
+    | Empty/missing → endpoint returns 401 (fail closed).
+    */
+    'pandora_conversion' => [
+        'internal_secret' => env('PANDORA_CONVERSION_INTERNAL_SECRET'),
+        'window_seconds' => (int) env('PANDORA_CONVERSION_WINDOW_SECONDS', 300),
     ],
 
 ];

@@ -1,8 +1,11 @@
 <?php
 
+use App\Http\Middleware\VerifyConversionInternalSignature;
+use App\Http\Middleware\VerifyIdentityWebhookSignature;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Routing\Middleware\ThrottleRequests;
 use Sentry\Laravel\Integration;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -14,10 +17,11 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->api(prepend: [
-            \Illuminate\Routing\Middleware\ThrottleRequests::class.':api',
+            ThrottleRequests::class.':api',
         ]);
         $middleware->alias([
-            'identity.webhook' => \App\Http\Middleware\VerifyIdentityWebhookSignature::class,
+            'identity.webhook' => VerifyIdentityWebhookSignature::class,
+            'conversion.internal' => VerifyConversionInternalSignature::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
