@@ -11,6 +11,7 @@ class Customer extends Model
     use HasApiTokens, HasFactory;
 
     protected $fillable = [
+        'pandora_user_uuid',
         'name', 'email', 'phone', 'password', 'is_vip',
         'google_id', 'line_id', 'membership_level',
         'address_city', 'address_district', 'address_detail', 'address_zip',
@@ -36,8 +37,11 @@ class Customer extends Model
             // 8-char upper-alnum, avoiding confusing 0/O/1/I
             $alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
             $code = '';
-            for ($i = 0; $i < 8; $i++) $code .= $alphabet[random_int(0, strlen($alphabet) - 1)];
+            for ($i = 0; $i < 8; $i++) {
+                $code .= $alphabet[random_int(0, strlen($alphabet) - 1)];
+            }
         } while (static::where('referral_code', $code)->exists());
+
         return $code;
     }
 
@@ -95,7 +99,9 @@ class Customer extends Model
      */
     public static function findByIdentity(string $type, ?string $value): ?Customer
     {
-        if (!$value) return null;
+        if (! $value) {
+            return null;
+        }
 
         $row = CustomerIdentity::where('type', $type)
             ->where('value', $value)
