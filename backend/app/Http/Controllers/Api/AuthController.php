@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
+use App\Services\Identity\Cutover\CutoverOAuthService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Laravel\Socialite\Facades\Socialite;
@@ -28,46 +29,21 @@ class AuthController extends Controller
         try {
             $googleUser = Socialite::driver('google')->stateless()->user();
         } catch (\Exception $e) {
-            return redirect()->to($frontendUrl . '/auth/google/callback?error=auth_failed');
+            return redirect()->to($frontendUrl.'/auth/google/callback?error=auth_failed');
         }
 
         $googleId = $googleUser->getId();
         $name = $googleUser->getName();
         $email = $googleUser->getEmail();
 
-        // Three cases, mirrored from LINE callback:
-        //   1. Already have this google_id → just log them in.
-        //   2. Have a customer with this email but no google_id → link Google to that account.
-        //   3. Totally new → create.
-        //
-        // 用 Customer::findByIdentity 統一查詢，自動兼容 customer_identities 多 identity
-        // （客戶曾經換過 email，舊 email 還能找回原帳號）+ fallback 查 customers 欄位。
-        $customer = Customer::findByIdentity('google_id', $googleId);
-
-        if (! $customer && $email) {
-            $customer = Customer::findByIdentity('email', $email);
-            if ($customer) {
-                $updates = ['google_id' => $googleId];
-                if (! $customer->name && $name) $updates['name'] = $name;
-                $customer->update($updates);
-            }
-        }
-
-        if (! $customer) {
-            $customer = Customer::create([
-                'google_id' => $googleId,
-                'name' => $name,
-                'email' => $email,
-                'membership_level' => 'regular',
-                // password NOT NULL in DB; Google users don't have one, so
-                // seed a random hash they can't sign in with directly.
-                'password' => bcrypt(\Illuminate\Support\Str::random(32)),
-            ]);
-        }
+        // ADR-007 Phase 3：依 IDENTITY_CUTOVER_MODE 決定走 legacy / shadow / cutover
+        // 三種模式都「保證」回傳 Customer，platform 失敗自動 fallback（fail_open 預設）
+        $customer = app(CutoverOAuthService::class)
+            ->loginOrCreate('google', $googleId, $email, $name);
 
         $token = $customer->createToken('google-auth')->plainTextToken;
 
-        return redirect()->to($frontendUrl . '/auth/google/callback?token=' . urlencode($token));
+        return redirect()->to($frontendUrl.'/auth/google/callback?token='.urlencode($token));
     }
 
     /**
@@ -108,20 +84,28 @@ class AuthController extends Controller
     {
         $body = rtrim(strtr(base64_encode(json_encode($payload, JSON_UNESCAPED_UNICODE)), '+/', '-_'), '=');
         $signature = hash_hmac('sha256', $body, config('app.key'));
-        return $body . '.' . $signature;
+
+        return $body.'.'.$signature;
     }
 
     private function decodeLineState(string $stateParam): ?array
     {
-        if (!str_contains($stateParam, '.')) return null;
+        if (! str_contains($stateParam, '.')) {
+            return null;
+        }
         [$body, $signature] = explode('.', $stateParam, 2);
         $expected = hash_hmac('sha256', $body, config('app.key'));
-        if (!hash_equals($expected, $signature)) return null;
+        if (! hash_equals($expected, $signature)) {
+            return null;
+        }
 
-        $padded = $body . str_repeat('=', (4 - strlen($body) % 4) % 4);
+        $padded = $body.str_repeat('=', (4 - strlen($body) % 4) % 4);
         $json = base64_decode(strtr($padded, '-_', '+/'), true);
-        if ($json === false) return null;
+        if ($json === false) {
+            return null;
+        }
         $data = json_decode($json, true);
+
         return is_array($data) ? $data : null;
     }
 
@@ -134,13 +118,13 @@ class AuthController extends Controller
 
         $stateData = $this->decodeLineState((string) $request->query('state', ''));
         if ($stateData === null) {
-            return redirect()->to($frontendUrl . '/auth/line/callback?error=auth_failed');
+            return redirect()->to($frontendUrl.'/auth/line/callback?error=auth_failed');
         }
 
         try {
             $lineUser = Socialite::driver('line')->stateless()->user();
         } catch (\Exception $e) {
-            return redirect()->to($frontendUrl . '/auth/line/callback?error=auth_failed');
+            return redirect()->to($frontendUrl.'/auth/line/callback?error=auth_failed');
         }
 
         $lineId = $lineUser->getId();
@@ -152,7 +136,7 @@ class AuthController extends Controller
         if (($stateData['i'] ?? null) === 'bind-order') {
             $orderNumber = (string) ($stateData['o'] ?? '');
             $token = (string) ($stateData['t'] ?? '');
-            $bindResult = app(\App\Http\Controllers\Api\OrderConfirmationController::class)
+            $bindResult = app(OrderConfirmationController::class)
                 ->bindLineAndPush($orderNumber, $token, $lineId, $name, $email);
 
             // Bind 成功 → 直接導去 LINE app 的 OA 對話視窗，user 一打開就看到剛
@@ -164,7 +148,8 @@ class AuthController extends Controller
             // 後 user 全程在 LINE 內完成確認，只有訂單狀態同步透過 webhook。
             if ($bindResult) {
                 $oaBasicId = config('services.line.oa_basic_id', '@177chupq');
-                return redirect()->away('https://line.me/R/ti/p/' . urlencode($oaBasicId));
+
+                return redirect()->away('https://line.me/R/ti/p/'.urlencode($oaBasicId));
             }
 
             // Bind 失敗 → 回 web 顯示錯誤狀態
@@ -172,33 +157,18 @@ class AuthController extends Controller
                 'order' => $orderNumber,
                 'bound' => '0',
             ]);
-            return redirect()->to($frontendUrl . '/order-complete?' . $qs);
+
+            return redirect()->to($frontendUrl.'/order-complete?'.$qs);
         }
 
         // Same pattern as Google：先 line_id，再 email fallback；用 findByIdentity 統一查詢
-        $customer = Customer::findByIdentity('line_id', $lineId);
-
-        if (!$customer && $email) {
-            $customer = Customer::findByIdentity('email', $email);
-            if ($customer) {
-                $customer->update(['line_id' => $lineId, 'name' => $name]);
-            }
-        }
-
-        if (!$customer) {
-            // Create new customer
-            $customer = Customer::create([
-                'line_id' => $lineId,
-                'name' => $name,
-                'email' => $email ?? $lineId . '@line.user',
-                'membership_level' => 'regular',
-                'password' => bcrypt(\Illuminate\Support\Str::random(32)),
-            ]);
-        }
+        // ADR-007 Phase 3：依 IDENTITY_CUTOVER_MODE 決定走 legacy / shadow / cutover
+        $customer = app(CutoverOAuthService::class)
+            ->loginOrCreate('line', $lineId, $email, $name);
 
         $token = $customer->createToken('line-auth')->plainTextToken;
 
-        return redirect()->to($frontendUrl . '/auth/line/callback?token=' . urlencode($token));
+        return redirect()->to($frontendUrl.'/auth/line/callback?token='.urlencode($token));
     }
 
     /**
