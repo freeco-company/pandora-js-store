@@ -71,7 +71,10 @@ jobs:
 
       - name: Install frontend deps
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # PAT with read:packages scope — cross-repo GitHub Packages access.
+          # secrets.GITHUB_TOKEN can't read packages from another repo even
+          # with permissions: packages: read.
+          GITHUB_TOKEN: ${{ secrets.NPM_REGISTRY_TOKEN }}
         run: cd frontend && npm ci --no-audit --no-fund
 
       - name: Build Next.js (CI, not server)
