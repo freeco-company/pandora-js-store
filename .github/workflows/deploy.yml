@@ -229,6 +229,47 @@ jobs:
             exit 1
           fi
 
+      # Revalidate Next.js ISR before Cloudflare purge.
+      #
+      # Why this exists: the homepage and other ISR pages are statically
+      # prerendered at CI build time, which bakes the banner/popup/product
+      # data fetched during that build into the HTML. When we rsync that
+      # `.next/` to prod, the build-time snapshot overwrites whatever
+      # state BannerObserver/PopupObserver had already revalidated on the
+      # running server — so any admin edit made between CI start and
+      # deploy finish silently reverts on rsync. CF purge alone doesn't
+      # fix this: the edge re-fetches origin and gets the stale snapshot.
+      #
+      # Order matters: revalidate origin FIRST (so the next request
+      # regenerates fresh HTML from backend), THEN purge CF (so edge
+      # forgets the now-stale snapshot it cached during smoke test).
+      #
+      # Same endpoint + secret as FrontendCacheService.php uses for
+      # admin-edit purges — single source of truth for cache busting.
+      - name: Revalidate Next.js ISR (origin)
+        if: success()
+        env:
+          REVALIDATE_SECRET: ${{ secrets.REVALIDATE_SECRET }}
+        run: |
+          curl -fsS -X POST \
+            "https://pandora.js-store.com.tw/revalidate" \
+            -H "Content-Type: application/json" \
+            -H "x-revalidate-secret: ${REVALIDATE_SECRET}" \
+            --data '{
+              "paths": ["/"],
+              "tags": [
+                "banners",
+                "popups",
+                "products",
+                "product-categories",
+                "articles",
+                "campaigns",
+                "bundles",
+                "reviews"
+              ]
+            }' | tee /tmp/next-revalidate.json
+          grep -q '"ok":true' /tmp/next-revalidate.json || { echo "Next.js revalidate failed"; exit 1; }
+
       # Selective Cloudflare purge — only routes whose content can change
       # on every deploy. /_next/static/* uses content-hash filenames
       # (auto-invalidated when bundle changes) and /storage/* assets don't
