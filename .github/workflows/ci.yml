@@ -80,6 +80,10 @@ jobs:
 
       - name: Install
         working-directory: frontend
+        env:
+          # Required by frontend/.npmrc to install @freeco-company/pandora-design-svg
+          # from GitHub Packages. Package is public so the implicit token suffices.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npm ci
 
       - name: TypeScript

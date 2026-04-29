@@ -67,6 +67,10 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
 
       - name: Install frontend deps
+        env:
+          # Required by frontend/.npmrc to install @freeco-company/pandora-design-svg
+          # from GitHub Packages. Package is public so the implicit token suffices.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: cd frontend && npm ci --no-audit --no-fund
 
       - name: Build Next.js (CI, not server)
