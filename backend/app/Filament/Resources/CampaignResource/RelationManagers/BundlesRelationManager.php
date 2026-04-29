@@ -3,11 +3,15 @@
 namespace App\Filament\Resources\CampaignResource\RelationManagers;
 
 use App\Models\Product;
+use App\Models\ShortLink;
 use Filament\Forms;
+use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Support\HtmlString;
+use Illuminate\Validation\Rule;
 
 /**
  * 套組管理 — 每個 Campaign 下可有多個 Bundle (套組)。
@@ -200,6 +204,7 @@ class BundlesRelationManager extends RelationManager
                     }),
             ])
             ->actions([
+                self::generateShortLinkAction(),
                 \Filament\Actions\EditAction::make()
                     ->mutateRecordDataUsing(fn (array $data, $record): array => self::hydratePivotState($data, $record))
                     ->after(function ($record, array $data) {
@@ -241,5 +246,114 @@ class BundlesRelationManager extends RelationManager
                 'quantity' => max(1, (int) ($row['quantity'] ?? 1)),
             ]);
         }
+    }
+
+    /**
+     * Row action: generate a short link (/p/{code}) targeting this bundle's
+     * detail page with utm_* baked in. Common channels are presented as a
+     * dropdown so marketing doesn't have to remember source/medium codes.
+     */
+    private static function generateShortLinkAction(): \Filament\Actions\Action
+    {
+        // [label => [utm_source, utm_medium]] — keep in sync with
+        // frontend/src/lib/attribution.ts::classifyClick.
+        $channels = [
+            'ig_story' => ['IG 限動', 'instagram', 'story'],
+            'ig_post' => ['IG 貼文', 'instagram', 'post'],
+            'ig_bio' => ['IG bio', 'instagram', 'bio'],
+            'ig_ads' => ['IG 廣告', 'instagram', 'cpc'],
+            'fb_post' => ['FB 貼文', 'facebook', 'post'],
+            'fb_ads' => ['FB 廣告', 'facebook', 'cpc'],
+            'line_oa' => ['LINE OA', 'line', 'oa'],
+            'email' => ['Email', 'email', 'newsletter'],
+            'custom' => ['自訂…', null, null],
+        ];
+
+        return \Filament\Actions\Action::make('generateShortLink')
+            ->label('產生短網址')
+            ->icon('heroicon-o-link')
+            ->color('primary')
+            ->modalHeading(fn ($record) => "為「{$record->name}」產生活動短網址")
+            ->modalSubmitActionLabel('產生')
+            ->fillForm(fn ($record) => [
+                'utm_campaign' => $record->slug,
+            ])
+            ->schema([
+                Forms\Components\Select::make('channel')
+                    ->label('通路')
+                    ->options(collect($channels)->mapWithKeys(fn ($c, $k) => [$k => $c[0]]))
+                    ->default('ig_story')
+                    ->required()
+                    ->live(),
+                Forms\Components\TextInput::make('utm_source_custom')
+                    ->label('utm_source')
+                    ->placeholder('instagram')
+                    ->visible(fn (Forms\Get $get) => $get('channel') === 'custom')
+                    ->required(fn (Forms\Get $get) => $get('channel') === 'custom'),
+                Forms\Components\TextInput::make('utm_medium_custom')
+                    ->label('utm_medium')
+                    ->placeholder('story')
+                    ->visible(fn (Forms\Get $get) => $get('channel') === 'custom')
+                    ->required(fn (Forms\Get $get) => $get('channel') === 'custom'),
+                Forms\Components\TextInput::make('utm_campaign')
+                    ->label('utm_campaign')
+                    ->required()
+                    ->maxLength(128)
+                    ->helperText('預設 = 套組 slug，可改'),
+                Forms\Components\TextInput::make('label')
+                    ->label('標籤（後台識別）')
+                    ->required()
+                    ->maxLength(120)
+                    ->placeholder('母親節 IG 限動'),
+                Forms\Components\TextInput::make('code')
+                    ->label('短網址 code（選填）')
+                    ->placeholder('pandora-mday-ig-story')
+                    ->regex('/^[a-z0-9-]+$/')
+                    ->minLength(3)
+                    ->maxLength(40)
+                    ->rule(Rule::unique('short_links', 'code'))
+                    ->helperText('純小寫英數+連字號。留空自動產 6 字元'),
+            ])
+            ->action(function (array $data, $record) use ($channels) {
+                $channelKey = $data['channel'];
+                [, $utmSource, $utmMedium] = $channels[$channelKey];
+                if ($channelKey === 'custom') {
+                    $utmSource = $data['utm_source_custom'];
+                    $utmMedium = $data['utm_medium_custom'];
+                }
+
+                $code = $data['code'] ?: ShortLink::generateUniqueCode();
+                $campaign = $data['utm_campaign'];
+
+                // Build the long URL pointing at the bundle's public page.
+                $base = rtrim(config('services.frontend.url'), '/') . '/bundles/' . $record->slug;
+                $query = http_build_query(array_filter([
+                    'utm_source' => $utmSource,
+                    'utm_medium' => $utmMedium,
+                    'utm_campaign' => $campaign,
+                ]));
+                $targetUrl = $base . '?' . $query;
+
+                $link = ShortLink::create([
+                    'code' => $code,
+                    'target_url' => $targetUrl,
+                    'label' => $data['label'],
+                    'bundle_id' => $record->id,
+                    'campaign' => $campaign,
+                    'created_by' => auth()->id(),
+                ]);
+
+                $editUrl = route('filament.admin.resources.short-links.edit', $link);
+                Notification::make()
+                    ->title('短網址產生完成')
+                    ->body(new HtmlString(
+                        '<div class="font-mono text-sm break-all">' . e($link->fullUrl()) . '</div>'
+                        . '<a href="' . e($editUrl) . '" class="text-primary-600 underline text-xs">→ 看 QR / 複製 / 編輯</a>'
+                    ))
+                    ->success()
+                    ->persistent()
+                    ->send();
+            })
+            ->modalWidth('lg');
     }
 }
