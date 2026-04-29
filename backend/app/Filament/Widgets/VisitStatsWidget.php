@@ -108,16 +108,32 @@ class VisitStatsWidget extends StatsOverviewWidget
     /** @return array{0: Carbon, 1: Carbon} */
     private function resolveRange(): array
     {
+        // 1) Dashboard date pickers (/admin) — InteractsWithPageFilters trait.
         $startFilter = $this->pageFilters['startDate'] ?? null;
         $endFilter = $this->pageFilters['endDate'] ?? null;
-
         if ($startFilter && $endFilter) {
             return [
                 Carbon::parse($startFilter)->startOfDay(),
                 Carbon::parse($endFilter)->endOfDay(),
             ];
         }
-        // Default = today only (matches list page's "僅今日" default filter)
+
+        // 2) Resource list page table filter (/admin/visits with `date` filter).
+        // Livewire syncs tableFilters into the request payload on every wire
+        // call, so request()->input() works for both initial load and SPA-style
+        // filter changes. Without this, the widget always shows today's data
+        // even when the user is browsing a past day in the list.
+        $tableDate = request()->input('tableFilters.date.value');
+        if ($tableDate) {
+            try {
+                $d = Carbon::parse($tableDate);
+                return [$d->copy()->startOfDay(), $d->copy()->endOfDay()];
+            } catch (\Throwable) {
+                // fall through
+            }
+        }
+
+        // 3) Default = today only (matches list page's "僅今日" default filter)
         return [today()->startOfDay(), today()->endOfDay()];
     }
 

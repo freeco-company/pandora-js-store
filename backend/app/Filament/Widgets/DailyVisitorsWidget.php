@@ -81,7 +81,18 @@ class DailyVisitorsWidget extends StatsOverviewWidget
 
     private function focusDate(): Carbon
     {
+        // Dashboard date picker has priority…
         $end = $this->pageFilters['endDate'] ?? null;
-        return $end ? Carbon::parse($end) : Carbon::today();
+        if ($end) {
+            return Carbon::parse($end);
+        }
+        // …then the VisitResource list page's `date` table filter (Livewire
+        // syncs tableFilters into the request payload, so this works for both
+        // initial load and SPA-style filter changes).
+        $tableDate = request()->input('tableFilters.date.value');
+        if ($tableDate) {
+            try { return Carbon::parse($tableDate); } catch (\Throwable) {}
+        }
+        return Carbon::today();
     }
 }
