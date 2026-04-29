@@ -147,10 +147,14 @@ class AiTrafficByContent extends BaseWidget
         if ($type === 'home') {
             return '首頁';
         }
-        if ($type === 'product' && preg_match('#^/products/([^/?#]+)#', $path, $m)) {
+        // Use ~ as delimiter so we can keep `#` literal inside the char class
+        // (the previous `#…[^/?#]…#` pattern collided with the delimiter and
+        // threw "preg_match(): Unknown modifier ']'" on any path containing a
+        // fragment segment).
+        if ($type === 'product' && preg_match('~^/products/([^/?#]+)~', $path, $m)) {
             return $products[$m[1]] ?? $m[1];
         }
-        if ($type === 'article' && preg_match('#^/articles/([^/?#]+)#', $path, $m)) {
+        if ($type === 'article' && preg_match('~^/articles/([^/?#]+)~', $path, $m)) {
             return $articles[$m[1]] ?? $m[1];
         }
         return $path;
