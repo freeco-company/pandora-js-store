@@ -23,6 +23,7 @@ use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\PopupController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\ReviewController;
+use App\Http\Controllers\Api\ShortLinkController;
 use App\Http\Controllers\Api\SocialProofController;
 use App\Http\Controllers\Api\StockNotificationController;
 use App\Http\Controllers\Api\VisitController;
@@ -143,6 +144,12 @@ Route::get('/campaigns/{slug}', [CampaignController::class, 'show']);
 
 // Bundle detail — /api/bundles/{slug}. 404 when parent campaign not running.
 Route::get('/bundles/{slug}', [BundleController::class, 'show']);
+
+// Marketing short links — Next.js /p/[code] hits this to resolve + bump
+// click_count, then issues the customer-visible 302. See
+// frontend/src/app/p/[code]/route.ts.
+Route::get('/short-links/{code}/resolve', [ShortLinkController::class, 'resolve'])
+    ->where('code', '[A-Za-z0-9-]{3,40}');
 
 // Pandora Core identity webhook — platform-side single source of truth pushes
 // here when group_users / group_user_identities change. HMAC + replay 防護
