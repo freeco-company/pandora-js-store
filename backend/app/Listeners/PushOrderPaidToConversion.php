@@ -4,6 +4,7 @@ namespace App\Listeners;
 
 use App\Events\OrderPaid;
 use App\Services\PandoraConversionClient;
+use App\Services\PandoraGamificationPublisher;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\DB;
@@ -56,7 +57,10 @@ class PushOrderPaidToConversion implements ShouldQueue
         return [30, 60, 120, 240, 480];
     }
 
-    public function __construct(private readonly PandoraConversionClient $client) {}
+    public function __construct(
+        private readonly PandoraConversionClient $client,
+        private readonly PandoraGamificationPublisher $gamificationPublisher,
+    ) {}
 
     public function handle(OrderPaid $event): void
     {
@@ -125,6 +129,36 @@ class PushOrderPaidToConversion implements ShouldQueue
                 'error' => $e->getMessage(),
             ]);
             throw $e;
+        }
+
+        // ADR-009 — also publish to gamification for the first paid order so
+        // the customer earns the cross-app jerosse.first_order XP and the
+        // conversion lifecycle's `applicant → franchisee_self_use` rule fires
+        // alongside the gamification.level_up webhook chain.
+        // Repeat purchases don't fire gamification here — those are scoreless
+        // engagement signals (catalog has no jerosse.order_paid kind).
+        if ($isFirstOrder) {
+            try {
+                $this->gamificationPublisher->publish(
+                    pandoraUserUuid: $uuid,
+                    eventKind: 'jerosse.first_order',
+                    idempotencyKey: 'jerosse.order.'.$order->id.'.first',
+                    metadata: [
+                        'order_id' => $order->id,
+                        'order_number' => $order->order_number,
+                        'amount' => (float) $order->total,
+                    ],
+                    occurredAt: $occurredAt,
+                );
+            } catch (\Throwable $e) {
+                // Same retry semantics as the conversion push — 5xx → re-throw,
+                // 4xx soft-handled inside the publisher.
+                Log::warning('[PushOrderPaidToConversion] gamification publish failed; will retry', [
+                    'order_id' => $order->id,
+                    'error' => $e->getMessage(),
+                ]);
+                throw $e;
+            }
         }
     }
 }
