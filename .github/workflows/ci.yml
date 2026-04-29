@@ -68,6 +68,9 @@ jobs:
   frontend:
     name: Frontend type-check + build
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read   # to install @freeco-company/pandora-design-svg from GitHub Packages
     steps:
       - uses: actions/checkout@v4
 
