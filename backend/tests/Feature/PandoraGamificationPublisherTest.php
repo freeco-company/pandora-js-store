@@ -113,4 +113,71 @@ class PandoraGamificationPublisherTest extends TestCase
             'idemp-y',
         );
     }
+
+    public function test_AchievementService_award_publishes_jerosse_achievement_awarded(): void
+    {
+        Http::fake([
+            'gam.test/*' => Http::response([
+                'awarded' => true, 'code' => 'first_order', 'tier' => 'bronze',
+                'xp_delta' => 50, 'total_xp' => 50, 'group_level' => 1,
+            ], 201),
+        ]);
+
+        $customer = \App\Models\Customer::create([
+            'name' => 'Pub Test',
+            'email' => 'pub-test@e.com',
+            'phone' => '0912000111',
+            'password' => bcrypt('x'),
+            'pandora_user_uuid' => 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeee0099',
+        ]);
+
+        $awarded = app(\App\Services\AchievementService::class)
+            ->award($customer, \App\Services\AchievementCatalog::FIRST_ORDER);
+
+        $this->assertSame(\App\Services\AchievementCatalog::FIRST_ORDER, $awarded);
+        Http::assertSent(function ($request) use ($customer) {
+            return $request->url() === 'https://gam.test/api/v1/internal/gamification/events'
+                && $request['event_kind'] === 'jerosse.achievement_awarded'
+                && $request['source_app'] === 'jerosse'
+                && $request['idempotency_key'] === 'jerosse.achievement.'.$customer->id.'.'.\App\Services\AchievementCatalog::FIRST_ORDER
+                && $request['metadata']['code'] === \App\Services\AchievementCatalog::FIRST_ORDER;
+        });
+    }
+
+    public function test_AchievementService_award_skips_publish_when_customer_has_no_uuid(): void
+    {
+        Http::fake();
+        $customer = \App\Models\Customer::create([
+            'name' => 'No Uuid',
+            'email' => 'no-uuid@e.com',
+            'phone' => '0912000222',
+            'password' => bcrypt('x'),
+        ]);
+        $customer->forceFill(['pandora_user_uuid' => null])->saveQuietly();
+
+        app(\App\Services\AchievementService::class)
+            ->award($customer, \App\Services\AchievementCatalog::FIRST_ORDER);
+
+        Http::assertNothingSent();
+    }
+
+    public function test_AchievementService_award_swallows_publish_5xx_to_avoid_blocking_checkout(): void
+    {
+        Http::fake([
+            'gam.test/*' => Http::response('boom', 503),
+        ]);
+        $customer = \App\Models\Customer::create([
+            'name' => 'Five XX',
+            'email' => 'five-xx@e.com',
+            'phone' => '0912000333',
+            'password' => bcrypt('x'),
+            'pandora_user_uuid' => 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeee0500',
+        ]);
+
+        // Should NOT throw — synchronous award path must not break checkout
+        $awarded = app(\App\Services\AchievementService::class)
+            ->award($customer, \App\Services\AchievementCatalog::FIRST_ORDER);
+
+        $this->assertSame(\App\Services\AchievementCatalog::FIRST_ORDER, $awarded);
+    }
 }
