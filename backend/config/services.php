@@ -174,4 +174,13 @@ return [
         'push_timeout_seconds' => (int) env('PANDORA_CONVERSION_PUSH_TIMEOUT', 5),
     ],
 
+    // ADR-009 Phase B — outbound gamification events from 母艦 to py-service.
+    // Empty base_url → publisher noop (safe default). Reuses the conversion
+    // shared secret if a gamification-specific one isn't set.
+    'pandora_gamification' => [
+        'base_url' => env('PANDORA_GAMIFICATION_BASE_URL', env('PANDORA_CONVERSION_BASE_URL')),
+        'shared_secret' => env('PANDORA_GAMIFICATION_SHARED_SECRET', env('PANDORA_CONVERSION_INTERNAL_SECRET')),
+        'timeout' => (int) env('PANDORA_GAMIFICATION_TIMEOUT', 5),
+    ],
+
 ];
