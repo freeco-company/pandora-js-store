@@ -3,6 +3,7 @@ import dynamic from 'next/dynamic';
 import { getProducts, getProductCategories, getBanners, getPopups, getArticles, imageUrl, type Product, type ProductCategory, type Banner, type Popup, type Article } from '@/lib/api';
 import ProductCardGrid from '@/components/ProductCardGrid';
 import HeroBanner from '@/components/HeroBanner';
+import HomeDodoNarrator from '@/components/HomeDodoNarrator';
 import ScrollReveal from '@/components/ScrollReveal';
 import TextReveal from '@/components/TextReveal';
 import MagneticButton from '@/components/MagneticButton';
@@ -136,6 +137,10 @@ export default async function HomePage() {
                   JEROSSE 婕樂纖 — 保健食品 × 美容保養雙軌品牌。<br />
                   每一份配方都為仙女而生，讓健康與美麗自然並行。
                 </p>
+              </ScrollReveal>
+
+              <ScrollReveal variant="fade-up" delay={600}>
+                <HomeDodoNarrator className="mb-8 max-w-md" />
               </ScrollReveal>
 
               <ScrollReveal variant="fade-up" delay={650}>

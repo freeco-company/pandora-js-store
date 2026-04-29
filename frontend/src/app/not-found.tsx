@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import DodoNarrator from '@/components/DodoNarrator';
 
 export const metadata: Metadata = {
   title: '找不到此頁面',
@@ -18,8 +19,14 @@ export default function NotFound() {
         className="mx-auto mb-2"
       />
       <h1 className="text-5xl font-bold text-[#9F6B3E]/30 mb-2">404</h1>
-      <h2 className="text-xl font-semibold text-gray-900 mb-2">找不到此頁面</h2>
-      <p className="text-gray-500 mb-8">朵朵幫你帶回首頁吧～</p>
+      <h2 className="text-xl font-semibold text-gray-900 mb-6">找不到此頁面</h2>
+      <div className="max-w-md mx-auto mb-8 text-left">
+        <DodoNarrator
+          line="這裡好像沒有妳要找的東西。讓我帶妳回首頁吧。"
+          mood="neutral"
+          size={56}
+        />
+      </div>
       <div className="flex flex-wrap gap-3 justify-center mb-12">
         <Link
           href="/"

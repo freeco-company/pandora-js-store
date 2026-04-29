@@ -12,6 +12,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import Mascot from './Mascot';
 import ActivationQuest, { type ActivationProgress } from './ActivationQuest';
+import DodoNarrator, { type DodoMood } from './DodoNarrator';
 import SiteIcon from '@/components/SiteIcon';
 import { useAuth } from './AuthProvider';
 import { getCustomerDashboard } from '@/lib/api';
@@ -58,6 +59,9 @@ export default function MascotBanner() {
 
   const stage = stageFromStreak(streak);
 
+  // 朵朵 NPC 旁白（依登入 / streak / achievement 條件出對白）
+  const dodo = pickDodoLine({ isLoggedIn, streak, achievementCount });
+
   // Next streak milestone
   const nextMilestone = streak < 7 ? 7 : streak < 30 ? 30 : streak < 100 ? 100 : 0;
   const prevMilestone = streak < 7 ? 0 : streak < 30 ? 7 : streak < 100 ? 30 : 100;
@@ -103,6 +107,13 @@ export default function MascotBanner() {
             <h2 className="text-xl sm:text-2xl font-black text-slate-800 mb-2">
               {isLoggedIn ? '哈囉仙女，今天想逛點什麼呢？' : '嗨～我是芽芽，要和我一起玩嗎？'}
             </h2>
+
+            {/* 朵朵 NPC 旁白 — 依登入 / streak / 成就推播 */}
+            {dodo && (
+              <div className="mb-3">
+                <DodoNarrator line={dodo.line} mood={dodo.mood} />
+              </div>
+            )}
 
             {/* Progress bar toward next streak milestone — only for logged-in */}
             {isLoggedIn && nextMilestone > 0 && (
@@ -156,4 +167,44 @@ export default function MascotBanner() {
       </div>
     </section>
   );
+}
+
+/**
+ * 朵朵 NPC 旁白挑選邏輯。
+ * Voice 規則來源：docs/design/dodo-character-board-v1.md §5
+ * - 妳 / 你 / 朋友（不寫「您」「會員」「用戶」）
+ * - ≤ 25 字 / 行；不命令、不批判、不強迫
+ */
+function pickDodoLine({
+  isLoggedIn,
+  streak,
+  achievementCount,
+}: {
+  isLoggedIn: boolean;
+  streak: number;
+  achievementCount: number;
+}): { line: string; mood: DodoMood } | null {
+  if (!isLoggedIn) {
+    return { line: '我是朵朵。登入後我陪妳一起走。', mood: 'neutral' };
+  }
+  if (streak >= 100) {
+    return { line: '一百天了。我會記得這個瞬間。', mood: 'cheering' };
+  }
+  if (streak >= 30) {
+    return { line: '衝！妳已經比昨天的自己更靠近了。', mood: 'cheering' };
+  }
+  if (streak === 7) {
+    return { line: '七天了，這個 milestone 值得記住。', mood: 'cheering' };
+  }
+  if (streak >= 8) {
+    return { line: `連續 ${streak} 天了，妳又往前走一步。`, mood: 'happy' };
+  }
+  if (streak >= 1) {
+    const left = 7 - streak;
+    return { line: `已經 ${streak} 天，再 ${left} 天就到第一個里程碑。`, mood: 'happy' };
+  }
+  if (achievementCount > 0) {
+    return { line: `妳收集了 ${achievementCount} 個成就，每一個我都記得。`, mood: 'happy' };
+  }
+  return { line: '今天慢慢來就好。我在這裡。', mood: 'neutral' };
 }

@@ -15,6 +15,7 @@ import { useCart } from '@/components/CartProvider';
 import { useToast } from '@/components/Toast';
 import ImageWithFallback, { LogoPlaceholder } from '@/components/ImageWithFallback';
 import LogoLoader from '@/components/LogoLoader';
+import DodoNarrator from '@/components/DodoNarrator';
 import { imageUrl, type Product } from '@/lib/api';
 import { formatPrice } from '@/lib/format';
 
@@ -57,7 +58,13 @@ export default function WishlistClient() {
             aria-hidden
             className="mx-auto mb-2"
           />
-          <p className="text-gray-600 mb-4">還沒收藏任何商品</p>
+          <div className="max-w-sm mx-auto mb-4 text-left">
+            <DodoNarrator
+              line="慢慢看，看到喜歡的就放進來，下次找回來更快。"
+              mood="happy"
+              size={48}
+            />
+          </div>
           <Link
             href="/products"
             className="inline-flex items-center gap-2 px-6 py-3 bg-[#9F6B3E] text-white font-black rounded-full hover:bg-[#85572F] transition-colors"
