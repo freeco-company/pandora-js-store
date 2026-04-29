@@ -49,9 +49,6 @@ jobs:
     # pipeline (frontend built 3 times!). The smoke test at the end
     # catches anything that slips through.
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: read   # to install @freeco-company/pandora-design-svg from GitHub Packages
     outputs:
       status: ${{ steps.smoke.outputs.status }}
     steps:
@@ -70,12 +67,6 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
 
       - name: Install frontend deps
-        env:
-          # PAT with read:packages scope — for cross-repo GitHub Packages access.
-          # secrets.GITHUB_TOKEN can't read packages from another repo;
-          # NODE_AUTH_TOKEN avoids name collision with Actions' implicit
-          # GITHUB_TOKEN env (which overrode our value before).
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_REGISTRY_TOKEN }}
         run: cd frontend && npm ci --no-audit --no-fund
 
       - name: Build Next.js (CI, not server)
