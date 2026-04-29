@@ -67,6 +67,8 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
 
       - name: Install frontend deps
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: cd frontend && npm ci --no-audit --no-fund
 
       - name: Build Next.js (CI, not server)
