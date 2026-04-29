@@ -85,7 +85,7 @@ jobs:
         working-directory: frontend
         env:
           # PAT with read:packages scope — see deploy.yml for explanation.
-          GITHUB_TOKEN: ${{ secrets.NPM_REGISTRY_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_REGISTRY_TOKEN }}
         run: npm ci
 
       - name: TypeScript
