@@ -169,13 +169,25 @@ jobs:
             set -e
             cd /var/www/pandora/backend
             composer install --no-dev --optimize-autoloader --no-interaction 2>&1 | tail -3
-            rm -f bootstrap/cache/*.php
             php artisan filament:assets 2>&1 | tail -2
             php artisan storage:link || true
-            php artisan view:clear
-            php artisan config:cache
-            php artisan route:cache
+
+            # Cache rebuild — atomic. The previous flow (`rm -f
+            # bootstrap/cache/*.php` followed by individual `*:cache`
+            # commands) opened a ~500ms race window where Laravel boot
+            # would fail with "routes-v7.php: No such file" because
+            # PHP-FPM opcache still believed the cache file existed.
+            # Symptom: admin sees 419 Page Expired (Livewire turns 500
+            # into 419 when CSRF context is lost). See issue #36.
+            #
+            # `optimize:clear` removes caches one-by-one (no global rm),
+            # `optimize` writes them via tmp+rename (atomic), and a
+            # graceful PHP-FPM reload at the end forces opcache to
+            # re-stat the new files instead of holding old inodes.
+            php artisan optimize:clear
             php artisan migrate --force
+            php artisan optimize 2>&1 | tail -10
+            systemctl reload php8.3-fpm
 
             # Storage permissions: rsync from CI carries the runner's UID
             # (1001) into storage/, but php-fpm runs as www-data — every
