@@ -174,13 +174,18 @@ return [
         'push_timeout_seconds' => (int) env('PANDORA_CONVERSION_PUSH_TIMEOUT', 5),
     ],
 
-    // ADR-009 Phase B — outbound gamification events from 母艦 to py-service.
-    // Empty base_url → publisher noop (safe default). Reuses the conversion
-    // shared secret if a gamification-specific one isn't set.
+    // ADR-009 Phase B — outbound gamification events from 母艦 to py-service +
+    // inbound gamification webhook (level_up / achievement_awarded /
+    // outfit_unlocked) from py-service. Empty values = noop (safe default).
     'pandora_gamification' => [
+        // Outbound publisher
         'base_url' => env('PANDORA_GAMIFICATION_BASE_URL', env('PANDORA_CONVERSION_BASE_URL')),
         'shared_secret' => env('PANDORA_GAMIFICATION_SHARED_SECRET', env('PANDORA_CONVERSION_INTERNAL_SECRET')),
         'timeout' => (int) env('PANDORA_GAMIFICATION_TIMEOUT', 5),
+        // Inbound webhook receiver (independent secret; py-service consumer
+        // env GAMIFICATION_CONSUMER_JEROSSE_SECRET points here).
+        'webhook_secret' => env('PANDORA_GAMIFICATION_WEBHOOK_SECRET'),
+        'webhook_window_seconds' => (int) env('PANDORA_GAMIFICATION_WEBHOOK_WINDOW_SECONDS', 300),
     ],
 
 ];

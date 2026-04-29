@@ -19,6 +19,9 @@ class Customer extends Model
         'streak_days', 'last_active_date', 'current_outfit', 'current_backdrop',
         'last_serendipity_at', 'activation_progress', 'total_spent', 'total_orders',
         'referral_code', 'referred_by_customer_id', 'referral_reward_granted',
+        // ADR-009 Phase B inbound — group gamification mirror (driven by py-service webhook)
+        'group_level', 'group_level_xp', 'group_level_name_zh', 'group_level_name_en',
+        'outfits_owned', 'group_level_updated_at',
     ];
 
     /** Auto-generate a unique referral_code on first save if blank. */
@@ -53,6 +56,10 @@ class Customer extends Model
         'last_active_date' => 'date',
         'last_serendipity_at' => 'datetime',
         'activation_progress' => 'array',
+        'outfits_owned' => 'array',
+        'group_level' => 'integer',
+        'group_level_xp' => 'integer',
+        'group_level_updated_at' => 'datetime',
     ];
 
     public function orders()

@@ -181,3 +181,13 @@ Route::get(
 )
     ->middleware('conversion.internal')
     ->withoutMiddleware([ThrottleRequests::class.':api']);
+
+// ADR-009 Phase B inbound — py-service gamification outbox dispatcher pushes
+// level_up / achievement_awarded / outfit_unlocked here. HMAC + nonce dedup
+// handled by middleware. No public throttle (server-to-server, batched).
+Route::post(
+    '/internal/gamification/webhook',
+    [\App\Http\Controllers\Api\GamificationWebhookController::class, 'handle']
+)
+    ->middleware('gamification.webhook')
+    ->withoutMiddleware([ThrottleRequests::class.':api']);
