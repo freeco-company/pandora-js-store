@@ -60,6 +60,17 @@ class DiscordNotifier
         );
     }
 
+    /** Webhook for new franchise consultation leads. Falls back to orders. */
+    public static function franchise(): self
+    {
+        return new self(
+            config('services.discord.franchise_webhook')
+                ?: config('services.discord.orders_webhook')
+                ?: config('services.discord.compliance_webhook'),
+            'franchise',
+        );
+    }
+
     public function isEnabled(): bool
     {
         return ! empty($this->webhook);

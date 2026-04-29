@@ -65,6 +65,8 @@ return [
         // ads_webhook (which carries raw daily numbers) so the two streams
         // don't noise each other. Falls back to ads_webhook if unset.
         'ads_strategy_webhook' => env('DISCORD_ADS_STRATEGY_WEBHOOK'),
+        // ADR-008 §2.2 段 1 — new franchise consultation leads. Falls back to orders_webhook.
+        'franchise_webhook' => env('DISCORD_FRANCHISE_WEBHOOK'),
     ],
 
     /*
