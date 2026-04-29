@@ -9,9 +9,17 @@ export const metadata: Metadata = {
 export default function NotFound() {
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
-      <h1 className="text-6xl font-bold text-gray-200 mb-4">404</h1>
+      <img
+        src="/svg/empty/error_404.svg"
+        alt=""
+        width={224}
+        height={224}
+        aria-hidden
+        className="mx-auto mb-2"
+      />
+      <h1 className="text-5xl font-bold text-[#9F6B3E]/30 mb-2">404</h1>
       <h2 className="text-xl font-semibold text-gray-900 mb-2">找不到此頁面</h2>
-      <p className="text-gray-500 mb-8">您要找的頁面不存在或已被移除。</p>
+      <p className="text-gray-500 mb-8">朵朵幫你帶回首頁吧～</p>
       <div className="flex flex-wrap gap-3 justify-center mb-12">
         <Link
           href="/"

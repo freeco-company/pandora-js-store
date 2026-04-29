@@ -17,6 +17,8 @@ import SiteIcon from '@/components/SiteIcon';
 import OutfitIcon from '@/components/OutfitIcon';
 import Mascot from '@/components/Mascot';
 import LogoLoader from '@/components/LogoLoader';
+import { badgeUrl } from '@/lib/badge';
+import type { AchievementTier } from '@/lib/achievements';
 import {
   getCustomerDashboard,
   setMascotOutfit,
@@ -460,6 +462,16 @@ function AchievementsGrid({
               <span className="absolute -top-2 -right-1 px-2 py-0.5 rounded-full bg-[#c0392b] text-white text-[9px] font-black shadow-md">
                 快達成
               </span>
+            )}
+            {earned && (
+              <img
+                src={badgeUrl(code, def.tier as AchievementTier)}
+                alt=""
+                width={28}
+                height={28}
+                aria-hidden
+                className="absolute -top-1 -left-1 drop-shadow-sm"
+              />
             )}
             <div className={`mb-0.5 ${earned ? '' : 'grayscale opacity-70'}`}>
               <OutfitIcon name={def.emoji} size={32} static={!earned} />

@@ -48,8 +48,15 @@ export default function WishlistClient() {
       <p className="text-sm text-gray-500 mb-8">收藏喜歡的商品，下次找回更快</p>
 
       {items.length === 0 ? (
-        <div className="text-center py-16 border-2 border-dashed border-[#e7d9cb] rounded-3xl bg-[#fdf7ef]">
-          <div className="text-5xl mb-3 opacity-40">♡</div>
+        <div className="text-center py-12 border-2 border-dashed border-[#e7d9cb] rounded-3xl bg-[#fdf7ef]">
+          <img
+            src="/svg/empty/empty_no_record.svg"
+            alt=""
+            width={200}
+            height={200}
+            aria-hidden
+            className="mx-auto mb-2"
+          />
           <p className="text-gray-600 mb-4">還沒收藏任何商品</p>
           <Link
             href="/products"

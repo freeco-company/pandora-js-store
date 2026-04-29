@@ -12,6 +12,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { ACHIEVEMENT_CATALOG, TIER_GRADIENTS, type AchievementDef } from '@/lib/achievements';
+import { badgeUrl } from '@/lib/badge';
 import SiteIcon from '@/components/SiteIcon';
 import OutfitIcon from '@/components/OutfitIcon';
 
@@ -76,7 +77,22 @@ function Overlay({ achievement, onClose }: { achievement: AchievementDef; onClos
       <ConfettiBurst />
       <div className="relative celebration-card">
         <div className={`bg-gradient-to-br ${TIER_GRADIENTS[achievement.tier]} rounded-3xl p-8 shadow-2xl min-w-[280px] text-center`}>
-          <div className="text-7xl mb-3 celebration-emoji"><OutfitIcon name={achievement.emoji} size={72} /></div>
+          {/* Tier badge frame (animated SVG) sits behind the content emoji */}
+          <div className="relative inline-block mb-3 celebration-emoji">
+            <img
+              src={badgeUrl(achievement.code, achievement.tier)}
+              alt=""
+              width={128}
+              height={128}
+              aria-hidden
+              className="block"
+            />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="bg-white/85 backdrop-blur-sm rounded-full p-2 shadow-md">
+                <OutfitIcon name={achievement.emoji} size={48} />
+              </div>
+            </div>
+          </div>
           <div className="text-[10px] font-black text-white/70 tracking-[0.2em] mb-1">成就達成</div>
           <h3 className="text-2xl font-black text-[#3d2e22] mb-1">{achievement.name}</h3>
           <p className="text-xs font-bold text-[#5a4234]/70">{achievement.description}</p>
