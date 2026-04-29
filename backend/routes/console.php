@@ -8,6 +8,13 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
+// ADR-007 §6 #4 mitigation (b) — hourly identity reconcile from Pandora Core.
+// Catches webhooks the publisher dropped / dead-lettered.
+Schedule::command('identity:reconcile')
+    ->hourly()
+    ->withoutOverlapping()
+    ->onOneServer();
+
 // Daily Jerosse article scrape at 03:10 Asia/Taipei.
 // Scraper skips already-imported URLs (dedupes by source_url) and
 // applies legal-compliance sanitizer + disclaimer on import.
