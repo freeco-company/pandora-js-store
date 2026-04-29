@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\VerifyConversionInternalSignature;
+use App\Http\Middleware\VerifyGamificationWebhookSignature;
 use App\Http\Middleware\VerifyIdentityWebhookSignature;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -22,6 +23,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'identity.webhook' => VerifyIdentityWebhookSignature::class,
             'conversion.internal' => VerifyConversionInternalSignature::class,
+            // ADR-009 Phase B inbound — py-service → 母艦 gamification webhook
+            'gamification.webhook' => VerifyGamificationWebhookSignature::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
