@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "f6cdf7d5a9e86b4695209e9ca3c0ce62",
+    "content-hash": "debc86feea9aca88a3b44d7221f3a0f1",
     "packages": [
         {
             "name": "blade-ui-kit/blade-heroicons",
@@ -1474,6 +1474,40 @@
                 "source": "https://github.com/googleapis/php-jwt/tree/v7.0.5"
             },
             "time": "2026-04-01T20:38:03+00:00"
+        },
+        {
+            "name": "freeco/pandora-shared",
+            "version": "0.1.0",
+            "dist": {
+                "type": "path",
+                "url": "../../packages/pandora-shared",
+                "reference": "45b7ae86b344249728f5d768e31a033296d4f400"
+            },
+            "require": {
+                "php": "^8.3"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "^12.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Pandora\\Shared\\": "src/"
+                }
+            },
+            "autoload-dev": {
+                "psr-4": {
+                    "Pandora\\Shared\\Tests\\": "tests/"
+                }
+            },
+            "license": [
+                "proprietary"
+            ],
+            "description": "Pandora 集團共用基礎設施與 domain services — ECPay, IndexNow, Discord, LINE Messaging, Google Ads, Achievement, Outfit, Serendipity. Pure PHP.",
+            "transport-options": {
+                "symlink": true,
+                "relative": true
+            }
         },
         {
             "name": "fruitcake/php-cors",
@@ -12034,7 +12068,9 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {},
+    "stability-flags": {
+        "freeco/pandora-shared": 20
+    },
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
