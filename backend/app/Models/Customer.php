@@ -13,6 +13,7 @@ class Customer extends Model
     protected $fillable = [
         'pandora_user_uuid',
         'name', 'email', 'phone', 'password', 'is_vip',
+        'is_franchisee', 'franchisee_verified_at',
         'google_id', 'line_id', 'membership_level',
         'address_city', 'address_district', 'address_detail', 'address_zip',
         'wp_user_id',
@@ -52,6 +53,8 @@ class Customer extends Model
 
     protected $casts = [
         'is_vip' => 'boolean',
+        'is_franchisee' => 'boolean',
+        'franchisee_verified_at' => 'datetime',
         'password' => 'hashed',
         'last_active_date' => 'date',
         'last_serendipity_at' => 'datetime',

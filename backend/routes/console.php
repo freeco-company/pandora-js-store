@@ -141,6 +141,16 @@ Schedule::command('mirror:dispatch-pending')
     ->runInBackground()
     ->appendOutputTo(storage_path('logs/identity-mirror.log'));
 
+// Franchise webhook outbox sweeper — every minute.
+// 母艦 → 朵朵 (pandora-meal) franchisee.activated/deactivated events。
+// Customer.is_franchisee 變化時 observer 寫一筆到 franchise_outbox_events 並
+// 立即 dispatch job；schedule 每分鐘兜底未送達 / retry。Worker 失敗 5 次後留 table。
+Schedule::command('franchise:dispatch-pending')
+    ->everyMinute()
+    ->withoutOverlapping(2)
+    ->runInBackground()
+    ->appendOutputTo(storage_path('logs/franchise-webhook.log'));
+
 // ── 本機開發專用：每天 03:00 從正式站 pull DB 覆蓋本地 ──
 // 指令內建 PHP_OS_FAMILY === 'Darwin' 守門，Linux 正式機跑 schedule:run
 // 也會被 guard 拒絕執行，不會循環同步自己。

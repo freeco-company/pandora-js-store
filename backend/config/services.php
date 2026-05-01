@@ -178,6 +178,25 @@ return [
         'push_timeout_seconds' => (int) env('PANDORA_CONVERSION_PUSH_TIMEOUT', 5),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Franchise Webhook → 朵朵 (pandora-meal)
+    |--------------------------------------------------------------------------
+    | 母艦是「誰是 加盟夥伴」的 source of truth；狀態變化時送 webhook 通知 朵朵
+    | unlock FP-gated content (fp_crown / fp_chef / fp_apron_premium / fp_recipe).
+    |
+    | secret 必須與 朵朵 端 MOTHERSHIP_FRANCHISE_WEBHOOK_SECRET 完全一致。
+    | 兩邊不一致 → 朵朵端 HMAC verify fail → 401 → 我們這邊一直 retry 直到 dead letter。
+    | rotate secret 步驟：先在朵朵端加新 secret（雙活），母艦切換 env，朵朵端
+    | 確認 nonce 表沒有舊 secret 簽的 event 再退場舊 secret。
+    */
+    'franchise_webhook' => [
+        'url' => env('FRANCHISE_WEBHOOK_URL', 'https://meal-api.js-store.com.tw/api/internal/franchisee/webhook'),
+        'secret' => env('MOTHERSHIP_FRANCHISE_WEBHOOK_SECRET'),
+        'timeout' => (int) env('FRANCHISE_WEBHOOK_TIMEOUT', 10),
+        'max_attempts' => (int) env('FRANCHISE_WEBHOOK_MAX_ATTEMPTS', 5),
+    ],
+
     // ADR-009 Phase B — outbound gamification events from 母艦 to py-service +
     // inbound gamification webhook (level_up / achievement_awarded /
     // outfit_unlocked) from py-service. Empty values = noop (safe default).
