@@ -34,6 +34,21 @@ class CustomerResource extends Resource
                     Forms\Components\Toggle::make('is_vip')->label('VIP 會員'),
                 ])->columns(2),
 
+                // 加盟夥伴狀態：toggle on → CustomerObserver 觸發 FranchiseEventPublisher
+                // → 朵朵 (pandora-meal) 收到 webhook → unlock FP-gated content
+                // (fp_crown / fp_chef / fp_apron_premium / fp_recipe / FP food)。
+                \Filament\Schemas\Components\Section::make('加盟夥伴 (FP Franchise)')
+                    ->description('啟用後 朵朵 App 會自動 unlock 加盟限定內容（皇冠、主廚帽、特殊食譜）。退出加盟請關閉此 toggle。')
+                    ->schema([
+                        Forms\Components\Toggle::make('is_franchisee')
+                            ->label('已加盟')
+                            ->helperText('toggle 變動會自動送 webhook 給 朵朵，無需手動操作'),
+                        Forms\Components\DateTimePicker::make('franchisee_verified_at')
+                            ->label('加盟認證時間')
+                            ->helperText('啟用 toggle 但留空，存檔時自動填 now()')
+                            ->visible(fn ($get) => (bool) $get('is_franchisee')),
+                    ])->columns(2),
+
                 \Filament\Schemas\Components\Section::make('地址')->schema([
                     Forms\Components\TextInput::make('address_city')->label('縣市'),
                     Forms\Components\TextInput::make('address_district')->label('區域'),
@@ -72,6 +87,12 @@ class CustomerResource extends Resource
                     ->sortable()
                     ->label('VIP'),
 
+                Tables\Columns\IconColumn::make('is_franchisee')
+                    ->boolean()
+                    ->sortable()
+                    ->toggleable()
+                    ->label('加盟'),
+
                 Tables\Columns\TextColumn::make('orders_count')
                     ->counts('orders')
                     ->sortable()
@@ -95,6 +116,7 @@ class CustomerResource extends Resource
             ->defaultSort('created_at', 'desc')
             ->filters([
                 Tables\Filters\TernaryFilter::make('is_vip')->label('VIP'),
+                Tables\Filters\TernaryFilter::make('is_franchisee')->label('加盟夥伴'),
                 Tables\Filters\Filter::make('has_orders')
                     ->label('有下過單')
                     ->query(fn ($q) => $q->has('orders')),

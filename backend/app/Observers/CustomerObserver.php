@@ -4,7 +4,9 @@ namespace App\Observers;
 
 use App\Models\Customer;
 use App\Models\CustomerIdentity;
+use App\Services\Franchise\FranchiseEventPublisher;
 use App\Services\Identity\IdentityMirrorService;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -81,6 +83,32 @@ class CustomerObserver
         $profileColumns = ['name', 'email', 'phone', 'google_id', 'line_id'];
         if ($identityChanged || $customer->wasChanged($profileColumns)) {
             IdentityMirrorService::queueCustomerUpsert($customer);
+        }
+
+        // 加盟夥伴狀態變化 → 通知 朵朵 (pandora-meal)。
+        // 用 wasChanged('is_franchisee') 確保 only fire on 真正翻牌（避免 admin
+        // 反覆 save 同樣值仍送 webhook）。verified_at 也跟著同步：activated 時
+        // observer 自己抓 now() 為認證時間（如果上層 service 有指定 verified_at
+        // 在 wasChanged 後仍可從 customer->franchisee_verified_at 讀回）。
+        if ($customer->wasChanged('is_franchisee')) {
+            $publisher = app(FranchiseEventPublisher::class);
+            try {
+                if ($customer->is_franchisee) {
+                    $verifiedAt = $customer->franchisee_verified_at
+                        ? CarbonImmutable::instance($customer->franchisee_verified_at)
+                        : CarbonImmutable::now();
+                    $publisher->dispatchActivated($customer, source: 'mothership_admin', verifiedAt: $verifiedAt);
+                } else {
+                    $publisher->dispatchDeactivated($customer, source: 'mothership_admin');
+                }
+            } catch (\Throwable $e) {
+                // shadow mode：webhook publish 不能炸 customer save 主流程
+                Log::warning('[FranchisePublisher] observer dispatch failed', [
+                    'customer_id' => $customer->id,
+                    'is_franchisee' => $customer->is_franchisee,
+                    'error' => $e->getMessage(),
+                ]);
+            }
         }
     }
 
