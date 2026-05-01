@@ -24,6 +24,9 @@ class VisitStatsWidget extends StatsOverviewWidget
 {
     use InteractsWithPageFilters;
 
+    /** Set by ListVisits via make() so the widget tracks the list page's date filter. */
+    public ?string $focusDate = null;
+
     protected static ?int $sort = 1;
 
     protected int | string | array $columnSpan = 'full';
@@ -118,15 +121,15 @@ class VisitStatsWidget extends StatsOverviewWidget
             ];
         }
 
-        // 2) Resource list page table filter (/admin/visits with `date` filter).
-        // Livewire syncs tableFilters into the request payload on every wire
-        // call, so request()->input() works for both initial load and SPA-style
-        // filter changes. Without this, the widget always shows today's data
-        // even when the user is browsing a past day in the list.
-        $tableDate = request()->input('tableFilters.date.value');
-        if ($tableDate) {
+        // 2) Resource list page (/admin/visits) — ListVisits passes its
+        // current `date` table filter via Widget::make(['focusDate' => ...]).
+        // Don't try request()->input('tableFilters.date.value') — Filament
+        // table filters live in the parent Livewire component's state, not
+        // the HTTP request payload, so it always read empty and fell through
+        // to today() while the list itself showed the picked day.
+        if ($this->focusDate) {
             try {
-                $d = Carbon::parse($tableDate);
+                $d = Carbon::parse($this->focusDate);
                 return [$d->copy()->startOfDay(), $d->copy()->endOfDay()];
             } catch (\Throwable) {
                 // fall through

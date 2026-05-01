@@ -187,6 +187,45 @@ class FilamentAdminSmokeTest extends TestCase
             ->assertSuccessful();
     }
 
+    public function test_visit_stats_widget_tracks_list_page_date_filter(): void
+    {
+        // Regression guard: VisitStatsWidget previously read tableFilters from
+        // request()->input(), which is empty on Filament v3 list pages because
+        // table filter state lives in the parent Livewire component. Result:
+        // the widget showed today's UV while the list itself showed the
+        // user-picked day. Fix passes focusDate via Widget::make().
+        $yesterday = now()->subDay()->setTime(10, 0);
+        Visit::create([
+            'visitor_id' => 'yesterday-only',
+            'ip' => '9.9.9.9',
+            'device_type' => 'mobile',
+            'os' => 'iOS',
+            'browser' => 'Safari',
+            'referer_source' => 'direct',
+            'path' => '/',
+            'visited_at' => $yesterday,
+        ]);
+        Visit::create([
+            'visitor_id' => 'today-only',
+            'ip' => '8.8.8.8',
+            'device_type' => 'desktop',
+            'os' => 'Windows',
+            'browser' => 'Chrome',
+            'referer_source' => 'direct',
+            'path' => '/',
+            'visited_at' => now(),
+        ]);
+
+        // Widget pinned to yesterday should count 1 (yesterday-only), not
+        // today's row. The MM/DD label proves it's not falling back to today.
+        \Livewire\Livewire::actingAs($this->admin())
+            ->test(\App\Filament\Widgets\VisitStatsWidget::class, [
+                'focusDate' => $yesterday->toDateString(),
+            ])
+            ->assertSuccessful()
+            ->assertSeeText($yesterday->format('m/d') . '不重複訪客');
+    }
+
     public function test_reviews_index_renders(): void
     {
         $customer = Customer::create(['name' => 'C', 'email' => 'c@t.com', 'password' => bcrypt('x')]);

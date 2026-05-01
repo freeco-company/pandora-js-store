@@ -21,7 +21,9 @@ class ListVisits extends ListRecords
     protected function getHeaderWidgets(): array
     {
         return [
-            \App\Filament\Widgets\VisitStatsWidget::class,
+            \App\Filament\Widgets\VisitStatsWidget::make([
+                'focusDate' => $this->focusDate()->toDateString(),
+            ]),
         ];
     }
 
