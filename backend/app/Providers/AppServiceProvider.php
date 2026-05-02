@@ -5,18 +5,28 @@ namespace App\Providers;
 use App\Events\OrderPaid;
 use App\Listeners\PushOrderPaidToConversion;
 use App\Models\Article;
+use App\Models\ArticleCategory;
 use App\Models\Banner;
+use App\Models\Bundle;
 use App\Models\Campaign;
 use App\Models\Customer;
 use App\Models\Order;
+use App\Models\Popup;
 use App\Models\Product;
+use App\Models\ProductCategory;
+use App\Models\Review;
+use App\Observers\ArticleCategoryObserver;
 use App\Observers\ArticleComplianceObserver;
 use App\Observers\BannerObserver;
+use App\Observers\BundleObserver;
 use App\Observers\CampaignObserver;
 use App\Observers\CustomerObserver;
 use App\Observers\OrderConversionObserver;
 use App\Observers\OrderObserver;
+use App\Observers\PopupObserver;
+use App\Observers\ProductCategoryObserver;
 use App\Observers\ProductComplianceObserver;
+use App\Observers\ReviewObserver;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Event;
@@ -54,11 +64,16 @@ class AppServiceProvider extends ServiceProvider
         // becomes paid. Queued; noop when env not configured.
         Event::listen(OrderPaid::class, PushOrderPaidToConversion::class);
 
-        // Bust product cache when campaigns change
+        // Bust product cache when campaigns / bundles change
         Campaign::observe(CampaignObserver::class);
+        Bundle::observe(BundleObserver::class);
 
-        // Bust Next.js + Cloudflare cache when banners change
+        // Bust Next.js + Cloudflare cache when admin-editable surfaces change
         Banner::observe(BannerObserver::class);
+        Popup::observe(PopupObserver::class);
+        ProductCategory::observe(ProductCategoryObserver::class);
+        ArticleCategory::observe(ArticleCategoryObserver::class);
+        Review::observe(ReviewObserver::class);
 
         // Mirror customers.{email,phone,google_id,line_id} into customer_identities
         // for unified identity lookup + dedupe support.

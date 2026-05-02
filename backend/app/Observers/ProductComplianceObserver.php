@@ -4,6 +4,7 @@ namespace App\Observers;
 
 use App\Http\Controllers\Api\ProductController;
 use App\Models\Product;
+use App\Services\FrontendCacheService;
 use App\Services\IndexNowService;
 use App\Services\LegalContentSanitizer;
 
@@ -15,7 +16,10 @@ use App\Services\LegalContentSanitizer;
  */
 class ProductComplianceObserver
 {
-    public function __construct(private readonly LegalContentSanitizer $sanitizer) {}
+    public function __construct(
+        private readonly LegalContentSanitizer $sanitizer,
+        private readonly FrontendCacheService $frontendCache,
+    ) {}
 
     public function saving(Product $product): void
     {
@@ -33,6 +37,7 @@ class ProductComplianceObserver
     public function saved(Product $product): void
     {
         ProductController::bumpVersion();
+        $this->bustFrontend($product);
         $this->pingIndexNow($product);
     }
 
@@ -57,5 +62,23 @@ class ProductComplianceObserver
     public function deleted(Product $product): void
     {
         ProductController::bumpVersion();
+        $this->bustFrontend($product);
+    }
+
+    private function bustFrontend(Product $product): void
+    {
+        $slugs = array_values(array_filter(array_unique([
+            $product->slug,
+            $product->getOriginal('slug'),
+        ])));
+
+        $tags = ['products'];
+        $paths = ['/', '/products'];
+        foreach ($slugs as $slug) {
+            $tags[] = "product:{$slug}";
+            $paths[] = "/products/{$slug}";
+        }
+
+        $this->frontendCache->purge(tags: $tags, paths: $paths);
     }
 }

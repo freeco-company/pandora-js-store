@@ -4,6 +4,7 @@ namespace App\Observers;
 
 use App\Http\Controllers\Api\ArticleController;
 use App\Models\Article;
+use App\Services\FrontendCacheService;
 use App\Services\IndexNowService;
 use App\Services\LegalContentSanitizer;
 
@@ -13,7 +14,10 @@ use App\Services\LegalContentSanitizer;
  */
 class ArticleComplianceObserver
 {
-    public function __construct(private readonly LegalContentSanitizer $sanitizer) {}
+    public function __construct(
+        private readonly LegalContentSanitizer $sanitizer,
+        private readonly FrontendCacheService $frontendCache,
+    ) {}
 
     public function saving(Article $article): void
     {
@@ -34,6 +38,7 @@ class ArticleComplianceObserver
     public function saved(Article $article): void
     {
         ArticleController::bumpVersion();
+        $this->bustFrontend($article);
         $this->pingIndexNow($article);
     }
 
@@ -58,5 +63,23 @@ class ArticleComplianceObserver
     public function deleted(Article $article): void
     {
         ArticleController::bumpVersion();
+        $this->bustFrontend($article);
+    }
+
+    private function bustFrontend(Article $article): void
+    {
+        $slugs = array_values(array_filter(array_unique([
+            $article->slug,
+            $article->getOriginal('slug'),
+        ])));
+
+        $tags = ['articles'];
+        $paths = ['/articles'];
+        foreach ($slugs as $slug) {
+            $tags[] = "article:{$slug}";
+            $paths[] = "/articles/{$slug}";
+        }
+
+        $this->frontendCache->purge(tags: $tags, paths: $paths);
     }
 }
