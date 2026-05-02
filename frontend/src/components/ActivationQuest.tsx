@@ -30,7 +30,7 @@ const STEPS: Step[] = [
   { key: 'first_article', title: '看一篇仙女誌', cta: '去閱讀 →', href: '/articles', icon: <Icons.Leaf className="w-5 h-5 text-[#4A9D5F]" /> },
   { key: 'first_brand', title: '了解 FP 團隊', cta: '認識團隊 →', href: '/about', icon: <Icons.Ribbon className="w-5 h-5 text-[#E8A93B]" /> },
   { key: 'first_cart', title: '挑件心動商品', cta: '去選購 →', href: '/products', icon: <Icons.ShoppingBag className="w-5 h-5 text-[#9F6B3E]" /> },
-  { key: 'first_mascot', title: '進入芽芽之家', cta: '去換裝 →', href: '/account/mascot', icon: <Icons.Seedling className="w-5 h-5 text-[#7BC47F]" /> },
+  { key: 'first_mascot', title: '進入寵物之家', cta: '去換裝 →', href: '/account/mascot', icon: <Icons.Seedling className="w-5 h-5 text-[#7BC47F]" /> },
 ];
 
 export default function ActivationQuest({ progress }: { progress: ActivationProgress }) {

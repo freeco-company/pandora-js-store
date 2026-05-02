@@ -12,7 +12,7 @@ interface MascotProps {
 }
 
 /**
- * 芽芽 — JEROSSE's sprout mascot.
+ * 寵物 — JEROSSE's mascot (placeholder until cross-app pet system lands).
  * Pure inline SVG (3 growth stages × 3 moods), CSS keyframes for life.
  */
 export default function Mascot({

@@ -75,7 +75,7 @@ class AchievementCatalog
             self::FIRST_ARTICLE => ['emoji' => 'book', 'name' => '閱讀仙女', 'description' => '看了第一篇仙女誌', 'tier' => 'bronze'],
             self::FIRST_BRAND => ['emoji' => 'cherry-blossom', 'name' => '知心仙女', 'description' => '認識 FP 團隊', 'tier' => 'bronze'],
             self::FIRST_CART => ['emoji' => 'cart', 'name' => '心動瞬間', 'description' => '加入第一件商品到購物車', 'tier' => 'bronze'],
-            self::FIRST_MASCOT => ['emoji' => 'sprout', 'name' => '芽芽之友', 'description' => '進入芽芽之家', 'tier' => 'bronze'],
+            self::FIRST_MASCOT => ['emoji' => 'sprout', 'name' => '夥伴起點', 'description' => '進入你的寵物之家', 'tier' => 'bronze'],
             self::FIRST_ORDER => ['emoji' => 'party', 'name' => '首購達成', 'description' => '完成第一筆訂單', 'tier' => 'silver'],
 
             self::ORDER_3 => ['emoji' => 'cherry-blossom', 'name' => '回頭仙女', 'description' => '累積 3 筆訂單', 'tier' => 'silver',

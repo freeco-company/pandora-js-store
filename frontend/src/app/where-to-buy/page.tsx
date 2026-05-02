@@ -85,7 +85,7 @@ export default function WhereToBuyPage() {
               { icon: '🚚', title: '快速出貨', desc: '付款後 1-2 個工作天出貨，超商取貨 / 宅配皆可' },
               { icon: '💳', title: '多元付款', desc: '信用卡、ATM、超商代碼、貨到付款全支援' },
               { icon: '🛡️', title: '售後保障', desc: '完整退換貨機制，購物安心有保障' },
-              { icon: '🌱', title: '會員福利', desc: '加入會員享專屬優惠、累積回饋與芽芽成就' },
+              { icon: '🌱', title: '會員福利', desc: '加入會員享專屬優惠、累積回饋與寵物成就' },
             ].map(({ icon, title, desc }) => (
               <div key={title} className="flex gap-3 p-4 rounded-xl border border-gray-100">
                 <span className="text-2xl shrink-0">{icon}</span>

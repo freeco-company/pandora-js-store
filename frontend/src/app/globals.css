@@ -410,7 +410,7 @@ h1, h2, h3, h4, h5, h6 {
   transform: scale(0.97);
 }
 
-/* --- Outfit icon idle animations (芽芽之家) --- */
+/* --- Outfit icon idle animations (寵物之家) --- */
 .outfit-icon-anim { transform-origin: center; transform-box: fill-box; }
 .outfit-icon-anim[data-anim="bob"]     { animation: outfit-bob 3.2s ease-in-out infinite; }
 .outfit-icon-anim[data-anim="tilt"]    { animation: outfit-tilt 3.6s ease-in-out infinite; }

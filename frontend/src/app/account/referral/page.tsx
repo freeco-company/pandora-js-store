@@ -80,13 +80,13 @@ export default function ReferralPage() {
         <StatCard label="首單完成" value={`${data.referrals_success} 位`} emoji="check-circle" />
       </section>
 
-      {/* Mascot reward milestones — every successful referral feeds XP into 芽芽 */}
+      {/* Mascot reward milestones — every successful referral feeds XP into 寵物 */}
       <section className="bg-white rounded-3xl border border-[#e7d9cb] p-5 sm:p-6">
         <div className="flex items-center gap-2 mb-1">
           <SiteIcon name="trophy" size={18} className="text-[#9F6B3E]" />
-          <h2 className="text-base font-black text-slate-800">芽芽里程碑</h2>
+          <h2 className="text-base font-black text-slate-800">寵物里程碑</h2>
         </div>
-        <p className="text-[11px] text-slate-500 mb-4">每位成功推薦的朋友都會幫芽芽長大，並解鎖以下成就</p>
+        <p className="text-[11px] text-slate-500 mb-4">每位成功推薦的朋友都會幫寵物長大，並解鎖以下成就</p>
 
         <ul className="space-y-3">
           {[
@@ -123,7 +123,7 @@ export default function ReferralPage() {
         </ul>
 
         <p className="text-[10px] text-slate-400 mt-3 leading-relaxed">
-          每滿 100 XP 芽芽升 1 級。新成就會解鎖更多服裝與背景，到 <Link href="/account/mascot" className="underline text-[#9F6B3E]">芽芽之家</Link> 看看。
+          每滿 100 XP 寵物升 1 級。新成就會解鎖更多服裝與背景，到 <Link href="/account/mascot" className="underline text-[#9F6B3E]">寵物之家</Link> 看看。
         </p>
       </section>
 

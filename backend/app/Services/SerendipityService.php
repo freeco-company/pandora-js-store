@@ -50,10 +50,10 @@ class SerendipityService
         }
 
         if ($customer->total_orders >= 1) {
-            $messages[] = ['message' => '芽芽偷偷跟妳說：優惠正在冒芽中 🌱', 'emoji' => '🌱'];
+            $messages[] = ['message' => '朵朵偷偷跟妳說：優惠正在冒芽中 🌱', 'emoji' => '🌱'];
         }
 
-        $messages[] = ['message' => '嗨～芽芽今天很有元氣！', 'emoji' => '😊'];
+        $messages[] = ['message' => '嗨～朵朵今天很有元氣！', 'emoji' => '😊'];
         $messages[] = ['message' => '仙女氣色真好～', 'emoji' => '✨'];
         $messages[] = ['message' => '今天也要美美的喔', 'emoji' => '💖'];
 

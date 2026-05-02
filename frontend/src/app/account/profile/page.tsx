@@ -154,7 +154,7 @@ export default function ProfilePage() {
         <Link href="/account/mascot" className="flex items-center gap-3 px-5 py-4 active:bg-[#fdf7ef]">
           <div className="w-10 h-10 rounded-2xl bg-[#fdf7ef] flex items-center justify-center shrink-0"><SiteIcon name="sprout" size={20} /></div>
           <div className="flex-1">
-            <div className="text-sm font-black text-slate-800">芽芽之家</div>
+            <div className="text-sm font-black text-slate-800">寵物之家</div>
             <div className="text-[11px] text-slate-500">換裝、背景、成就</div>
           </div>
           <svg className="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
