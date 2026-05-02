@@ -62,6 +62,7 @@ if [[ "$FLAG" != "--smoke-only" ]]; then
     php artisan config:cache 2>&1 | tail -1
     php artisan route:cache 2>&1 | tail -1
     php artisan migrate --force 2>&1 | tail -2
+    chown -R www-data:www-data storage bootstrap/cache
   "
   ok "Backend deps installed + caches rebuilt"
 
