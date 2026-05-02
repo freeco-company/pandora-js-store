@@ -115,6 +115,18 @@ Schedule::command('pipeline:daily-report')
     ->runInBackground()
     ->appendOutputTo(storage_path('logs/pipeline-daily-report.log'));
 
+// Weekly checkout funnel — pinpoints where /cart→paid drops using the
+// sub-step events added in v2.12.0 (payment_selected / submit_attempt /
+// submit_failed). Sunday 22:00 Asia/Taipei aligns with end-of-week
+// recap; rolling 7-day window keeps signal fresh without drowning in
+// noise. Posts to ads_strategy Discord channel.
+Schedule::command('analytics:checkout-funnel')
+    ->weeklyOn(0, '22:00') // 0 = Sunday
+    ->timezone('Asia/Taipei')
+    ->withoutOverlapping(15)
+    ->runInBackground()
+    ->appendOutputTo(storage_path('logs/checkout-funnel.log'));
+
 // COD pending_confirmation 訂單：24h 寄提醒 / 48h 自動取消（還原庫存 + coupon + 通知）
 Schedule::command('cod:auto-cancel-unconfirmed')
     ->everyThirtyMinutes()
