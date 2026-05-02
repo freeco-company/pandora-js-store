@@ -18,7 +18,7 @@ export const ACHIEVEMENT_CATALOG: Record<string, AchievementDef> = {
   first_article: { code: 'first_article', name: '閱讀仙女', description: '看了第一篇仙女誌', emoji: 'book', tier: 'bronze' },
   first_brand: { code: 'first_brand', name: '知心仙女', description: '認識 FP 團隊', emoji: 'cherry-blossom', tier: 'bronze' },
   first_cart: { code: 'first_cart', name: '心動瞬間', description: '加入第一件商品到購物車', emoji: 'cart', tier: 'bronze' },
-  first_mascot: { code: 'first_mascot', name: '芽芽之友', description: '進入芽芽之家', emoji: 'sprout', tier: 'bronze' },
+  first_mascot: { code: 'first_mascot', name: '夥伴起點', description: '進入寵物之家', emoji: 'sprout', tier: 'bronze' },
   first_order: { code: 'first_order', name: '首購達成', description: '完成第一筆訂單', emoji: 'party', tier: 'silver' },
 
   order_3: { code: 'order_3', name: '回頭仙女', description: '累積 3 筆訂單', emoji: 'cherry-blossom', tier: 'silver' },

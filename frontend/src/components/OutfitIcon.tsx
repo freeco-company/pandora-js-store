@@ -1,6 +1,6 @@
 /**
  * Colorful + animated icons for mascot outfits, backdrops, achievements.
- * Used in 芽芽之家 to make the grid feel alive (vs. monochrome SiteIcon).
+ * Used in 寵物之家 to make the grid feel alive (vs. monochrome SiteIcon).
  *
  * Falls back to SiteIcon if the code isn't defined here.
  */

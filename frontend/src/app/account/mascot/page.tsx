@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * 芽芽之家 — immersive full-screen mascot customization.
+ * 寵物之家 — immersive full-screen mascot customization.
  *
  * Layout: mascot fills hero half; tabbed picker (outfit / backdrop) below.
  * Tapping a locked item → shows amber preview (cannot save).

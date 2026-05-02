@@ -62,10 +62,10 @@ export default function AccountPage() {
             <div className="mb-5 flex justify-center">
               <Mascot stage="sprout" mood="happy" size={120} />
             </div>
-            <div className="text-[10px] font-black tracking-[0.3em] text-[#9F6B3E] mb-2">SPROUT · 芽芽任務</div>
+            <div className="text-[10px] font-black tracking-[0.3em] text-[#9F6B3E] mb-2">SPROUT · 寵物任務</div>
             <h1 className="text-2xl sm:text-3xl font-black text-slate-800 mb-3">仙女登入專區</h1>
             <p className="text-sm text-slate-600 mb-6 max-w-sm mx-auto leading-relaxed">
-              登入後解鎖 <strong className="text-[#9F6B3E]">{Object.keys(ACHIEVEMENT_CATALOG).length} 種成就</strong>、10+ 服裝、連續造訪 streak、芽芽成長系統
+              登入後解鎖 <strong className="text-[#9F6B3E]">{Object.keys(ACHIEVEMENT_CATALOG).length} 種成就</strong>、10+ 服裝、連續造訪 streak、寵物成長系統
             </p>
             <div className="flex flex-col gap-3 max-w-xs mx-auto">
               <button
@@ -116,8 +116,8 @@ export default function AccountPage() {
             {([
               { icon: <Icons.Fire className="w-5 h-5 text-[#e74c3c]" />, title: '連續造訪 Streak', desc: '7/30/100 天解鎖獎章與稀有服裝' },
               { icon: <Icons.Ribbon className="w-5 h-5 text-[#E8A93B]" />, title: '成就收集', desc: '首購、VIP 解鎖、類別探索⋯各種事件都有回饋' },
-              { icon: <Icons.Crown className="w-5 h-5 text-[#9b59b6]" />, title: '芽芽衣櫃', desc: '橡實帽、花冠、珍珠項鍊⋯換裝展現你的風格' },
-              { icon: <Icons.Sparkles className="w-5 h-5 text-[#3498db]" />, title: '驚喜彩蛋', desc: '隨機出現的芽芽訊息，偶爾送上專屬暖心話' },
+              { icon: <Icons.Crown className="w-5 h-5 text-[#9b59b6]" />, title: '寵物衣櫃', desc: '橡實帽、花冠、珍珠項鍊⋯換裝展現你的風格' },
+              { icon: <Icons.Sparkles className="w-5 h-5 text-[#3498db]" />, title: '驚喜彩蛋', desc: '隨機出現的朵朵訊息，偶爾送上專屬暖心話' },
               { icon: <Icons.ShoppingBag className="w-5 h-5 text-[#E0748C]" />, title: '訂單查詢', desc: '隨時查看訂單狀態、歷史紀錄' },
               { icon: <Icons.Diamond className="w-5 h-5 text-[#1abc9c]" />, title: 'VIP 價', desc: '搭配滿 $4,000 自動升級最優惠' },
             ] as const).map((b, i) => (
@@ -180,7 +180,7 @@ export default function AccountPage() {
       <Link
         href="/account/mascot"
         className="block bg-gradient-to-br from-[#e7d9cb] to-[#f7eee3] rounded-3xl p-6 flex items-center gap-4 hover:shadow-lg hover:-translate-y-0.5 transition-all group"
-        aria-label="進入芽芽之家"
+        aria-label="進入寵物之家"
       >
         <Mascot
           stage={stage}
@@ -211,7 +211,7 @@ export default function AccountPage() {
             </div>
           </div>
           <div className="mt-3 inline-flex items-center gap-1 text-[11px] font-black text-[#9F6B3E] opacity-70 group-hover:opacity-100 group-hover:translate-x-1 transition-all">
-            進入芽芽之家 →
+            進入寵物之家 →
           </div>
         </div>
       </Link>
@@ -253,7 +253,7 @@ export default function AccountPage() {
           className="group bg-white border border-[#e7d9cb] rounded-2xl p-4 hover:shadow-md transition-all text-center"
         >
           <div className="mb-1"><Icons.Crown className="w-8 h-8 text-[#9b59b6]" /></div>
-          <div className="text-xs font-black text-slate-800">芽芽衣櫃</div>
+          <div className="text-xs font-black text-slate-800">寵物衣櫃</div>
           <div className="text-[10px] text-slate-400 mt-0.5">
             {Object.keys(data.outfits.catalog).filter((c) => ownedCodes.has(c)).length}/{Object.keys(data.outfits.catalog).length} 服裝
           </div>

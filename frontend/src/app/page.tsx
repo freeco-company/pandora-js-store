@@ -515,7 +515,7 @@ export default async function HomePage() {
             <TextReveal as="h2" text="開啟你的仙女旅程" className="text-3xl sm:text-5xl font-bold text-white mb-4" stagger={80} />
             <p className="text-white/90 mb-10 max-w-xl mx-auto text-base sm:text-lg leading-relaxed">
               每一次下單、每一次登入、每一筆評論，<br />
-              都讓芽芽和妳一起成長。
+              都讓寵物和妳一起成長。
             </p>
             <div className="flex flex-wrap gap-4 justify-center">
               <MagneticButton

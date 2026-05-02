@@ -260,7 +260,7 @@ function OrderCompleteContent() {
                   backdrop={data.customer.current_backdrop}
                 />
                 <div className="flex-1 min-w-0">
-                  <div className="text-[10px] font-black tracking-[0.2em] text-[#7a5836] mb-1">芽芽為你加油</div>
+                  <div className="text-[10px] font-black tracking-[0.2em] text-[#7a5836] mb-1">朵朵為你加油</div>
                   <h3 className="text-base font-black text-slate-800">
                     累積已消費 NT${data.customer.total_spent.toLocaleString()}
                   </h3>

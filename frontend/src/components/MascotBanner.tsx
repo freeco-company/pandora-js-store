@@ -79,7 +79,7 @@ export default function MascotBanner() {
           <Link
             href={isLoggedIn ? '/account/mascot' : '/account'}
             className="flex justify-center md:justify-start group"
-            aria-label={isLoggedIn ? '進入芽芽之家' : '登入開始仙女任務'}
+            aria-label={isLoggedIn ? '進入寵物之家' : '登入開始仙女任務'}
           >
             <div className="relative">
               <Mascot
@@ -105,7 +105,7 @@ export default function MascotBanner() {
                 : <><SiteIcon name="sprout" size={12} className="inline" /> 仙女任務</>}
             </div>
             <h2 className="text-xl sm:text-2xl font-black text-slate-800 mb-2">
-              {isLoggedIn ? '哈囉仙女，今天想逛點什麼呢？' : '嗨～我是芽芽，要和我一起玩嗎？'}
+              {isLoggedIn ? '哈囉仙女，今天想逛點什麼呢？' : '嗨～我是朵朵，要和我一起玩嗎？'}
             </h2>
 
             {/* 朵朵 NPC 旁白 — 依登入 / streak / 成就推播 */}
@@ -140,7 +140,7 @@ export default function MascotBanner() {
 
             {!isLoggedIn && (
               <p className="text-sm text-slate-600 mb-4 leading-relaxed">
-                登入後完成任務解鎖成就、服裝、芽芽的成長旅程，每日造訪還能連續 streak 獎勵
+                登入後完成任務解鎖成就、服裝、寵物的成長旅程，每日造訪還能連續 streak 獎勵
               </p>
             )}
 

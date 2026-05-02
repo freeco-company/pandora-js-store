@@ -10,11 +10,11 @@ import { getCustomerDashboard, type CustomerDashboard } from '@/lib/api';
 import { stageFromStreak, type MascotStage, type MascotMood } from '@/lib/achievements';
 
 /**
- * Hero orbit visual — central glowing orb with 芽芽 mascot at center,
+ * Hero orbit visual — central glowing orb with 寵物 mascot at center,
  * floating badges + orbit rings.
  *
  * When logged in: reads user's outfit, backdrop, streak stage.
- * Backdrop changes the ORB color itself — the whole sphere is 芽芽's world.
+ * Backdrop changes the ORB color itself — the whole sphere is 寵物's world.
  */
 
 // Orb gradient per backdrop — maps backdrop code → radial-gradient for the sphere
@@ -134,13 +134,13 @@ export default function HeroOrbit({ size = 420, className = '' }: Props) {
         }}
       />
 
-      {/* 芽芽 mascot at the center — tap to visit */}
+      {/* 寵物 mascot at the center — tap to visit */}
       <button
         type="button"
-        onClick={() => tap('mascot', isLoggedIn ? '進入芽芽之家' : '登入解鎖芽芽', isLoggedIn ? '/account/mascot' : '/account')}
+        onClick={() => tap('mascot', isLoggedIn ? '進入寵物之家' : '登入解鎖寵物', isLoggedIn ? '/account/mascot' : '/account')}
         className={`absolute flex items-center justify-center hero-mascot-float cursor-pointer transition-transform duration-300 ${tapped === 'mascot' ? 'scale-125' : ''}`}
         style={{ inset: '22%' }}
-        aria-label="進入芽芽之家"
+        aria-label="進入寵物之家"
       >
         <Mascot
           stage={mascotState.stage}
