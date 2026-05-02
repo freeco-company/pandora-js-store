@@ -7,6 +7,7 @@ import ImageWithFallback, { LogoPlaceholder } from '@/components/ImageWithFallba
 import { formatPrice } from '@/lib/format';
 import { useAuth } from '@/components/AuthProvider';
 import SiteIcon from '@/components/SiteIcon';
+import DodoNarrator from '@/components/DodoNarrator';
 
 interface OrderItem {
   product_id: number;
@@ -307,11 +308,25 @@ function MyOrdersList({ orders, loading }: { orders: Order[] | null; loading: bo
   if (!orders || orders.length === 0) {
     return (
       <div className="py-12 text-center">
-        <div className="mb-3"><SiteIcon name="mailbox" size={48} className="text-[#9F6B3E]/30" /></div>
-        <p className="text-sm font-black text-gray-700">還沒有訂單</p>
+        <img
+          src="/svg/empty/empty_no_history.svg"
+          alt=""
+          width={200}
+          height={200}
+          aria-hidden
+          className="mx-auto mb-2"
+        />
+        <p className="text-base font-black text-gray-800 mb-4">還沒有訂單</p>
+        <div className="max-w-sm mx-auto mb-6 text-left">
+          <DodoNarrator
+            line="第一張訂單我幫妳記得，等妳挑到喜歡的再回來結帳。"
+            mood="neutral"
+            size={48}
+          />
+        </div>
         <Link
           href="/products"
-          className="mt-5 inline-flex items-center gap-2 px-6 py-3 bg-[#9F6B3E] text-white font-black rounded-full hover:bg-[#85572F] transition-colors"
+          className="inline-flex items-center gap-2 px-6 py-3 bg-[#9F6B3E] text-white font-black rounded-full hover:bg-[#85572F] transition-colors"
         >
           去逛商品 →
         </Link>

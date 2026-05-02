@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Mail\OrderCompleted;
+use App\Mail\OrderShipped;
 use App\Models\Blacklist;
 use App\Models\Coupon;
 use App\Models\Customer;
@@ -262,6 +264,74 @@ class OrderTest extends TestCase
         $b = Customer::where('email', 'b@example.com')->first();
         $this->assertNotNull($b);
         $this->assertSame($b->id, Order::first()->customer_id);
+    }
+
+    public function test_status_transition_to_shipped_sends_email(): void
+    {
+        $customer = Customer::create([
+            'email' => 'ship@example.com', 'name' => '收件人', 'phone' => '0911000000',
+            'password' => bcrypt('x'),
+        ]);
+        $order = Order::create([
+            'order_number' => 'TEST-SHIP-1',
+            'customer_id' => $customer->id,
+            'status' => 'processing',
+            'payment_method' => 'ecpay_credit',
+            'payment_status' => 'paid',
+            'shipping_method' => 'cvs_711',
+            'shipping_name' => '收件人',
+            'shipping_phone' => '0911000000',
+            'shipping_store_name' => '測試門市',
+            'cvs_payment_no' => 'F1234567',
+            'cvs_validation_no' => '5678',
+            'subtotal' => 1000, 'total' => 1000,
+            'pricing_tier' => 'regular',
+        ]);
+
+        $order->update(['status' => 'shipped']);
+
+        Mail::assertSent(OrderShipped::class, fn ($m) => $m->hasTo('ship@example.com'));
+    }
+
+    public function test_status_transition_to_completed_sends_email(): void
+    {
+        $customer = Customer::create([
+            'email' => 'done@example.com', 'name' => '完成', 'phone' => '0911000002',
+            'password' => bcrypt('x'),
+        ]);
+        $order = Order::create([
+            'order_number' => 'TEST-DONE-1', 'customer_id' => $customer->id,
+            'status' => 'shipped', 'payment_method' => 'ecpay_credit',
+            'payment_status' => 'paid', 'shipping_method' => 'home_delivery',
+            'shipping_name' => '完成', 'shipping_phone' => '0911000002',
+            'shipping_address' => '台北', 'subtotal' => 1000, 'total' => 1000,
+            'pricing_tier' => 'regular',
+        ]);
+
+        $order->update(['status' => 'completed']);
+
+        Mail::assertSent(OrderCompleted::class, fn ($m) => $m->hasTo('done@example.com'));
+        Mail::assertNotSent(OrderShipped::class);
+    }
+
+    public function test_status_transition_to_non_shipped_does_not_send_shipped_email(): void
+    {
+        $customer = Customer::create([
+            'email' => 'noemail@example.com', 'name' => 'X', 'phone' => '0911000001',
+            'password' => bcrypt('x'),
+        ]);
+        $order = Order::create([
+            'order_number' => 'TEST-NS-1', 'customer_id' => $customer->id,
+            'status' => 'pending', 'payment_method' => 'ecpay_credit',
+            'payment_status' => 'unpaid', 'shipping_method' => 'home_delivery',
+            'shipping_name' => 'X', 'shipping_phone' => '0911000001',
+            'shipping_address' => '台北', 'subtotal' => 1000, 'total' => 1000,
+            'pricing_tier' => 'regular',
+        ]);
+
+        $order->update(['status' => 'processing']);
+
+        Mail::assertNotSent(OrderShipped::class);
     }
 
     public function test_check_cod_endpoint(): void

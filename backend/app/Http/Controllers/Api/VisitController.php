@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Visit;
+use App\Services\InternalTrafficDetector;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Jenssegers\Agent\Agent;
@@ -18,6 +19,10 @@ use Jenssegers\Agent\Agent;
  */
 class VisitController extends Controller
 {
+    public function __construct(
+        private InternalTrafficDetector $internal,
+    ) {}
+
     public function store(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -81,6 +86,12 @@ class VisitController extends Controller
             'landing_path'    => $data['landing_path'] ?? null,
             'path'            => $data['path'] ?? null,
             'customer_id'     => $request->user()?->id,
+            // Flag testing traffic so admin dashboards stay clean.
+            // Either an exact-match internal IP or an authenticated
+            // internal email is enough; both checks are cheap (in_array
+            // against a tiny list, plus a 5-min cached customer-id lookup).
+            'is_internal'     => $this->internal->isInternalIp($ip)
+                || $this->internal->isInternalCustomerId($request->user()?->id),
             'visited_at'      => now(),
         ]);
 

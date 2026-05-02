@@ -83,7 +83,8 @@ class PipelineDailyReportCmd extends Command
     {
         $q = fn (Carbon $s, Carbon $e) => DB::table('visits')
             ->whereBetween('visited_at', [$s->copy()->startOfDay(), $e->copy()->endOfDay()])
-            ->where('referer_source', '!=', 'bot');
+            ->where('referer_source', '!=', 'bot')
+            ->where('is_internal', false);
 
         $paid = ['google_ads', 'facebook_ads', 'bing_ads', 'tiktok_ads', 'linkedin_ads', 'other_ads'];
 
@@ -192,6 +193,7 @@ class PipelineDailyReportCmd extends Command
         $countBy = fn (string $eventType) => (int) DB::table('cart_events')
             ->whereBetween('occurred_at', [$start, $end])
             ->where('event_type', $eventType)
+            ->where('is_internal', false)
             ->distinct('session_id')
             ->count('session_id');
 
@@ -232,6 +234,7 @@ class PipelineDailyReportCmd extends Command
             ->where('visited_at', '>=', $fourteenDaysAgo->copy()->startOfDay())
             ->where('visited_at', '<=', today()->subDay()->endOfDay())
             ->where('referer_source', '!=', 'bot')
+            ->where('is_internal', false)
             ->whereNotIn('referer_source', array_merge($paid, ['ai_referral']))
             ->groupBy('d')->orderBy('d')
             ->pluck('uv', 'd')

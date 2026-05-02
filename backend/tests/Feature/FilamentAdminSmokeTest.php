@@ -189,11 +189,12 @@ class FilamentAdminSmokeTest extends TestCase
 
     public function test_visit_stats_widget_tracks_list_page_date_filter(): void
     {
-        // Regression guard: VisitStatsWidget previously read tableFilters from
-        // request()->input(), which is empty on Filament v3 list pages because
-        // table filter state lives in the parent Livewire component. Result:
-        // the widget showed today's UV while the list itself showed the
-        // user-picked day. Fix passes focusDate via Widget::make().
+        // Regression guard: VisitStatsWidget previously fell back to today
+        // when the user changed the table filter, because Filament header
+        // widgets only mount once and don't re-receive Widget::make props
+        // when the filter dropdown updates. The widget now reads
+        // tableFilters from the request payload so it tracks the live
+        // filter value, and still falls back to focusDate / today.
         $yesterday = now()->subDay()->setTime(10, 0);
         Visit::create([
             'visitor_id' => 'yesterday-only',
@@ -222,6 +223,16 @@ class FilamentAdminSmokeTest extends TestCase
             ->test(\App\Filament\Widgets\VisitStatsWidget::class, [
                 'focusDate' => $yesterday->toDateString(),
             ])
+            ->assertSuccessful()
+            ->assertSeeText($yesterday->format('m/d') . '不重複訪客');
+
+        // Live filter case: simulate the URL the table dropdown produces
+        // when the user picks yesterday. The widget should pick this up
+        // even when no focusDate prop is passed. Livewire's test harness
+        // honours withQueryParams as the request query string.
+        \Livewire\Livewire::withQueryParams([
+            'tableFilters' => ['date' => ['value' => $yesterday->toDateString()]],
+        ])->test(\App\Filament\Widgets\VisitStatsWidget::class)
             ->assertSuccessful()
             ->assertSeeText($yesterday->format('m/d') . '不重複訪客');
     }

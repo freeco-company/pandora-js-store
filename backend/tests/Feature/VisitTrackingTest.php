@@ -179,4 +179,64 @@ class VisitTrackingTest extends TestCase
         $this->assertStringContainsString('iOS', (string) $v->os);
         $this->assertSame('Safari', $v->browser);
     }
+
+    public function test_internal_ip_flags_visit_as_internal(): void
+    {
+        config(['analytics.internal_ips' => ['198.51.100.7']]);
+
+        $this->withServerVariables(['REMOTE_ADDR' => '198.51.100.7'])
+            ->track([
+                'session_id' => 'sess-internal',
+                'path' => '/',
+                'user_agent' => 'Mozilla/5.0',
+            ]);
+
+        $v = Visit::first();
+        $this->assertTrue((bool) $v->is_internal);
+        $this->assertSame(0, Visit::external()->count());
+    }
+
+    public function test_external_ip_does_not_flag_internal(): void
+    {
+        config(['analytics.internal_ips' => ['198.51.100.7']]);
+
+        $this->withServerVariables(['REMOTE_ADDR' => '203.0.113.42'])
+            ->track([
+                'session_id' => 'sess-real',
+                'path' => '/',
+                'user_agent' => 'Mozilla/5.0',
+            ]);
+
+        $this->assertFalse((bool) Visit::first()->is_internal);
+        $this->assertSame(1, Visit::external()->count());
+    }
+
+    public function test_internal_session_propagates_to_cart_event(): void
+    {
+        config(['analytics.internal_ips' => ['198.51.100.7']]);
+
+        // Page-view ping from internal IP — flagged on the visit.
+        $this->withServerVariables(['REMOTE_ADDR' => '198.51.100.7'])
+            ->track([
+                'session_id' => 'sess-shared',
+                'path' => '/products/foo',
+                'user_agent' => 'Mozilla/5.0',
+            ]);
+
+        // Cart event from a non-internal IP but reusing the same session_id —
+        // should still inherit the internal flag from the visit row.
+        $this->withServerVariables(['REMOTE_ADDR' => '203.0.113.99'])
+            ->postJson('/api/track/cart-event', [
+                'session_id' => 'sess-shared',
+                'event_type' => 'add_to_cart',
+                'quantity' => 1,
+                'value' => 100,
+            ])
+            ->assertOk();
+
+        $event = \App\Models\CartEvent::first();
+        $this->assertNotNull($event);
+        $this->assertTrue((bool) $event->is_internal);
+        $this->assertSame(0, \App\Models\CartEvent::external()->count());
+    }
 }

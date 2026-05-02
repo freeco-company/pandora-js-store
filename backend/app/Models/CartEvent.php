@@ -16,14 +16,21 @@ class CartEvent extends Model
     use HasFactory;
 
     protected $fillable = [
-        'session_id', 'customer_id', 'event_type',
+        'session_id', 'customer_id', 'is_internal', 'event_type',
         'product_id', 'bundle_id', 'quantity', 'value', 'occurred_at',
     ];
 
     protected $casts = [
         'occurred_at' => 'datetime',
         'value' => 'decimal:2',
+        'is_internal' => 'bool',
     ];
+
+    /** See {@see Visit::scopeExternal()} — same intent for cart events. */
+    public function scopeExternal($query)
+    {
+        return $query->where('is_internal', false);
+    }
 
     public function customer(): BelongsTo
     {

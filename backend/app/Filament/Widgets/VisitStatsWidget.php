@@ -46,7 +46,8 @@ class VisitStatsWidget extends StatsOverviewWidget
         // Exclude rows flagged as bots by the VisitController — AdsBot,
         // headless Chrome, Googlebot, curl/, etc. Keeping them in the
         // denominator inflates organic UV with non-human traffic.
-        $baseQuery = fn () => Visit::whereBetween('visited_at', [$start, $end])
+        $baseQuery = fn () => Visit::external()
+            ->whereBetween('visited_at', [$start, $end])
             ->where('referer_source', '!=', 'bot');
 
         $uv = (clone $baseQuery())->distinct('visitor_id')->count('visitor_id');
@@ -74,7 +75,8 @@ class VisitStatsWidget extends StatsOverviewWidget
         $durationDays = max(1, $start->diffInDays($end) + 1);
         $prevStart = (clone $start)->subDays($durationDays);
         $prevEnd = (clone $start)->subDay()->endOfDay();
-        $prevUv = Visit::whereBetween('visited_at', [$prevStart, $prevEnd])
+        $prevUv = Visit::external()
+            ->whereBetween('visited_at', [$prevStart, $prevEnd])
             ->where('referer_source', '!=', 'bot')
             ->distinct('visitor_id')
             ->count('visitor_id');
@@ -121,12 +123,29 @@ class VisitStatsWidget extends StatsOverviewWidget
             ];
         }
 
-        // 2) Resource list page (/admin/visits) — ListVisits passes its
-        // current `date` table filter via Widget::make(['focusDate' => ...]).
-        // Don't try request()->input('tableFilters.date.value') — Filament
-        // table filters live in the parent Livewire component's state, not
-        // the HTTP request payload, so it always read empty and fell through
-        // to today() while the list itself showed the picked day.
+        // 2) Resource list page (/admin/visits) — read the date filter from
+        // the URL query string. Filament keeps `?tableFilters[date][value]=YYYY-MM-DD`
+        // in sync with the dropdown, so this always reflects the picked day.
+        // We can't rely on $this->focusDate (set via Widget::make in
+        // ListVisits::getHeaderWidgets) because header widgets only mount
+        // once: changing the filter dropdown re-renders the table but does
+        // NOT re-pass the new focusDate to the cached widget instance.
+        // Use input() which supports dot-notation across both query string
+        // and Livewire AJAX payloads, then fall back to nested query() access
+        // for the original GET request.
+        $urlDate = request()->input('tableFilters.date.value')
+            ?? data_get(request()->query('tableFilters', []), 'date.value');
+        if ($urlDate) {
+            try {
+                $d = Carbon::parse($urlDate);
+                return [$d->copy()->startOfDay(), $d->copy()->endOfDay()];
+            } catch (\Throwable) {
+                // fall through
+            }
+        }
+
+        // 3) focusDate via Widget::make — covers the initial page-load case
+        // when URL has no tableFilters yet (server-rendered with default).
         if ($this->focusDate) {
             try {
                 $d = Carbon::parse($this->focusDate);
@@ -136,7 +155,7 @@ class VisitStatsWidget extends StatsOverviewWidget
             }
         }
 
-        // 3) Default = today only (matches list page's "僅今日" default filter)
+        // 4) Default = today only (matches list page's "僅今日" default filter)
         return [today()->startOfDay(), today()->endOfDay()];
     }
 

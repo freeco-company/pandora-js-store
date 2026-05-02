@@ -242,7 +242,8 @@ class VisitResource extends Resource
         return (string) \Illuminate\Support\Facades\Cache::remember(
             'visits:today-uv',
             60,
-            fn () => Visit::whereBetween('visited_at', [today()->startOfDay(), today()->endOfDay()])
+            fn () => Visit::external()
+                ->whereBetween('visited_at', [today()->startOfDay(), today()->endOfDay()])
                 ->where('referer_source', '!=', 'bot')
                 ->distinct('visitor_id')
                 ->count('visitor_id')

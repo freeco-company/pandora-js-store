@@ -3,7 +3,9 @@
 namespace App\Observers;
 
 use App\Http\Controllers\Api\OrderController;
+use App\Mail\OrderCompleted;
 use App\Mail\OrderPaymentConfirmed;
+use App\Mail\OrderShipped;
 use App\Models\Blacklist;
 use App\Models\Order;
 use App\Services\DiscordNotifier;
@@ -80,6 +82,65 @@ class OrderObserver
      *     bank_transfer path needs this hook.
      */
     public function updated(Order $order): void
+    {
+        $this->onPaymentPaid($order);
+        $this->onShipped($order);
+        $this->onCompleted($order);
+    }
+
+    /**
+     * Status transition → 'completed': closes the loop with a thank-you note
+     * and a review prompt. Pairs with the existing review-reminder cron
+     * (which fires after a delay) — this hits the moment of confirmation
+     * while satisfaction is fresh.
+     */
+    private function onCompleted(Order $order): void
+    {
+        if (! $order->wasChanged('status')) return;
+        if ($order->status !== 'completed') return;
+        if ($order->getOriginal('status') === 'completed') return;
+
+        $order->loadMissing('customer');
+        $email = $order->customer?->email;
+        if (! $email) return;
+
+        try {
+            Mail::to($email)->send(new OrderCompleted($order));
+        } catch (\Throwable $e) {
+            Log::error('Failed to send completed email', [
+                'order_number' => $order->order_number,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * Status transition → 'shipped': notify customer with pickup code
+     * (CVS) or shipping confirmation (home delivery). Without this email,
+     * customers come back to /order-lookup to check status — that page
+     * was the 9th most-visited path in the 14d before this was added.
+     */
+    private function onShipped(Order $order): void
+    {
+        if (! $order->wasChanged('status')) return;
+        if ($order->status !== 'shipped') return;
+        if ($order->getOriginal('status') === 'shipped') return;
+
+        $order->loadMissing('customer');
+        $email = $order->customer?->email;
+        if (! $email) return;
+
+        try {
+            Mail::to($email)->send(new OrderShipped($order));
+        } catch (\Throwable $e) {
+            Log::error('Failed to send shipped email', [
+                'order_number' => $order->order_number,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    private function onPaymentPaid(Order $order): void
     {
         if (! $order->wasChanged('payment_status')) return;
         if ($order->payment_status !== 'paid') return;

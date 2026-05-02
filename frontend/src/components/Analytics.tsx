@@ -34,7 +34,13 @@ export function pushEvent(event: string, data: Record<string, unknown> = {}) {
  * write, fire-and-forget. Failures are swallowed so analytics errors never
  * bubble into the UI.
  */
-type CartEventType = 'view_item' | 'add_to_cart' | 'remove_from_cart' | 'begin_checkout' | 'purchase';
+type CartEventType =
+  | 'view_item' | 'add_to_cart' | 'remove_from_cart' | 'begin_checkout' | 'purchase'
+  // Checkout sub-steps — emitted from checkout page so the funnel
+  // analyses can localise where customers drop out between /cart and
+  // a paid order (~80% drop-off without sub-step visibility).
+  | 'checkout_form_filled' | 'checkout_payment_selected'
+  | 'checkout_submit_attempt' | 'checkout_submit_failed';
 function postCartEvent(params: {
   event_type: CartEventType;
   product_id?: number;
@@ -175,6 +181,26 @@ export function trackBeginCheckout(total: number, items: GtmItem[]) {
     event_type: 'begin_checkout',
     value: total,
     quantity: items.reduce((sum, i) => sum + i.quantity, 0) || 1,
+  });
+}
+
+/**
+ * Checkout sub-step events. Each fires at most once per session-step:
+ *   - form_filled        : recipient name/phone/address all valid for the first time
+ *   - payment_selected   : user actively picks payment method (default ecpay_credit doesn't count)
+ *   - submit_attempt     : user clicks the final "立即下單" button
+ *   - submit_failed      : order POST returned an error (validation / ECPay / payment)
+ *
+ * Caller is responsible for de-duplication if it wants once-per-step
+ * semantics; backend stores every event so duplicates are tolerable.
+ */
+export function trackCheckoutStep(
+  step: 'form_filled' | 'payment_selected' | 'submit_attempt' | 'submit_failed',
+  total?: number,
+) {
+  postCartEvent({
+    event_type: `checkout_${step}` as CartEventType,
+    value: total,
   });
 }
 

@@ -15,6 +15,7 @@ import {
 } from '@/lib/api';
 import { TW_CITIES, districtsFor, zipFor } from '@/lib/tw-regions';
 import SiteIcon from '@/components/SiteIcon';
+import DodoNarrator from '@/components/DodoNarrator';
 
 type Draft = Omit<CustomerAddress, 'id'>;
 const emptyDraft: Draft = {
@@ -138,9 +139,22 @@ export default function AddressesPage() {
 
       {addresses.length === 0 ? (
         <div className="bg-white rounded-3xl border border-[#e7d9cb] p-10 text-center">
-          <div className="text-5xl mb-3"><SiteIcon name="target" size={48} className="text-[#9F6B3E]/30" /></div>
-          <p className="text-sm font-black text-slate-700 mb-1">還沒有儲存地址</p>
-          <p className="text-[11px] text-slate-500">新增常用地址，下次結帳一鍵選取</p>
+          <img
+            src="/svg/empty/empty_no_record.svg"
+            alt=""
+            width={200}
+            height={200}
+            aria-hidden
+            className="mx-auto mb-2"
+          />
+          <p className="text-base font-black text-slate-800 mb-4">還沒有儲存地址</p>
+          <div className="max-w-sm mx-auto text-left">
+            <DodoNarrator
+              line="先存一個常用地址，下次結帳一鍵就好，不用再填一次。"
+              mood="neutral"
+              size={48}
+            />
+          </div>
         </div>
       ) : (
         <div className="space-y-3">

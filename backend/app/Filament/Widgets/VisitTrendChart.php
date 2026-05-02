@@ -50,7 +50,8 @@ class VisitTrendChart extends ChartWidget
 
         // Paid UV per day. Separate query from total UV because COUNT DISTINCT
         // can't be split by a CASE inside one aggregation.
-        $paidUvPerDay = Visit::selectRaw('DATE(visited_at) as d, COUNT(DISTINCT visitor_id) as uv')
+        $paidUvPerDay = Visit::external()
+            ->selectRaw('DATE(visited_at) as d, COUNT(DISTINCT visitor_id) as uv')
             ->whereBetween('visited_at', [$start, $end])
             ->where('referer_source', '!=', 'bot')
             ->where(function ($q) {
@@ -61,7 +62,8 @@ class VisitTrendChart extends ChartWidget
             ->pluck('uv', 'd')
             ->toArray();
 
-        $totalUvPerDay = Visit::selectRaw('DATE(visited_at) as d, COUNT(DISTINCT visitor_id) as uv')
+        $totalUvPerDay = Visit::external()
+            ->selectRaw('DATE(visited_at) as d, COUNT(DISTINCT visitor_id) as uv')
             ->whereBetween('visited_at', [$start, $end])
             ->where('referer_source', '!=', 'bot')
             ->groupByRaw('DATE(visited_at)')

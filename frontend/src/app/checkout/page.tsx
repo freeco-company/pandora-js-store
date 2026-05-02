@@ -8,7 +8,7 @@ import ImageWithFallback, { LogoPlaceholder } from '@/components/ImageWithFallba
 import { useAuth } from '@/components/AuthProvider';
 import { useFormValidation } from '@/hooks/useFormValidation';
 import { useToast } from '@/components/Toast';
-import { trackBeginCheckout, trackPurchase } from '@/components/Analytics';
+import { trackBeginCheckout, trackPurchase, trackCheckoutStep } from '@/components/Analytics';
 import { tierLabel } from '@/lib/pricing';
 import { formatPrice } from '@/lib/format';
 import { API_URL, fetchApi, imageUrl, type CelebrationKeys } from '@/lib/api';
@@ -18,6 +18,7 @@ import type { CustomerAddress } from '@/lib/api';
 import { TW_CITIES, districtsFor, zipFor } from '@/lib/tw-regions';
 import { useCelebrate } from '@/components/Celebration';
 import SiteIcon from '@/components/SiteIcon';
+import DodoNarrator from '@/components/DodoNarrator';
 import { useSerendipity } from '@/components/Serendipity';
 
 type PaymentMethod = 'ecpay_credit' | 'cod' | 'bank_transfer';
@@ -188,10 +189,17 @@ export default function CheckoutPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Funnel marker: user clicked the submit button. Fired before validation
+    // so that "tried but bounced on validation" is distinguishable from
+    // "never tried". Pair with checkout_submit_failed (in catch below) to
+    // localise where post-cart drop-off happens.
+    trackCheckoutStep('submit_attempt', finalTotal);
+
     // Always validate the base form first (name, email, phone, recipient
     // name/phone if not same-as-customer). That way fields like 電話 are
     // caught BEFORE we try to open the CVS map.
     if (!validate(form as unknown as Record<string, any>, validationRules)) {
+      trackCheckoutStep('submit_failed', finalTotal);
       return;
     }
 
@@ -337,6 +345,7 @@ export default function CheckoutPage() {
         router.push(`/order-complete?${params}`);
       }, (order._achievements?.length || 0) > 0 ? 1200 : 0);
     } catch (err: any) {
+      trackCheckoutStep('submit_failed', finalTotal);
       toast(err?.message || '訂單建立失敗，請稍後再試', 'error');
     } finally {
       setSubmitting(false);
@@ -345,9 +354,23 @@ export default function CheckoutPage() {
 
   if (items.length === 0) {
     return (
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
+        <img
+          src="/svg/empty/empty_no_record.svg"
+          alt=""
+          width={224}
+          height={224}
+          aria-hidden
+          className="mx-auto mb-2"
+        />
         <h1 className="text-2xl font-bold text-gray-900 mb-2">購物車是空的</h1>
-        <p className="text-gray-500 mb-6">請先選購商品再進行結帳</p>
+        <div className="max-w-md mx-auto mb-8 text-left">
+          <DodoNarrator
+            line="先去挑幾樣喜歡的吧，回來我陪妳一起結帳。"
+            mood="neutral"
+            size={56}
+          />
+        </div>
         <Link
           href="/products"
           className="inline-flex items-center px-8 py-3 bg-[#9F6B3E] text-white font-semibold rounded-full hover:bg-[#85572F] transition-colors"
@@ -636,7 +659,7 @@ export default function CheckoutPage() {
                   name="payment_method"
                   value="ecpay_credit"
                   checked={form.payment_method === 'ecpay_credit'}
-                  onChange={(e) => update('payment_method', e.target.value)}
+                  onChange={(e) => { update('payment_method', e.target.value); trackCheckoutStep('payment_selected', finalTotal); }}
                   className="text-[#9F6B3E] focus:ring-[#9F6B3E]"
                 />
                 <span className="font-medium text-gray-900">信用卡付款</span>
@@ -647,7 +670,7 @@ export default function CheckoutPage() {
                   name="payment_method"
                   value="bank_transfer"
                   checked={form.payment_method === 'bank_transfer'}
-                  onChange={(e) => update('payment_method', e.target.value)}
+                  onChange={(e) => { update('payment_method', e.target.value); trackCheckoutStep('payment_selected', finalTotal); }}
                   className="text-[#9F6B3E] focus:ring-[#9F6B3E]"
                 />
                 <span className="font-medium text-gray-900">銀行轉帳</span>

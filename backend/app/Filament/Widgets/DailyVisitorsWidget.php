@@ -32,12 +32,14 @@ class DailyVisitorsWidget extends StatsOverviewWidget
         $uniqueVisitors = (int) DB::table('visits')
             ->whereBetween('visited_at', [$dayStart, $dayEnd])
             ->where('referer_source', '!=', 'bot')
+            ->where('is_internal', false)
             ->distinct('visitor_id')
             ->count('visitor_id');
 
         $totalHits = (int) DB::table('visits')
             ->whereBetween('visited_at', [$dayStart, $dayEnd])
             ->where('referer_source', '!=', 'bot')
+            ->where('is_internal', false)
             ->count();
 
         // Previous day for delta %
@@ -46,6 +48,7 @@ class DailyVisitorsWidget extends StatsOverviewWidget
         $prevVisitors = (int) DB::table('visits')
             ->whereBetween('visited_at', [$prevStart, $prevEnd])
             ->where('referer_source', '!=', 'bot')
+            ->where('is_internal', false)
             ->distinct('visitor_id')
             ->count('visitor_id');
 

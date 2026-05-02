@@ -30,11 +30,11 @@ export default function DodoNarrator({
         data-mood={mood}
       >
         <Image
-          src="/images/mascots/dodo-neutral.png"
+          src="/images/mascots/dodo-portrait.png"
           alt="朵朵"
           fill
           sizes={`${size}px`}
-          className="object-cover object-top"
+          className="object-cover"
         />
       </div>
       <div className="relative flex-1 min-w-0">

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Icons from '@/components/SvgIcons';
+import DodoNarrator from '@/components/DodoNarrator';
 import { useCart } from '@/components/CartProvider';
 import { tierLabel, getPrice, isBundleItem, isProductItem } from '@/lib/pricing';
 import { formatPrice } from '@/lib/format';
@@ -93,12 +94,23 @@ export default function CartPage() {
 
   if (items.length === 0) {
     return (
-      <div className="max-w-4xl mx-auto px-5 sm:px-6 lg:px-8 py-16 text-center">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1} stroke="currentColor" className="w-20 h-20 mx-auto text-gray-300 mb-6">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
-        </svg>
+      <div className="max-w-4xl mx-auto px-5 sm:px-6 lg:px-8 py-20 text-center">
+        <img
+          src="/svg/empty/empty_no_record.svg"
+          alt=""
+          width={224}
+          height={224}
+          aria-hidden
+          className="mx-auto mb-2"
+        />
         <h1 className="text-2xl font-bold text-gray-900 mb-2">購物車是空的</h1>
-        <p className="text-gray-500 mb-6">快去挑選喜歡的商品吧！</p>
+        <div className="max-w-md mx-auto mb-8 text-left">
+          <DodoNarrator
+            line="慢慢看，挑到喜歡的就放進來，我幫妳留著。"
+            mood="happy"
+            size={56}
+          />
+        </div>
         <Link
           href="/products"
           className="inline-flex items-center px-8 py-3 bg-[#9F6B3E] text-white font-semibold rounded-full hover:bg-[#85572F] transition-colors"
@@ -447,6 +459,27 @@ export default function CartPage() {
             前往結帳
           </Link>
         )}
+
+        {/* Trust strip — reassurance directly under the checkout button.
+            /cart→checkout drop is ~82% in the 14d before this; missing trust
+            cues at the decision moment was a likely contributor. Three short
+            signals (shipping / return policy / payment security). */}
+        <div className="mt-4 grid grid-cols-3 gap-2 text-center">
+          <div className="flex flex-col items-center gap-1 px-1 py-2 rounded-lg bg-white border border-[#e7d9cb]">
+            <svg className="w-4 h-4 text-[#9F6B3E]" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" aria-hidden>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-6 0H3.375A1.125 1.125 0 012.25 17.625V14.25M21 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h.375a1.125 1.125 0 001.125-1.125V11.25M14.25 18.75H18M2.25 14.25v-2.625a3.375 3.375 0 013.375-3.375h7.5a1.125 1.125 0 011.125 1.125v8.25M2.25 14.25h12m7.5-3.75H14.25m7.5 0v-1.575a1.5 1.5 0 00-.44-1.06l-2.475-2.475a1.5 1.5 0 00-1.06-.44H14.25" />
+            </svg>
+            <span className="text-[11px] font-black text-[#7a5836] leading-tight">全站免運</span>
+          </div>
+          <div className="flex flex-col items-center gap-1 px-1 py-2 rounded-lg bg-white border border-[#e7d9cb]">
+            <Icons.Shield className="w-4 h-4 text-[#9F6B3E]" />
+            <span className="text-[11px] font-black text-[#7a5836] leading-tight">7 天鑑賞期</span>
+          </div>
+          <div className="flex flex-col items-center gap-1 px-1 py-2 rounded-lg bg-white border border-[#e7d9cb]">
+            <Icons.Lock className="w-4 h-4 text-[#9F6B3E]" />
+            <span className="text-[11px] font-black text-[#7a5836] leading-tight">SSL 加密付款</span>
+          </div>
+        </div>
       </div>
 
       {relatedProducts.length > 0 && (
