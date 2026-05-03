@@ -35,7 +35,6 @@ class PaymentReminderTest extends TestCase
         ]);
         unset($attrs['customer']);
 
-        // `created_at` 不是 fillable，要 raw update 才能模擬「N 小時前下的單」
         $createdAt = $attrs['created_at'] ?? null;
         unset($attrs['created_at']);
 
@@ -65,19 +64,43 @@ class PaymentReminderTest extends TestCase
         return $order;
     }
 
-    public function test_bank_transfer_unpaid_order_past_24h_gets_reminder(): void
+    // ── Bank transfer ───────────────────────────────────────────
+
+    public function test_bank_transfer_at_3h_gets_stage_1_reminder(): void
+    {
+        $order = $this->makeOrder(['created_at' => now()->subHours(4)]);
+
+        $this->artisan('bank-transfer:auto-cancel')->assertSuccessful();
+
+        $order->refresh();
+        $this->assertSame(1, (int) $order->confirmation_reminder_stage);
+        $this->assertNotNull($order->confirmation_reminder_sent_at);
+        $this->assertSame('unpaid', $order->payment_status);
+    }
+
+    public function test_bank_transfer_at_25h_gets_stage_2_reminder(): void
     {
         $order = $this->makeOrder(['created_at' => now()->subHours(25)]);
 
         $this->artisan('bank-transfer:auto-cancel')->assertSuccessful();
 
         $order->refresh();
+        $this->assertSame(2, (int) $order->confirmation_reminder_stage);
         $this->assertNotNull($order->confirmation_reminder_sent_at);
-        $this->assertSame('unpaid', $order->payment_status);
         $this->assertNotSame('cancelled', $order->status);
     }
 
-    public function test_bank_transfer_unpaid_order_past_48h_gets_cancelled_and_stock_restored(): void
+    public function test_bank_transfer_below_3h_no_reminder(): void
+    {
+        $order = $this->makeOrder(['created_at' => now()->subHours(1)]);
+
+        $this->artisan('bank-transfer:auto-cancel')->assertSuccessful();
+
+        $this->assertSame(0, (int) $order->fresh()->confirmation_reminder_stage);
+        $this->assertNull($order->fresh()->confirmation_reminder_sent_at);
+    }
+
+    public function test_bank_transfer_cancel_at_48h(): void
     {
         $product = Product::create([
             'name' => 'BTP', 'slug' => 'btp', 'price' => 1000,
@@ -127,28 +150,21 @@ class PaymentReminderTest extends TestCase
         $this->artisan('bank-transfer:auto-cancel')->assertSuccessful();
 
         $this->assertSame('cancelled', $order->fresh()->status);
-        $this->assertNull($order->fresh()->confirmation_reminder_sent_at);
+        $this->assertSame(0, (int) $order->fresh()->confirmation_reminder_stage);
     }
 
-    public function test_bank_transfer_reminder_is_idempotent(): void
+    public function test_bank_transfer_reminder_is_idempotent_within_same_stage(): void
     {
-        $order = $this->makeOrder(['created_at' => now()->subHours(25)]);
+        $order = $this->makeOrder(['created_at' => now()->subHours(4)]);
 
         $this->artisan('bank-transfer:auto-cancel')->assertSuccessful();
         $firstSentAt = $order->fresh()->confirmation_reminder_sent_at;
-        $this->assertNotNull($firstSentAt);
+        $this->assertSame(1, (int) $order->fresh()->confirmation_reminder_stage);
 
+        // 第二次跑（仍在 stage 1 區間）— 不應重送
         $this->artisan('bank-transfer:auto-cancel')->assertSuccessful();
         $this->assertEquals($firstSentAt, $order->fresh()->confirmation_reminder_sent_at);
-    }
-
-    public function test_bank_transfer_below_24h_no_reminder(): void
-    {
-        $order = $this->makeOrder(['created_at' => now()->subHours(10)]);
-
-        $this->artisan('bank-transfer:auto-cancel')->assertSuccessful();
-
-        $this->assertNull($order->fresh()->confirmation_reminder_sent_at);
+        $this->assertSame(1, (int) $order->fresh()->confirmation_reminder_stage);
     }
 
     public function test_bank_transfer_cancellation_restores_coupon(): void
@@ -164,7 +180,25 @@ class PaymentReminderTest extends TestCase
         $this->assertSame(4, (int) $coupon->fresh()->used_count);
     }
 
-    public function test_cod_reminder_at_24h_no_cancel(): void
+    // ── COD pending_confirmation ───────────────────────────────
+
+    public function test_cod_at_3h_gets_stage_1_reminder(): void
+    {
+        $order = $this->makeOrder([
+            'created_at' => now()->subHours(4),
+            'payment_method' => 'cod',
+            'status' => 'pending_confirmation',
+            'confirmation_token' => bin2hex(random_bytes(16)),
+        ]);
+
+        $this->artisan('cod:auto-cancel-unconfirmed')->assertSuccessful();
+
+        $order->refresh();
+        $this->assertSame(1, (int) $order->confirmation_reminder_stage);
+        $this->assertSame('pending_confirmation', $order->status);
+    }
+
+    public function test_cod_at_25h_gets_stage_2_reminder(): void
     {
         $order = $this->makeOrder([
             'created_at' => now()->subHours(25),
@@ -176,7 +210,7 @@ class PaymentReminderTest extends TestCase
         $this->artisan('cod:auto-cancel-unconfirmed')->assertSuccessful();
 
         $order->refresh();
-        $this->assertNotNull($order->confirmation_reminder_sent_at);
+        $this->assertSame(2, (int) $order->confirmation_reminder_stage);
         $this->assertSame('pending_confirmation', $order->status);
     }
 
@@ -187,11 +221,119 @@ class PaymentReminderTest extends TestCase
             'payment_method' => 'cod',
             'status' => 'pending_confirmation',
             'confirmation_token' => bin2hex(random_bytes(16)),
-            'confirmation_reminder_sent_at' => now()->subHours(25),
         ]);
 
         $this->artisan('cod:auto-cancel-unconfirmed')->assertSuccessful();
 
         $this->assertSame('cancelled', $order->fresh()->status);
     }
+
+    // ── Credit card (ecpay_credit) ─────────────────────────────
+
+    public function test_cc_at_1h_gets_stage_1_reminder(): void
+    {
+        $order = $this->makeOrder([
+            'created_at' => now()->subHours(2),
+            'payment_method' => 'ecpay_credit',
+        ]);
+
+        $this->artisan('cc:auto-cancel-unpaid')->assertSuccessful();
+
+        $order->refresh();
+        $this->assertSame(1, (int) $order->confirmation_reminder_stage);
+        $this->assertNotNull($order->confirmation_reminder_sent_at);
+        $this->assertSame('unpaid', $order->payment_status);
+    }
+
+    public function test_cc_at_7h_gets_stage_2_reminder(): void
+    {
+        $order = $this->makeOrder([
+            'created_at' => now()->subHours(7),
+            'payment_method' => 'ecpay_credit',
+        ]);
+
+        $this->artisan('cc:auto-cancel-unpaid')->assertSuccessful();
+
+        $this->assertSame(2, (int) $order->fresh()->confirmation_reminder_stage);
+    }
+
+    public function test_cc_at_25h_gets_stage_3_reminder(): void
+    {
+        $order = $this->makeOrder([
+            'created_at' => now()->subHours(25),
+            'payment_method' => 'ecpay_credit',
+        ]);
+
+        $this->artisan('cc:auto-cancel-unpaid')->assertSuccessful();
+
+        $this->assertSame(3, (int) $order->fresh()->confirmation_reminder_stage);
+    }
+
+    public function test_cc_at_145h_gets_stage_5_reminder(): void
+    {
+        $order = $this->makeOrder([
+            'created_at' => now()->subHours(145),
+            'payment_method' => 'ecpay_credit',
+        ]);
+
+        $this->artisan('cc:auto-cancel-unpaid')->assertSuccessful();
+
+        $this->assertSame(5, (int) $order->fresh()->confirmation_reminder_stage);
+    }
+
+    public function test_cc_below_1h_no_reminder(): void
+    {
+        $order = $this->makeOrder([
+            'created_at' => now()->subMinutes(30),
+            'payment_method' => 'ecpay_credit',
+        ]);
+
+        $this->artisan('cc:auto-cancel-unpaid')->assertSuccessful();
+
+        $this->assertSame(0, (int) $order->fresh()->confirmation_reminder_stage);
+    }
+
+    public function test_cc_cancel_at_7d(): void
+    {
+        $order = $this->makeOrder([
+            'created_at' => now()->subHours(170),
+            'payment_method' => 'ecpay_credit',
+        ]);
+
+        $this->artisan('cc:auto-cancel-unpaid')->assertSuccessful();
+
+        $this->assertSame('cancelled', $order->fresh()->status);
+        $this->assertStringContainsString('未完成信用卡付款', $order->fresh()->note);
+    }
+
+    public function test_cc_paid_order_is_not_touched(): void
+    {
+        $order = $this->makeOrder([
+            'created_at' => now()->subHours(170),
+            'payment_method' => 'ecpay_credit',
+            'payment_status' => 'paid',
+        ]);
+
+        $this->artisan('cc:auto-cancel-unpaid')->assertSuccessful();
+
+        $this->assertNotSame('cancelled', $order->fresh()->status);
+        $this->assertSame(0, (int) $order->fresh()->confirmation_reminder_stage);
+    }
+
+    public function test_cc_stage_progresses_across_runs(): void
+    {
+        // 起始 4h，跑一次 → stage 1
+        $order = $this->makeOrder([
+            'created_at' => now()->subHours(4),
+            'payment_method' => 'ecpay_credit',
+        ]);
+        $this->artisan('cc:auto-cancel-unpaid')->assertSuccessful();
+        $this->assertSame(1, (int) $order->fresh()->confirmation_reminder_stage);
+
+        // 推到 7h → 跑一次 → 應推進到 stage 2
+        \DB::table('orders')->where('id', $order->id)->update(['created_at' => now()->subHours(7)]);
+        $this->artisan('cc:auto-cancel-unpaid')->assertSuccessful();
+        $this->assertSame(2, (int) $order->fresh()->confirmation_reminder_stage);
+    }
+
 }

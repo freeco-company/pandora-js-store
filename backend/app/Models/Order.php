@@ -21,6 +21,7 @@ class Order extends Model
         'review_reminder_2_sent_at',
         'shipped_at', 'pickup_reminder_sent_at',
         'confirmed_at', 'line_user_id', 'confirmation_token', 'confirmation_reminder_sent_at',
+        'confirmation_reminder_stage',
         'referer_source', 'utm_source', 'utm_medium', 'utm_campaign', 'landing_path',
     ];
 
@@ -37,6 +38,7 @@ class Order extends Model
         'pickup_reminder_sent_at' => 'datetime',
         'confirmed_at' => 'datetime',
         'confirmation_reminder_sent_at' => 'datetime',
+        'confirmation_reminder_stage' => 'integer',
     ];
 
     protected $hidden = [

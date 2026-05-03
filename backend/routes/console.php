@@ -135,13 +135,22 @@ Schedule::command('cod:auto-cancel-unconfirmed')
     ->runInBackground()
     ->appendOutputTo(storage_path('logs/cod-auto-cancel.log'));
 
-// 銀行轉帳訂單：24h 寄提醒 / 48h 未付款自動取消（避免無效 hold 庫存 / coupon）
+// 銀行轉帳訂單：多段提醒（3h / 24h）/ 48h 未付款自動取消
 Schedule::command('bank-transfer:auto-cancel')
     ->everyThirtyMinutes()
     ->timezone('Asia/Taipei')
     ->withoutOverlapping(10)
     ->runInBackground()
     ->appendOutputTo(storage_path('logs/bank-transfer-auto-cancel.log'));
+
+// 信用卡訂單：多段提醒（1h/6h/24h/72h/144h）/ 7 天未付款自動取消
+// 補刷透過 /order-lookup?order=PD... 重新走 ECPay（EcpayService 會加 R1/R2 suffix 避重號）
+Schedule::command('cc:auto-cancel-unpaid')
+    ->everyThirtyMinutes()
+    ->timezone('Asia/Taipei')
+    ->withoutOverlapping(10)
+    ->runInBackground()
+    ->appendOutputTo(storage_path('logs/cc-auto-cancel.log'));
 
 // Pandora Core identity shadow-mirror outbox dispatch — every 5 min.
 // Pulls outbox_identity_events.status=pending + due → ProcessIdentityOutbox jobs.
