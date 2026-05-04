@@ -33,6 +33,17 @@ interface StreakUnlocks {
   already_unlocked: boolean;
 }
 
+// SPEC-cross-app-streak Phase 5B — 集團 master streak overlay snapshot.
+// Backend proxies pandora-core-conversion `/internal/group-streak/{uuid}`;
+// null when not configured / not bound / py-service unavailable.
+interface GroupStreakSnapshot {
+  current_streak: number;
+  longest_streak: number;
+  last_login_date: string | null;
+  last_seen_app: string | null;
+  today_in_streak: boolean;
+}
+
 interface StreakSnapshot {
   current_streak: number;
   longest_streak: number;
@@ -41,6 +52,7 @@ interface StreakSnapshot {
   milestone_label: string | null;
   today_date: string;
   unlocks: StreakUnlocks | null;
+  group: GroupStreakSnapshot | null;
 }
 
 const SHOWN_KEY_PREFIX = 'pandora-streak-shown-';
@@ -139,7 +151,13 @@ export default function StreakToast() {
           <h2 className="mb-2 text-2xl font-bold text-[#9F6B3E]">
             {milestoneHeadline(snap.current_streak)}
           </h2>
-          <p className="mb-6 text-sm text-[#b09070]">{milestoneSub(snap.current_streak)}</p>
+          <p className="mb-2 text-sm text-[#b09070]">{milestoneSub(snap.current_streak)}</p>
+          {snap.group && snap.group.current_streak > 0 && (
+            <p className="mb-6 text-xs text-[#b09070]/80">
+              FP 團隊連續第 {snap.group.current_streak} 天
+            </p>
+          )}
+          {!snap.group && <div className="mb-6" aria-hidden="true" />}
           {snap.unlocks && <UnlockChips unlocks={snap.unlocks} />}
           <button
             type="button"
@@ -173,6 +191,11 @@ export default function StreakToast() {
       >
         <p className="text-sm font-semibold text-[#9F6B3E]">{headline}</p>
         {sub && <p className="mt-1 text-xs text-[#b09070]">{sub}</p>}
+        {isMilestone && snap.group && snap.group.current_streak > 0 && (
+          <p className="mt-1 text-[11px] text-[#b09070]/80">
+            FP 團隊連續第 {snap.group.current_streak} 天
+          </p>
+        )}
         {isMilestone && snap.unlocks && (
           <div className="mt-2">
             <UnlockChips unlocks={snap.unlocks} compact />
