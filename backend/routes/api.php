@@ -95,7 +95,10 @@ Route::post('/track/cart-event', [CartEventController::class, 'store'])
     ->middleware('throttle:1000,1');
 
 // Customer gamification dashboard (requires auth)
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware(['auth:sanctum', \App\Http\Middleware\RecordDailyStreak::class])->group(function () {
+    // SPEC-cross-app-streak Phase 1.C — per-App 每日登入 streak（母艦 jerosse）
+    Route::get('/streak/today', [\App\Http\Controllers\Api\StreakController::class, 'today']);
+
     Route::get('/customer/dashboard', [CustomerController::class, 'dashboard']);
     Route::post('/customer/mascot/outfit', [CustomerController::class, 'setOutfit']);
     Route::post('/customer/mascot/backdrop', [CustomerController::class, 'setBackdrop']);
