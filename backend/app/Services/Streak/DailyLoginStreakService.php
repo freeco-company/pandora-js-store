@@ -50,6 +50,7 @@ class DailyLoginStreakService
 
     public function __construct(
         private readonly PandoraGamificationPublisher $gamification,
+        private readonly StreakMilestoneRewardService $rewardService,
     ) {}
 
     /**
@@ -60,6 +61,14 @@ class DailyLoginStreakService
      *     is_milestone: bool,
      *     milestone_label: ?string,
      *     today_date: string,
+     *     unlocks: ?array{
+     *         streak_days: int,
+     *         achievements_awarded: list<string>,
+     *         coupon_code: ?string,
+     *         coupon_value: ?int,
+     *         coupon_label: ?string,
+     *         already_unlocked: bool,
+     *     },
      * }
      */
     public function recordLogin(Customer $customer): array
@@ -113,6 +122,23 @@ class DailyLoginStreakService
             $this->safePublish($customer, $result['streak'], $today);
         }
 
+        // Trigger milestone reward unlock — fail-soft so streak flow never breaks
+        // on a reward bug. Same-day re-entry is gated by is_first_today, but
+        // the service's own (customer_id, streak_days) unique index is the
+        // ultimate idempotency guarantee.
+        $unlocks = null;
+        if ($isMilestone) {
+            try {
+                $unlocks = $this->rewardService->unlockForMilestone($customer, $result['streak']);
+            } catch (Throwable $e) {
+                Log::warning('[DailyLoginStreak] milestone reward unlock failed (soft)', [
+                    'customer_id' => $customer->id,
+                    'streak' => $result['streak'],
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
         return [
             'streak' => $result['streak'],
             'longest_streak' => $result['longest'],
@@ -120,6 +146,7 @@ class DailyLoginStreakService
             'is_milestone' => $isMilestone,
             'milestone_label' => $milestoneLabel,
             'today_date' => $today,
+            'unlocks' => $unlocks,
         ];
     }
 

@@ -48,6 +48,7 @@ class PandoraGamificationPublisher
         'jerosse.referral_signed',
         'jerosse.streak_7',
         'jerosse.streak_30',
+        'jerosse.streak_milestone_unlocked',
         'jerosse.engagement_deep',
         'jerosse.achievement_awarded',
     ];
