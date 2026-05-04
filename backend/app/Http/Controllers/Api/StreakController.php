@@ -35,6 +35,10 @@ class StreakController extends Controller
             'is_milestone' => $recorded['is_milestone'],
             'milestone_label' => $recorded['milestone_label'],
             'today_date' => $recorded['today_date'],
+            // SPEC-streak-milestone-rewards — only present when this call hit a
+            // milestone (is_first_today + streak ∈ MILESTONES). Frontend uses
+            // it to render reward chips (achievement badge + coupon code).
+            'unlocks' => $recorded['unlocks'] ?? null,
         ]);
     }
 }

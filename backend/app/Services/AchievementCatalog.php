@@ -42,8 +42,13 @@ class AchievementCatalog
 
     // Engagement
     public const FIRST_COUPON = 'first_coupon';
+    public const STREAK_1 = 'streak_1';
+    public const STREAK_3 = 'streak_3';
     public const STREAK_7 = 'streak_7';
+    public const STREAK_14 = 'streak_14';
+    public const STREAK_21 = 'streak_21';
     public const STREAK_30 = 'streak_30';
+    public const STREAK_60 = 'streak_60';
     public const STREAK_100 = 'streak_100';
 
     // Referral
@@ -113,11 +118,21 @@ class AchievementCatalog
             self::QUALITY_REVIEW => ['emoji' => 'heart-eyes', 'name' => '走心仙女', 'description' => '寫下超過 30 字的詳細評論', 'tier' => 'silver'],
 
             self::FIRST_COUPON => ['emoji' => 'gift', 'name' => '省錢仙女', 'description' => '首次使用優惠碼', 'tier' => 'bronze'],
-            self::STREAK_7 => ['emoji' => 'fire', 'name' => '七日連訪', 'description' => '連續 7 天造訪', 'tier' => 'silver',
+            self::STREAK_1 => ['emoji' => 'sparkle', 'name' => '初心朋友', 'description' => '回來看朵朵的第一天', 'tier' => 'bronze',
+                               'progress' => ['type' => 'streak_days', 'target' => 1]],
+            self::STREAK_3 => ['emoji' => 'leaf', 'name' => '三日小步', 'description' => '連續 3 天造訪', 'tier' => 'bronze',
+                               'progress' => ['type' => 'streak_days', 'target' => 3]],
+            self::STREAK_7 => ['emoji' => 'fire', 'name' => '一週老朋友', 'description' => '連續 7 天造訪', 'tier' => 'silver',
                                'progress' => ['type' => 'streak_days', 'target' => 7]],
+            self::STREAK_14 => ['emoji' => 'cherry-blossom', 'name' => '兩週決心', 'description' => '連續 14 天造訪', 'tier' => 'silver',
+                                'progress' => ['type' => 'streak_days', 'target' => 14]],
+            self::STREAK_21 => ['emoji' => 'ribbon-bow', 'name' => '習慣養成', 'description' => '連續 21 天造訪', 'tier' => 'silver',
+                                'progress' => ['type' => 'streak_days', 'target' => 21]],
             self::STREAK_30 => ['emoji' => 'fire', 'name' => '月月相伴', 'description' => '連續 30 天造訪', 'tier' => 'gold',
                                 'progress' => ['type' => 'streak_days', 'target' => 30]],
-            self::STREAK_100 => ['emoji' => 'star', 'name' => '百日傳說', 'description' => '連續 100 天造訪', 'tier' => 'gold',
+            self::STREAK_60 => ['emoji' => 'trophy', 'name' => '兩月好朋友', 'description' => '連續 60 天造訪', 'tier' => 'gold',
+                                'progress' => ['type' => 'streak_days', 'target' => 60]],
+            self::STREAK_100 => ['emoji' => 'star', 'name' => '百日傳奇', 'description' => '連續 100 天造訪', 'tier' => 'gold',
                                  'progress' => ['type' => 'streak_days', 'target' => 100]],
 
             self::FIRST_REFERRAL => ['emoji' => 'gift', 'name' => '第一位推薦者', 'description' => '成功邀請一位朋友完成首單', 'tier' => 'silver'],
