@@ -16,6 +16,7 @@ import CustomCursor from '@/components/CustomCursor';
 import MobileDrawer from '@/components/MobileDrawer';
 import MobileBottomNavWrapper from '@/components/MobileBottomNavWrapper';
 import LineFloatingButton from '@/components/LineFloatingButton';
+import StreakToast from '@/components/StreakToast';
 // LenisProvider removed — conflicts with GSAP ScrollTrigger, causes scroll to freeze
 // import LenisProvider from '@/components/LenisProvider';
 
@@ -140,6 +141,7 @@ export default function RootLayout({
                     </main>
                     <Footer />
                     <LineFloatingButton />
+                    <StreakToast />
                     <CookieConsent />
                     <Analytics />
                     <MobileDrawer />
